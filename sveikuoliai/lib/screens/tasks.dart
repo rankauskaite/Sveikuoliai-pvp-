@@ -1,30 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/main.dart';
 import 'package:sveikuoliai/screens/journal.dart';
-import 'package:sveikuoliai/screens/tasks.dart';
-import 'screens/profile.dart';
+import 'package:sveikuoliai/screens/profile.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Pagrindinis ekranas',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MainScreen(),
-    );
-  }
-}
-
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+class TasksPage extends StatelessWidget {
+  const TasksPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +28,8 @@ class MainScreen extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 20),
               ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Row, kad visi elementai būtų vienoje eilutėje
                   Row(
                     mainAxisAlignment: MainAxisAlignment
                         .start, // Išlaikyti kairę, galite keisti į 'center' ar 'end'
@@ -65,118 +45,53 @@ class MainScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      Container(
-                        height:
-                            50, // Nustatome aukštį, kad tekstas būtų apačioje
-                        alignment: Alignment
-                            .bottomLeft, // Užtikrina, kad tekstas bus apačioje
-                        child: const Text(
-                          'VARDAS',
-                          style: TextStyle(fontSize: 20),
+                    ],
+                  ),
+                  //const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Pirmas mygtukas
+                            print('Pirmas mygtukas paspaustas');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                topLeft:
+                                    Radius.circular(30), // Suapvalinti kampai
+                                bottomLeft: Radius.circular(30),
+                              ),
+                            ),
+                            iconColor:
+                                Color(0xFF8093F1), // Spalva pirmam mygtukui
+                          ),
+                          child: const Text('Mano įpročiai'),
                         ),
                       ),
-                      const Expanded(child: SizedBox()),
-                      const Icon(Icons.notifications_outlined, size: 35),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mano augalai',
-                        style: TextStyle(fontSize: 17),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // Centruojame elementus vertikaliai
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: const Color(0xFFD9D9D9),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Antras mygtukas
+                            print('Antras mygtukas paspaustas');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                topRight:
+                                    Radius.circular(30), // Suapvalinti kampai
+                                bottomRight: Radius.circular(30),
+                              ),
+                            ),
+                            iconColor:
+                                Color(0xFFB388EB), // Spalva antram mygtukui
                           ),
-                          Text(
-                            'Orchidėja',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: const Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Dobilas',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: const Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Žibuoklės',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Centruoti horizontaliai
-                    children: [
-                      Container(
-                        width: 250, // Nustatykite plotį
-                        height: 150, // Nustatykite aukštį
-                        color: const Color(0xFFB388EB), // Spalva
-                        child: Text(
-                          'PREMIUM VERSIJOS REKLAMA',
-                          style: TextStyle(
-                            fontSize: 40,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
+                          child: const Text('Mano tikslai'),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Centruoti horizontaliai
-                    children: [
-                      Container(
-                        width: 250, // Nustatykite plotį
-                        height: 100, // Nustatykite aukštį
-                        color: const Color(0xFFD9D9D9), // Spalva
-                        child: Text(
-                          'Reklamos plotas',
-                          style: TextStyle(
-                            fontSize: 37,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  )
                 ],
               ),
             ),

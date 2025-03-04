@@ -1,30 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/screens/journal.dart';
+import 'package:sveikuoliai/main.dart';
+import 'package:sveikuoliai/screens/profile.dart';
 import 'package:sveikuoliai/screens/tasks.dart';
-import 'screens/profile.dart';
+import 'package:table_calendar/table_calendar.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Pagrindinis ekranas',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MainScreen(),
-    );
-  }
-}
-
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+class JournalPage extends StatelessWidget {
+  const JournalPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +29,8 @@ class MainScreen extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 20),
               ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Row, kad visi elementai būtų vienoje eilutėje
                   Row(
                     mainAxisAlignment: MainAxisAlignment
                         .start, // Išlaikyti kairę, galite keisti į 'center' ar 'end'
@@ -65,118 +46,41 @@ class MainScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      Container(
-                        height:
-                            50, // Nustatome aukštį, kad tekstas būtų apačioje
-                        alignment: Alignment
-                            .bottomLeft, // Užtikrina, kad tekstas bus apačioje
-                        child: const Text(
-                          'VARDAS',
-                          style: TextStyle(fontSize: 20),
-                        ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                      const Icon(Icons.notifications_outlined, size: 35),
                     ],
                   ),
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mano augalai',
-                        style: TextStyle(fontSize: 17),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // Centruojame elementus vertikaliai
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: const Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Orchidėja',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: const Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Dobilas',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: const Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Žibuoklės',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
+                  //const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment:
                         MainAxisAlignment.center, // Centruoti horizontaliai
                     children: [
                       Container(
                         width: 250, // Nustatykite plotį
-                        height: 150, // Nustatykite aukštį
-                        color: const Color(0xFFB388EB), // Spalva
-                        child: Text(
-                          'PREMIUM VERSIJOS REKLAMA',
-                          style: TextStyle(
-                            fontSize: 40,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Centruoti horizontaliai
-                    children: [
-                      Container(
-                        width: 250, // Nustatykite plotį
-                        height: 100, // Nustatykite aukštį
+                        height: 80, // Nustatykite aukštį
                         color: const Color(0xFFD9D9D9), // Spalva
                         child: Text(
-                          'Reklamos plotas',
+                          'Vizualas su užrašu dienoraštis(?) Jei ką - papildomas reklamos plotas',
                           style: TextStyle(
-                            fontSize: 37,
+                            fontSize: 20,
                             color: Colors.black,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
                     ],
-                  )
+                  ),
+                  //Čia pridedame kalendorių
+                  TableCalendar(
+                    firstDay: DateTime.utc(2020, 01, 01),
+                    lastDay: DateTime.utc(2025, 12, 31),
+                    focusedDay: DateTime.now(),
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                    ),
+                    onDaySelected: (selectedDay, focusedDay) {
+                      print('Selected day: $selectedDay');
+                    },
+                  ),
                 ],
               ),
             ),
