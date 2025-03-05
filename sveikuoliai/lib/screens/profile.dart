@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/main.dart';
-import 'package:sveikuoliai/screens/journal.dart';
 import 'package:sveikuoliai/screens/settings.dart';
-import 'package:sveikuoliai/screens/tasks.dart';
+import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -39,7 +37,7 @@ class ProfilePage extends StatelessWidget {
                           Navigator.pop(context);
                         },
                         icon: Icon(
-                          Icons.arrow_back,
+                          Icons.arrow_back_ios,
                           size: 30,
                         ),
                       ),
@@ -66,10 +64,26 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const Icon(
-                    Icons.account_circle,
-                    size: 200,
-                    color: Color(0xFFD9D9D9),
+                  Stack(
+                    children: [
+                      // Centrinė account_circle ikona
+                      Center(
+                        child: const Icon(
+                          Icons.account_circle,
+                          size: 200,
+                          color: Color(0xFFD9D9D9),
+                        ),
+                      ),
+                      // Viršutinė dešinė logout ikona
+                      Positioned(
+                        top: 5, // Galite koreguoti atstumą nuo viršaus
+                        right: 5, // Galite koreguoti atstumą nuo dešinės
+                        child: const Icon(
+                          Icons.logout,
+                          size: 30,
+                        ),
+                      ),
+                    ],
                   ),
                   const Text(
                     'VARDAS',
@@ -165,92 +179,7 @@ class ProfilePage extends StatelessWidget {
                 ],
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Column(
-                  children: [
-                    SizedBox(height: 10), // Vietos pridėjimas virš ikonos
-                    Container(
-                      width: 50, // Apskritimo plotis
-                      height: 50, // Apskritimo aukštis
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9), // Apskritimo spalva
-                        shape: BoxShape.circle, // Apskritimo forma
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.library_books_outlined,
-                              size: 35), // Ikonos dydis
-                          color: const Color(0xFF8093F1),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const JournalPage()),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    SizedBox(height: 10), // Vietos pridėjimas virš ikonos
-                    Container(
-                      width: 50, // Apskritimo plotis
-                      height: 50, // Apskritimo aukštis
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9), // Apskritimo spalva
-                        shape: BoxShape.circle, // Apskritimo forma
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.home_outlined,
-                              size: 35), // Ikonos dydis
-                          color: const Color(0xFF8093F1),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const MainScreen()),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    SizedBox(height: 10), // Vietos pridėjimas virš ikonos
-                    Container(
-                      width: 50, // Apskritimo plotis
-                      height: 50, // Apskritimo aukštis
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9), // Apskritimo spalva
-                        shape: BoxShape.circle, // Apskritimo forma
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.check_circle_outline,
-                              size: 35), // Ikonos dydis
-                          color: const Color(0xFF8093F1),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const TasksPage()),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            const BottomNavigation(), // Įterpiama navigacija
           ],
         ),
       ),

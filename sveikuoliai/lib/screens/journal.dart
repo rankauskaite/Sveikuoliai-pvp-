@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/main.dart';
 import 'package:sveikuoliai/screens/profile.dart';
-import 'package:sveikuoliai/screens/tasks.dart';
+import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class JournalPage extends StatelessWidget {
@@ -84,92 +83,7 @@ class JournalPage extends StatelessWidget {
                 ],
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Column(
-                  children: [
-                    SizedBox(height: 10), // Vietos pridėjimas virš ikonos
-                    Container(
-                      width: 50, // Apskritimo plotis
-                      height: 50, // Apskritimo aukštis
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9), // Apskritimo spalva
-                        shape: BoxShape.circle, // Apskritimo forma
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.library_books_outlined,
-                              size: 35), // Ikonos dydis
-                          color: const Color(0xFF8093F1),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const JournalPage()),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    SizedBox(height: 10), // Vietos pridėjimas virš ikonos
-                    Container(
-                      width: 50, // Apskritimo plotis
-                      height: 50, // Apskritimo aukštis
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9), // Apskritimo spalva
-                        shape: BoxShape.circle, // Apskritimo forma
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.home_outlined,
-                              size: 35), // Ikonos dydis
-                          color: const Color(0xFF8093F1),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const MainScreen()),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    SizedBox(height: 10), // Vietos pridėjimas virš ikonos
-                    Container(
-                      width: 50, // Apskritimo plotis
-                      height: 50, // Apskritimo aukštis
-                      decoration: BoxDecoration(
-                        color: Color(0xFFD9D9D9), // Apskritimo spalva
-                        shape: BoxShape.circle, // Apskritimo forma
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.check_circle_outline,
-                              size: 35), // Ikonos dydis
-                          color: const Color(0xFF8093F1),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const TasksPage()),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            const BottomNavigation(), // Įterpiama navigacija
           ],
         ),
       ),
