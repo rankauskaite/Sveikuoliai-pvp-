@@ -154,7 +154,7 @@ class _HabitCardState extends State<HabitCard> {
               content: SingleChildScrollView(
                 child: Column(
                   children: [
-                    Text('${widget.habitDescription}'),
+                    Text(widget.habitDescription),
                     const SizedBox(height: 20),
                     // Jei tai paskutinė kortelė, naudoti kitus laukus
                     if (widget.isLast)
@@ -246,10 +246,11 @@ class _HabitCardState extends State<HabitCard> {
                           firstDate: DateTime(2020),
                           lastDate: DateTime(2101),
                         );
-                        if (pickedDate != null && pickedDate != _startDate)
+                        if (pickedDate != null && pickedDate != _startDate) {
                           setState(() {
                             _startDate = pickedDate;
                           });
+                        }
                       },
                     ),
                     const SizedBox(height: 20),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/settings.dart';
+import 'package:sveikuoliai/screens/update_profile.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -42,12 +44,19 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ),
                       const Expanded(child: SizedBox()),
-                      Icon(
-                        Icons.edit_outlined,
-                        size: 30,
-                      ),
-                      const SizedBox(
-                        width: 10,
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const UpdateProfilePage()),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 30,
+                        ),
                       ),
                       IconButton(
                         onPressed: () {
@@ -77,10 +86,13 @@ class ProfilePage extends StatelessWidget {
                       // Viršutinė dešinė logout ikona
                       Positioned(
                         top: 5, // Galite koreguoti atstumą nuo viršaus
-                        right: 5, // Galite koreguoti atstumą nuo dešinės
-                        child: const Icon(
-                          Icons.logout,
-                          size: 30,
+                        right: 0, // Galite koreguoti atstumą nuo dešinės
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.logout,
+                            size: 30,
+                          ),
                         ),
                       ),
                     ],
@@ -165,7 +177,11 @@ class ProfilePage extends StatelessWidget {
                   const SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const FriendsPage()),
+                          );
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
