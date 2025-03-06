@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/goal.dart';
 import 'package:sveikuoliai/screens/habit.dart';
-import 'package:sveikuoliai/screens/profile.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/profile_button.dart';
 
 class TasksPage extends StatefulWidget {
   const TasksPage({super.key});
@@ -41,17 +41,7 @@ class _TasksPageState extends State<TasksPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.account_circle, size: 60),
-                        color: const Color(0xFFD9D9D9),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const ProfilePage()),
-                          );
-                        },
-                      ),
+                      ProfileButton(),
                     ],
                   ),
                   Row(

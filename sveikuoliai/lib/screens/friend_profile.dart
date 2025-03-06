@@ -1,29 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
-import 'package:sveikuoliai/widgets/profile_button.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Pagrindinis ekranas',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MainScreen(),
-    );
-  }
-}
-
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+class FriendProfilePage extends StatelessWidget {
+  final String name;
+  final String username;
+  const FriendProfilePage(
+      {super.key, required this.name, required this.username});
 
   @override
   Widget build(BuildContext context) {
@@ -47,33 +29,73 @@ class MainScreen extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 20),
               ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Row, kad visi elementai būtų vienoje eilutėje
                   Row(
-                    mainAxisAlignment: MainAxisAlignment
-                        .start, // Išlaikyti kairę, galite keisti į 'center' ar 'end'
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      ProfileButton(),
-                      Container(
-                        height:
-                            50, // Nustatome aukštį, kad tekstas būtų apačioje
-                        alignment: Alignment
-                            .bottomLeft, // Užtikrina, kad tekstas bus apačioje
-                        child: const Text(
-                          'VARDAS',
-                          style: TextStyle(fontSize: 20),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: Icon(
+                          Icons.arrow_back_ios,
+                          size: 30,
                         ),
                       ),
                       const Expanded(child: SizedBox()),
-                      const Icon(Icons.notifications_outlined, size: 35),
+                      ElevatedButton(
+                        onPressed: () {
+                          // setState(() {
+                          //   journalText = tempText; // Išsaugome tekstą
+                          // });
+                          Navigator.pop(context); // Uždaro modalą
+                        },
+                        child: Text('Ištrinti'),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 40),
+                  Stack(
+                    children: [
+                      // Centrinė account_circle ikona
+                      Center(
+                        child: const Icon(
+                          Icons.account_circle,
+                          size: 200,
+                          color: Color(0xFFD9D9D9),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Vardas su stiliumi
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  // Username su stiliumi
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      username,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Color(0xFF8093F1),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        'Mano augalai',
+                        'Draugo augalai',
                         style: TextStyle(fontSize: 17),
                       ),
                     ],
@@ -126,50 +148,10 @@ class MainScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Centruoti horizontaliai
-                    children: [
-                      Container(
-                        width: 250, // Nustatykite plotį
-                        height: 150, // Nustatykite aukštį
-                        color: const Color(0xFFB388EB), // Spalva
-                        child: Text(
-                          'PREMIUM VERSIJOS REKLAMA',
-                          style: TextStyle(
-                            fontSize: 40,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Centruoti horizontaliai
-                    children: [
-                      Container(
-                        width: 250, // Nustatykite plotį
-                        height: 100, // Nustatykite aukštį
-                        color: const Color(0xFFD9D9D9), // Spalva
-                        child: Text(
-                          'Reklamos plotas',
-                          style: TextStyle(
-                            fontSize: 37,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  )
                 ],
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
+            const BottomNavigation(),
           ],
         ),
       ),
