@@ -1,8 +1,22 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:sveikuoliai/screens/habit_progress.dart';
+import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class GoalPage extends StatelessWidget {
+class GoalPage extends StatefulWidget {
   const GoalPage({super.key});
+
+  @override
+  _GoalPageState createState() => _GoalPageState();
+}
+
+class _GoalPageState extends State<GoalPage> {
+  bool isGoal1Completed = false;
+  bool isGoal2Completed = false;
+  bool isGoal3Completed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,275 +39,255 @@ class GoalPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(color: Colors.white, width: 20),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 50,
-                  ),
-                  const Text(
-                    'Naujas tikslas',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Karuselė su tikslais
-                  SizedBox(
-                    height: 300, // Aukštis karuselei
-                    child: PageView(
-                      scrollDirection:
-                          Axis.horizontal, // Horizontalus slinkimas
-                      controller: PageController(
-                          viewportFraction: 0.9), // Pagerins sklandumą
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        GoalCard(
-                          goalName: 'Tikslas 1',
-                          goalDescription: 'Aprašymas 1...',
-                          goalIcon: Icons.sports_tennis,
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            size: 30,
+                          ),
                         ),
-                        GoalCard(
-                          goalName: 'Tikslas 2',
-                          goalDescription: 'Aprašymas 2...',
-                          goalIcon: Icons.local_drink,
+                        const Expanded(child: SizedBox()),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const UpdateGoalPage()),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 30,
+                          ),
                         ),
-                        GoalCard(
-                          goalName: 'Tikslas 3',
-                          goalDescription: 'Aprašymas 3...',
-                          goalIcon: Icons.single_bed,
-                        ),
-                        GoalCard(
-                          goalName: 'Tikslas 4',
-                          goalDescription: 'Aprašymas 4...',
-                          goalIcon: Icons.self_improvement,
-                        ),
-                        GoalCard(
-                          goalName: 'Pridėti savo tikslą',
-                          goalDescription: 'Sukurk ir pridėk savo tikslą',
-                          goalIcon: Icons.add_circle,
-                          isLast:
-                              true, // Nurodoma, kad ši kortelė yra paskutinė
+                        IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.remove_circle_outline,
+                            size: 30,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Tikslo pavadinimas',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF72ddf7),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildProgressIndicator(0.3),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Apie tikslą',
+                      style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
+                    ),
+                    const Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Detalesnė informacija apie tikslą,\nkoks jis yra: aprašymas',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ]),
+                    const SizedBox(height: 10),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Trukmė: ',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        Text(
+                          '2 mėnesiai',
+                          style:
+                              TextStyle(fontSize: 18, color: Color(0xFF72ddf7)),
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Text(
+                      'Užduotys',
+                      style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGoalItem(
+                            'Tikslas 1: Pirmas tikslas',
+                            'Aprašymas: Šis tikslas apima sveikos mitybos pradėjimą.',
+                            isGoal1Completed, (bool? value) {
+                          setState(() {
+                            isGoal1Completed = value!;
+                          });
+                        }),
+                        _buildGoalItem(
+                            'Tikslas 2: Kitas tikslas',
+                            'Aprašymas: Tai tikslas, susijęs su fiziniu aktyvumu.',
+                            isGoal2Completed, (bool? value) {
+                          setState(() {
+                            isGoal2Completed = value!;
+                          });
+                        }),
+                        _buildGoalItem(
+                            'Tikslas 3: Dar vienas tikslas',
+                            'Aprašymas: Įgyvendinti gerą miego režimą.',
+                            isGoal3Completed, (bool? value) {
+                          setState(() {
+                            isGoal3Completed = value!;
+                          });
+                        }),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const HabitProgressPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                        iconColor: const Color(0xFF72ddf7), // Violetinė spalva
+                      ),
+                      child: const Text(
+                        'Pridėti užduotį',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Statistika',
+                      style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(height: 200, child: _buildChart()),
+                  ],
+                ),
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
+            const BottomNavigation(),
           ],
         ),
       ),
     );
   }
-}
 
-// Atkuriama tikslo kortelė su piktograma, pavadinimu ir aprašymu
-class GoalCard extends StatefulWidget {
-  final String goalName;
-  final String goalDescription;
-  final IconData goalIcon;
-  final bool
-      isLast; // Naujas parametras, kad žinotume, ar tai paskutinė kortelė
-
-  const GoalCard({
-    super.key,
-    required this.goalName,
-    required this.goalDescription,
-    required this.goalIcon,
-    this.isLast = false, // Jei neapibrėžta, laikome, kad kortelė nėra paskutinė
-  });
-
-  @override
-  _GoalCardState createState() => _GoalCardState();
-}
-
-class _GoalCardState extends State<GoalCard> {
-  String? _selectedDuration = '1 mėnesį'; // Pasirinkta trukmė
-  DateTime _startDate = DateTime.now(); // Pradžios data
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Paspaudus ant kortelės, atidarome formą
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Stack(
-                children: [
-                  Text('Užpildykite tikslą:\n${widget.goalName}'),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.pop(context); // Uždaryti dialogą
-                      },
-                    ),
-                  ),
-                ],
+  // Progreso indikatorius su procentais
+  Widget _buildProgressIndicator(double progress) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(
+              Icons.local_florist,
+              size: 170,
+              color: Color(0xFF72ddf7),
+            ),
+          ],
+        ),
+        const SizedBox(width: 20),
+        SizedBox(
+          width: 20,
+          height: 200,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Container(
+                width: 20,
+                color: Colors.grey[100],
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Text(widget.goalDescription),
-                    const SizedBox(height: 20),
-                    // Jei tai paskutinė kortelė, naudoti kitus laukus
-                    if (widget.isLast)
-                      Column(
-                        children: [
-                          TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Pavadinimas',
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .always, // Label tekstas visada ant lauko
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0,
-                                  horizontal:
-                                      10), // Lygiavimas su kitais laukais
-                              border: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Colors.transparent), // Nematoma riba
-                              ),
-                            ),
-                            onChanged: (String newValue) {
-                              // Veiksmas, kai tekstas pasikeičia
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Aprašymas',
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .always, // Label tekstas visada ant lauko
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0, horizontal: 10),
-                              border: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.transparent),
-                              ),
-                            ),
-                            onChanged: (String newValue) {
-                              // Veiksmas, kai tekstas pasikeičia
-                            },
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: 10),
-                    // Trukmės pasirinkimas su dekoracija
-                    DropdownButtonFormField<String>(
-                      value: _selectedDuration,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedDuration = newValue;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Tikslo trukmė',
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 0, horizontal: 5),
-                        border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.transparent)),
-                      ),
-                      isExpanded: true, // Užima visą plotį
-                      items: <String>[
-                        '1 savaitė',
-                        '2 savaitės',
-                        '1 mėnesį',
-                        '3 mėnesiai',
-                        '6 mėnesiai'
-                      ].map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12),
-                            child: Text(value),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 10),
-                    // Pradžios datos pasirinkimas
-                    TextFormField(
-                      controller: TextEditingController(
-                          text: '${_startDate.toLocal()}'.split(' ')[0]),
-                      decoration: const InputDecoration(
-                        labelText: 'Pradžios data',
-                        border: OutlineInputBorder(),
-                      ),
-                      onTap: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: _startDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2101),
-                        );
-                        if (pickedDate != null && pickedDate != _startDate) {
-                          setState(() {
-                            _startDate = pickedDate;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Veiksmas, kai paspaudžiama 'Pateikti'
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Pateikti'),
-                    ),
-                  ],
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: 20,
+                  height: 200 * progress,
+                  color: const Color(0xFFCDE499),
                 ),
               ),
-            );
-          },
-        );
-      },
-      child: Card(
-        color: Color(0xFF72ddf7), // Kortelės fonas
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+            ],
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              widget.goalIcon,
-              size: 80,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              widget.goalName,
-              style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              widget.goalDescription,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+        const SizedBox(width: 10),
+        Text(
+          '${(progress * 100).toStringAsFixed(0)}%',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Tikslų kortelių kūrimo funkcija
+  Widget _buildGoalItem(String title, String subtitle, bool value,
+      ValueChanged<bool?> onChanged) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF72ddf7).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: CheckboxListTile(
+        title: Text(title),
+        subtitle: Text(subtitle),
+        value: value,
+        onChanged: onChanged,
+        activeColor: Colors.blue,
+      ),
+    );
+  }
+
+  Widget _buildChart() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: [
+                FlSpot(0, 1),
+                FlSpot(1, 3),
+                FlSpot(2, 2),
+                FlSpot(3, 5),
+                FlSpot(4, 4),
+                FlSpot(5, 6),
+              ],
+              isCurved: true,
+              color: const Color(0xFF72ddf7),
+              dotData: FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: const Color(0xFF72ddf7).withOpacity(0.2),
+              ),
             ),
           ],
         ),

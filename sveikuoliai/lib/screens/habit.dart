@@ -1,4 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:sveikuoliai/screens/habit_progress.dart';
+import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
 class HabitPage extends StatelessWidget {
@@ -25,77 +30,194 @@ class HabitPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(color: Colors.white, width: 20),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 50,
-                  ),
-                  const Text(
-                    'Naujas įprotis',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Karuselė su įpročiais
-                  SizedBox(
-                    height: 300, // Aukštis karuselei
-                    child: PageView(
-                      scrollDirection:
-                          Axis.horizontal, // Horizontalus slinkimas
-                      controller: PageController(
-                          viewportFraction: 0.9), // Pagerins sklandumą
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        HabitCard(
-                          habitName: 'Įprotis 1',
-                          habitDescription: 'Aprašymas 1...',
-                          habitIcon: Icons.fitness_center,
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            size: 30,
+                          ),
                         ),
-                        HabitCard(
-                          habitName: 'Įprotis 2',
-                          habitDescription: 'Aprašymas 2...',
-                          habitIcon: Icons.local_drink,
+                        const Expanded(child: SizedBox()),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const UpdateHabitPage()),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 30,
+                          ),
                         ),
-                        HabitCard(
-                          habitName: 'Įprotis 3',
-                          habitDescription: 'Aprašymas 3...',
-                          habitIcon: Icons.run_circle,
-                        ),
-                        HabitCard(
-                          habitName: 'Įprotis 4',
-                          habitDescription: 'Aprašymas 4...',
-                          habitIcon: Icons.self_improvement,
-                        ),
-                        HabitCard(
-                          habitName: 'Pridėti savo įprotį',
-                          habitDescription: 'Sukurk ir pridėk savo įprotį',
-                          habitIcon: Icons.add_circle,
-                          isLast:
-                              true, // Nurodoma, kad ši kortelė yra paskutinė
+                        IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.remove_circle_outline,
+                            size: 30,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Įpročio pavadinimas',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFB388EB),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Progreso indikatorius su procentais
+                    _buildProgressIndicator(0.3), // Pvz., 60% progresas
+
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const HabitProgressPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                        iconColor: const Color(0xFFB388EB), // Violetinė spalva
+                      ),
+                      child: const Text(
+                        'Žymėti progresą',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Apie įprotį',
+                      style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
+                    ),
+                    const Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Detalesnė informacija apie įprotį,\nkoks jis yra: aprašymas',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ]),
+                    const SizedBox(height: 10),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Trukmė: ',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        Text(
+                          '2 mėnesiai',
+                          style:
+                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Statistika',
+                      style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(height: 200, child: _buildChart()),
+                  ],
+                ),
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
+            const BottomNavigation(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Progreso indikatorius su procentais
+  Widget _buildProgressIndicator(double progress) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: 220,
+          height: 220,
+          child: Semantics(
+            label: 'Progreso indikatorius', // Apibūdinimas
+            value:
+                '${(progress * 100).toStringAsFixed(0)}%', // Naudok string su nuliais po kablelio
+            child: CircularProgressIndicator(
+              value: progress, // Progreso reikšmė (0.0 - 1.0)
+              strokeWidth: 10,
+              backgroundColor: Colors.grey[100], // Pilkas fonas
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFFCDE499)), // Violetinė linija
+            ),
+          ),
+        ),
+        CustomPaint(
+          size: Size(220, 220),
+          painter: PercentagePainter(progress),
+        ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.local_florist,
+              size: 170,
+              color: Color(0xFFB388EB),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChart() {
+    return Container(
+      padding: const EdgeInsets.all(10), // Tarpo aplink grafiką
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0), // Šviesiai pilkas fonas
+        borderRadius: BorderRadius.circular(15), // Užapvalinti kampai
+      ),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: [
+                FlSpot(0, 1),
+                FlSpot(1, 3),
+                FlSpot(2, 2),
+                FlSpot(3, 5),
+                FlSpot(4, 4),
+                FlSpot(5, 6),
+              ],
+              isCurved: true,
+              color: const Color(0xFFB388EB), // Violetinė linija
+              dotData: FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: const Color(0xFFB388EB)
+                    .withOpacity(0.2), // Pusiau permatomas fonas po linija
+              ),
+            ),
           ],
         ),
       ),
@@ -103,201 +225,59 @@ class HabitPage extends StatelessWidget {
   }
 }
 
-// Atkuriama įpročio kortelė su piktograma, pavadinimu ir aprašymu
-class HabitCard extends StatefulWidget {
-  final String habitName;
-  final String habitDescription;
-  final IconData habitIcon;
-  final bool
-      isLast; // Naujas parametras, kad žinotume, ar tai paskutinė kortelė
+// CustomPainter klase, kuri piešia procentus
+class PercentagePainter extends CustomPainter {
+  final double progress;
 
-  const HabitCard({
-    super.key,
-    required this.habitName,
-    required this.habitDescription,
-    required this.habitIcon,
-    this.isLast = false, // Jei neapibrėžta, laikome, kad kortelė nėra paskutinė
-  });
+  PercentagePainter(this.progress);
 
   @override
-  _HabitCardState createState() => _HabitCardState();
-}
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = Colors.deepPurple
+      ..style = PaintingStyle.fill;
 
-class _HabitCardState extends State<HabitCard> {
-  String? _selectedDuration = '1 mėnesį'; // Pasirinkta trukmė
-  DateTime _startDate = DateTime.now(); // Pradžios data
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Paspaudus ant kortelės, atidarome formą
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Stack(
-                children: [
-                  Text('Užpildykite įprotį:\n${widget.habitName}'),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.pop(context); // Uždaryti dialogą
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Text(widget.habitDescription),
-                    const SizedBox(height: 20),
-                    // Jei tai paskutinė kortelė, naudoti kitus laukus
-                    if (widget.isLast)
-                      Column(
-                        children: [
-                          TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Pavadinimas',
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .always, // Label tekstas visada ant lauko
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0,
-                                  horizontal:
-                                      10), // Lygiavimas su kitais laukais
-                              border: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Colors.transparent), // Nematoma riba
-                              ),
-                            ),
-                            onChanged: (String newValue) {
-                              // Veiksmas, kai tekstas pasikeičia
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            decoration: InputDecoration(
-                              labelText: 'Aprašymas',
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .always, // Label tekstas visada ant lauko
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0, horizontal: 10),
-                              border: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.transparent),
-                              ),
-                            ),
-                            onChanged: (String newValue) {
-                              // Veiksmas, kai tekstas pasikeičia
-                            },
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: 10),
-                    // Trukmės pasirinkimas su dekoracija
-                    DropdownButtonFormField<String>(
-                      value: _selectedDuration,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedDuration = newValue;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Įpročio trukmė',
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 0, horizontal: 5),
-                        border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.transparent)),
-                      ),
-                      isExpanded: true, // Užima visą plotį
-                      items: <String>[
-                        '1 savaitė',
-                        '2 savaitės',
-                        '1 mėnesį',
-                        '3 mėnesiai',
-                        '6 mėnesiai'
-                      ].map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12),
-                            child: Text(value),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 10),
-                    // Pradžios datos pasirinkimas
-                    TextFormField(
-                      controller: TextEditingController(
-                          text: '${_startDate.toLocal()}'.split(' ')[0]),
-                      decoration: const InputDecoration(
-                        labelText: 'Pradžios data',
-                        border: OutlineInputBorder(),
-                      ),
-                      onTap: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: _startDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2101),
-                        );
-                        if (pickedDate != null && pickedDate != _startDate) {
-                          setState(() {
-                            _startDate = pickedDate;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Veiksmas, kai paspaudžiama 'Pateikti'
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Pateikti'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-      child: Card(
-        color: Color(0xFFB388EB), // Kortelės fonas
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              widget.habitIcon,
-              size: 80,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              widget.habitName,
-              style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              widget.habitDescription,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
-            ),
-          ],
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: '${(progress * 100).toStringAsFixed(0)}%',
+        style: TextStyle(
+          color: Colors.deepPurple,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
         ),
       ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    // Apskaičiuojame kampą pagal progresą (360 laipsnių apskritimas)
+    double angle = progress * 2 * pi; // Kampas pagal progresą (procentai)
+
+    // Išdėstome tekstą aplink apskritimą, t.y., ant progreso juostos
+    double x = (size.width / 2) +
+        (size.width / 2) * 0.6 * cos(angle); // X koordinačių skaičiavimas
+    double y = (size.height / 2) +
+        (size.height / 2) * 0.6 * sin(angle); // Y koordinačių skaičiavimas
+
+    // Pakeiskime tekstą, kad jis būtų apatinėje pusėje
+    y = (size.height / 2) +
+        (size.height / 2) *
+            0.9 *
+            sin(angle); // padidinkime atstumą nuo centro, kad tekstas būtų žemiau
+    x = (size.width / 1);
+    y = (size.height / 1.5);
+
+    // Nustatome tekstą pagal progresą
+    textPainter.paint(
+      canvas,
+      Offset(
+        x - textPainter.width / 2, // Pritaikome tekstą pagal jo plotį
+        y - textPainter.height / 2, // Pritaikome tekstą pagal jo aukštį
+      ),
     );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }

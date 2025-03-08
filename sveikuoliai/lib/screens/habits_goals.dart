@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/goal.dart';
 import 'package:sveikuoliai/screens/habit.dart';
+import 'package:sveikuoliai/screens/new_goal.dart';
+import 'package:sveikuoliai/screens/new_habit.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 
@@ -170,7 +172,7 @@ class _TasksPageState extends State<TasksPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const HabitPage()),
+                                  builder: (context) => const NewHabitPage()),
                             );
                           }, // Veiksmas paspaudus
                           child: Icon(
@@ -255,7 +257,7 @@ class _TasksPageState extends State<TasksPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const GoalPage()),
+                                  builder: (context) => const NewGoalPage()),
                             );
                           }, // Veiksmas paspaudus
                           child: Icon(
@@ -303,106 +305,126 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _habitItem(String title) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Ikona / Paveikslėlis kairėje
-              ClipRRect(
-                borderRadius: BorderRadius.circular(50), // Apvalūs kampai
-                child: Icon(
-                  Icons.circle,
-                  size: 80,
-                  color: Color(0xFFD9D9D9),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const HabitPage()), // Pakeisk į tinkamą puslapį
+        );
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Ikona / Paveikslėlis kairėje
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50), // Apvalūs kampai
+                  child: Icon(
+                    Icons.circle,
+                    size: 80,
+                    color: Color(0xFFD9D9D9),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              // Teksto dalis
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFFB388EB),
-                        fontWeight: FontWeight.bold,
+                const SizedBox(width: 10),
+                // Teksto dalis
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFFB388EB),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    const Text(
-                      "Detalesnė informacija\nKą norėsime parašyti?",
-                      style: TextStyle(
-                          fontStyle: FontStyle.italic, color: Colors.black54),
-                    ),
-                  ],
+                      const SizedBox(height: 3),
+                      const Text(
+                        "Detalesnė informacija\nKą norėsime parašyti?",
+                        style: TextStyle(
+                            fontStyle: FontStyle.italic, color: Colors.black54),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        // Linija po Row
-        const Divider(
-          color: Color(0xFFD9D9D9),
-          thickness: 1, // Linijos storis
-        ),
-      ],
+          // Linija po Row
+          const Divider(
+            color: Color(0xFFD9D9D9),
+            thickness: 1, // Linijos storis
+          ),
+        ],
+      ),
     );
   }
 
   Widget _goalItem(String title) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Ikona / Paveikslėlis kairėje
-              ClipRRect(
-                borderRadius: BorderRadius.circular(50), // Apvalūs kampai
-                child: Icon(
-                  Icons.circle,
-                  size: 80,
-                  color: Color(0xFFD9D9D9),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Teksto dalis
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF72ddf7),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    const Text(
-                      "Detalesnė informacija\nKą norėsime parašyti?",
-                      style: TextStyle(
-                          fontStyle: FontStyle.italic, color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const GoalPage(), // Pakeisk į tinkamą puslapį
           ),
-        ),
-        // Linija po Row
-        const Divider(
-          color: Color(0xFFD9D9D9),
-          thickness: 1, // Linijos storis
-        ),
-      ],
+        );
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Ikona / Paveikslėlis kairėje
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50), // Apvalūs kampai
+                  child: Icon(
+                    Icons.circle,
+                    size: 80,
+                    color: Color(0xFFD9D9D9),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Teksto dalis
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF72ddf7),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        "Detalesnė informacija\nKą norėsime parašyti?",
+                        style: TextStyle(
+                            fontStyle: FontStyle.italic, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Linija po Row
+          const Divider(
+            color: Color(0xFFD9D9D9),
+            thickness: 1, // Linijos storis
+          ),
+        ],
+      ),
     );
   }
 }

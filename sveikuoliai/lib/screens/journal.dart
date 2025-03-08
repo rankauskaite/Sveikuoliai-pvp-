@@ -57,7 +57,7 @@ class _JournalPageState extends State<JournalPage> {
           ProfileButton(),
           _buildBanner(),
           SizedBox(
-            height: 50,
+            height: 30,
           ),
           _buildCalendar(context),
         ],
@@ -86,37 +86,52 @@ class _JournalPageState extends State<JournalPage> {
   }
 
   Widget _buildCalendar(BuildContext context) {
-    return TableCalendar(
-      locale: 'lt_LT', // Kalendorius lietuviškai
-      firstDay: DateTime.utc(2020, 01, 01),
-      lastDay: DateTime.utc(2025, 12, 31),
-      focusedDay: DateTime.now(),
-      startingDayOfWeek:
-          StartingDayOfWeek.monday, // Pirmadienis kaip savaitės pradžia
-      headerStyle: HeaderStyle(
-        formatButtonVisible: false,
-        titleCentered: true,
-        titleTextFormatter: (date, locale) =>
-            DateFormat.yMMMM('lt_LT').format(date), // Lietuviški mėnesiai
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFFCE5FC), // Šviesiai rožinis fonas visam kalendoriui
+        borderRadius: BorderRadius.circular(15), // Užapvalinti kampai
       ),
-      daysOfWeekStyle: const DaysOfWeekStyle(
-        weekdayStyle: TextStyle(color: Colors.black),
-        weekendStyle: TextStyle(color: Colors.purple),
+      padding: EdgeInsets.all(5), // Kad būtų tarpai nuo kraštų
+      child: TableCalendar(
+        locale: 'lt_LT', // Kalendorius lietuviškai
+        firstDay: DateTime.utc(2020, 01, 01),
+        lastDay: DateTime.utc(2025, 12, 31),
+        focusedDay: DateTime.now(),
+        startingDayOfWeek:
+            StartingDayOfWeek.monday, // Pirmadienis kaip savaitės pradžia
+        headerStyle: HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextFormatter: (date, locale) =>
+              DateFormat.yMMMM('lt_LT').format(date), // Lietuviški mėnesiai
+        ),
+        daysOfWeekStyle: const DaysOfWeekStyle(
+          weekdayStyle: TextStyle(color: Colors.black),
+          weekendStyle: TextStyle(color: Colors.purple),
+        ),
+        calendarStyle: CalendarStyle(
+          outsideDaysVisible: false, // Paslepia kitų mėnesių dienas
+          tablePadding: EdgeInsets.all(10), // Papildomi tarpai lentelės viduje
+          defaultTextStyle:
+              TextStyle(color: Colors.black), // Dienų skaičių spalva
+          weekendTextStyle:
+              TextStyle(color: Colors.purple), // Savaitgalių skaičių spalva
+        ),
+        rowHeight: 40, // Nustatykite mažesnį aukštį tarp savaičių
+        enabledDayPredicate: (day) {
+          return day.isBefore(DateTime.now());
+        },
+        onDaySelected: (selectedDay, focusedDay) {
+          if (selectedDay.isBefore(DateTime.now())) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => JournalDayPage(selectedDay: selectedDay),
+              ),
+            );
+          }
+        },
       ),
-      rowHeight: 40, // Nustatykite mažesnį aukštį tarp savaičių
-      enabledDayPredicate: (day) {
-        return day.isBefore(DateTime.now());
-      },
-      onDaySelected: (selectedDay, focusedDay) {
-        if (selectedDay.isBefore(DateTime.now())) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => JournalDayPage(selectedDay: selectedDay),
-            ),
-          );
-        }
-      },
     );
   }
 }

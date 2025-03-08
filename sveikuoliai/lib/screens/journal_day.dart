@@ -94,21 +94,22 @@ class _JournalDayPageState extends State<JournalDayPage> {
                     children: [
                       SizedBox(
                         width: 80,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              Text('Šiandien jaučiuosi:',
-                                  style: TextStyle(fontSize: 15)),
-                              SizedBox(height: 10),
-                              _buildMoodCircle('Laiminga'),
-                              _buildMoodCircle('Liūdna'),
-                              _buildMoodCircle('Nusivylusi'),
-                              _buildMoodCircle('Euforija'),
-                            ],
-                          ),
+                        height: 480, // Nustatykite aukštį pagal poreikį
+                        child: ListView(
+                          scrollDirection: Axis.vertical,
+                          children: [
+                            Text('Šiandien jaučiuosi:',
+                                style: TextStyle(fontSize: 15)),
+                            SizedBox(height: 10),
+                            _buildMoodCircle('Laiminga'),
+                            _buildMoodCircle('Liūdna'),
+                            _buildMoodCircle('Nusivylusi'),
+                            _buildMoodCircle('Euforija'),
+                            _buildMoodCircle('Rami'),
+                          ],
                         ),
                       ),
-                      Container(height: 460, width: 1, color: Colors.grey),
+                      Container(height: 480, width: 1, color: Colors.grey),
                       Expanded(
                         child: Column(
                           children: [
