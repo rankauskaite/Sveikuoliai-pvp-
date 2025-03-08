@@ -100,53 +100,18 @@ class FriendProfilePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // Centruojame elementus vertikaliai
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Orchidėja',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Dobilas',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.circle,
-                            size: 90,
-                            color: Color(0xFFD9D9D9),
-                          ),
-                          Text(
-                            'Žibuoklės',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ],
+                  // Karuselės efektas draugo augalams
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // Horizontali slinktis
+                    child: Row(
+                      children: [
+                        _buildPlantColumn('Orchidėja'),
+                        _buildPlantColumn('Dobilas'),
+                        _buildPlantColumn('Žibuoklės'),
+                        _buildPlantColumn(
+                            'Ramunė'), // Galite pridėti daugiau augalų
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -155,6 +120,23 @@ class FriendProfilePage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPlantColumn(String plantName) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.circle,
+          size: 90,
+          color: Color(0xFFD9D9D9),
+        ),
+        Text(
+          plantName,
+          style: TextStyle(fontSize: 16),
+        ),
+      ],
     );
   }
 }
