@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Importuojame intl paketą
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class JournalDayPage extends StatefulWidget {
+class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
 
-  const JournalDayPage({super.key, required this.selectedDay});
+  const JournalDayScreen({super.key, required this.selectedDay});
 
   @override
-  _JournalDayPageState createState() => _JournalDayPageState();
+  _JournalDayScreenState createState() => _JournalDayScreenState();
 }
 
-class _JournalDayPageState extends State<JournalDayPage> {
+class _JournalDayScreenState extends State<JournalDayScreen> {
   late DateTime selectedDay;
   String? selectedMood;
   String journalText = '';

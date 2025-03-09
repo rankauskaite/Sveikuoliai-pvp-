@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class HabitProgressPage extends StatefulWidget {
-  const HabitProgressPage({super.key});
+class HabitProgressScreen extends StatefulWidget {
+  const HabitProgressScreen({super.key});
 
   @override
-  _HabitProgressPageState createState() => _HabitProgressPageState();
+  _HabitProgressScreenState createState() => _HabitProgressScreenState();
 }
 
-class _HabitProgressPageState extends State<HabitProgressPage> {
+class _HabitProgressScreenState extends State<HabitProgressScreen> {
   bool _isChecked = false; // Pradinis checkbox būsenos nustatymas
 
   @override

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class FriendProfilePage extends StatelessWidget {
+class FriendProfileScreen extends StatelessWidget {
   final String name;
   final String username;
-  const FriendProfilePage(
+  const FriendProfileScreen(
       {super.key, required this.name, required this.username});
 
   @override

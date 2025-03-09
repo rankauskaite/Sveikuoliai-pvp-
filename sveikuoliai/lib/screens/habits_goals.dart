@@ -6,14 +6,14 @@ import 'package:sveikuoliai/screens/new_habit.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 
-class TasksPage extends StatefulWidget {
-  const TasksPage({super.key});
+class TasksScreen extends StatefulWidget {
+  const TasksScreen({super.key});
 
   @override
   _TasksPageState createState() => _TasksPageState();
 }
 
-class _TasksPageState extends State<TasksPage> {
+class _TasksPageState extends State<TasksScreen> {
   int selectedIndex = 0; // 0 - Mano įpročiai, 1 - Mano tikslai
 
   @override
@@ -172,7 +172,7 @@ class _TasksPageState extends State<TasksPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const NewHabitPage()),
+                                  builder: (context) => const NewHabitScreen()),
                             );
                           }, // Veiksmas paspaudus
                           child: Icon(
@@ -257,7 +257,7 @@ class _TasksPageState extends State<TasksPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const NewGoalPage()),
+                                  builder: (context) => const NewGoalScreen()),
                             );
                           }, // Veiksmas paspaudus
                           child: Icon(
@@ -372,7 +372,7 @@ class _TasksPageState extends State<TasksPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const GoalPage(), // Pakeisk į tinkamą puslapį
+            builder: (context) => const GoalScreen(), // Pakeisk į tinkamą puslapį
           ),
         );
       },

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class NewHabitPage extends StatelessWidget {
-  const NewHabitPage({super.key});
+class NewHabitScreen extends StatelessWidget {
+  const NewHabitScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

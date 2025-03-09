@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class NewGoalPage extends StatelessWidget {
-  const NewGoalPage({super.key});
+class NewGoalScreen extends StatelessWidget {
+  const NewGoalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

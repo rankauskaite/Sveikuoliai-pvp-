@@ -15,7 +15,7 @@ class ProfileButton extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ProfilePage()),
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           },
         ),
