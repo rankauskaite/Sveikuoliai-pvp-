@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/friend_profile.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class FriendsPage extends StatelessWidget {
-  const FriendsPage({super.key});
+class FriendsScreen extends StatelessWidget {
+  const FriendsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +112,7 @@ class FriendsPage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => FriendProfilePage(
+                                builder: (context) => FriendProfileScreen(
                                   name: friends[index],
                                   username: 'USERNAME',
                                 ),

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/screens/journal_day.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class JournalPage extends StatefulWidget {
-  const JournalPage({super.key});
+class JournalScreen extends StatefulWidget {
+  const JournalScreen({super.key});
 
   @override
-  _JournalPageState createState() => _JournalPageState();
+  _JournalScreenState createState() => _JournalScreenState();
 }
 
-class _JournalPageState extends State<JournalPage> {
+class _JournalScreenState extends State<JournalScreen> {
   @override
   void initState() {
     super.initState();
@@ -54,7 +55,26 @@ class _JournalPageState extends State<JournalPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          ProfileButton(),
+          Row(
+            children: [
+              ProfileButton(),
+              SizedBox(
+                height: 20,
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelloScreen()),
+                  );
+                },
+                icon: Icon(
+                  Icons.login,
+                  size: 30,
+                ),
+              ),
+            ],
+          ),
           _buildBanner(),
           SizedBox(
             height: 30,
@@ -126,7 +146,7 @@ class _JournalPageState extends State<JournalPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => JournalDayPage(selectedDay: selectedDay),
+                builder: (context) => JournalDayScreen(selectedDay: selectedDay),
               ),
             );
           }

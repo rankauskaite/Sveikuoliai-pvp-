@@ -4,8 +4,8 @@ import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/screens/update_profile.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +50,7 @@ class ProfilePage extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    const UpdateProfilePage()),
+                                    const UpdateProfileScreen()),
                           );
                         },
                         icon: Icon(
@@ -63,7 +63,7 @@ class ProfilePage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => const SettingsPage()),
+                                builder: (context) => const SettingsScreen()),
                           );
                         },
                         icon: Icon(
@@ -180,7 +180,7 @@ class ProfilePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const FriendsPage()),
+                            builder: (context) => const FriendsScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(

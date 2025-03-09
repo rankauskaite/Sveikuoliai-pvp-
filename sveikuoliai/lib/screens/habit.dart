@@ -53,7 +53,7 @@ class HabitPage extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      const UpdateHabitPage()),
+                                      const UpdateHabitScreen()),
                             );
                           },
                           icon: Icon(
@@ -90,7 +90,7 @@ class HabitPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const HabitProgressPage()),
+                              builder: (context) => const HabitProgressScreen()),
                         );
                       },
                       style: ElevatedButton.styleFrom(

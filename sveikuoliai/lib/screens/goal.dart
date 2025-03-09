@@ -6,14 +6,14 @@ import 'package:sveikuoliai/screens/habit_progress.dart';
 import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
-class GoalPage extends StatefulWidget {
-  const GoalPage({super.key});
+class GoalScreen extends StatefulWidget {
+  const GoalScreen({super.key});
 
   @override
   _GoalPageState createState() => _GoalPageState();
 }
 
-class _GoalPageState extends State<GoalPage> {
+class _GoalPageState extends State<GoalScreen> {
   bool isGoal1Completed = false;
   bool isGoal2Completed = false;
   bool isGoal3Completed = false;
@@ -62,7 +62,7 @@ class _GoalPageState extends State<GoalPage> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      const UpdateGoalPage()),
+                                      const UpdateGoalScreen()),
                             );
                           },
                           icon: Icon(
@@ -159,7 +159,7 @@ class _GoalPageState extends State<GoalPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const HabitProgressPage()),
+                              builder: (context) => const HabitProgressScreen()),
                         );
                       },
                       style: ElevatedButton.styleFrom(

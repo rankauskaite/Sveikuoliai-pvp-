@@ -14,7 +14,7 @@ class BottomNavigation extends StatelessWidget {
         _buildNavItem(
           context,
           icon: Icons.library_books_outlined,
-          destination: const JournalPage(),
+          destination: const JournalScreen(),
         ),
         _buildNavItem(
           context,
@@ -24,7 +24,7 @@ class BottomNavigation extends StatelessWidget {
         _buildNavItem(
           context,
           icon: Icons.check_circle_outline,
-          destination: const TasksPage(),
+          destination: const TasksScreen(),
         ),
       ],
     );

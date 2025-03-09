@@ -3,8 +3,8 @@ import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'dart:ui';
 
-class UpdateProfilePage extends StatelessWidget {
-  const UpdateProfilePage({super.key});
+class UpdateProfileScreen extends StatelessWidget {
+  const UpdateProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
