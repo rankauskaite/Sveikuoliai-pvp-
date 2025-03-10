@@ -156,11 +156,60 @@ class _GoalPageState extends State<GoalScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const HabitProgressScreen()),
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            String taskTitle = '';
+                            String taskDescription = '';
+                            return AlertDialog(
+                              title: const Text('Pridėti užduotį'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    onChanged: (value) {
+                                      taskTitle = value;
+                                    },
+                                    decoration: const InputDecoration(
+                                      labelText: 'Pavadinimas',
+                                    ),
+                                  ),
+                                  TextField(
+                                    onChanged: (value) {
+                                      taskDescription = value;
+                                    },
+                                    decoration: const InputDecoration(
+                                      labelText: 'Aprašymas',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Atšaukti'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      // Add the new task to the list
+                                      // You can modify this part to add the task to your actual data source
+                                    });
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Pridėti'),
+                                ),
+                              ],
+                            );
+                          },
                         );
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //       builder: (context) => const HabitProgressScreen()),
+                        // );
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),

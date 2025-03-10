@@ -24,7 +24,7 @@ class BottomNavigation extends StatelessWidget {
         _buildNavItem(
           context,
           icon: Icons.check_circle_outline,
-          destination: const TasksScreen(),
+          destination: const HabitsGoalsScreen(),
         ),
       ],
     );
