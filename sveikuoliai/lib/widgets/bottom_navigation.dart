@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/main.dart';
+import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/journal.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 
@@ -19,7 +19,7 @@ class BottomNavigation extends StatelessWidget {
         _buildNavItem(
           context,
           icon: Icons.home_outlined,
-          destination: const MainScreen(),
+          destination: const HomeScreen(),
         ),
         _buildNavItem(
           context,
