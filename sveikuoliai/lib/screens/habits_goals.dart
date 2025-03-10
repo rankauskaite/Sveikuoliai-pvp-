@@ -6,14 +6,14 @@ import 'package:sveikuoliai/screens/new_habit.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 
-class TasksScreen extends StatefulWidget {
-  const TasksScreen({super.key});
+class HabitsGoalsScreen extends StatefulWidget {
+  const HabitsGoalsScreen({super.key});
 
   @override
-  _TasksPageState createState() => _TasksPageState();
+  _HabitsGoalsScreenState createState() => _HabitsGoalsScreenState();
 }
 
-class _TasksPageState extends State<TasksScreen> {
+class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   int selectedIndex = 0; // 0 - Mano įpročiai, 1 - Mano tikslai
 
   @override
@@ -372,7 +372,8 @@ class _TasksPageState extends State<TasksScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const GoalScreen(), // Pakeisk į tinkamą puslapį
+            builder: (context) =>
+                const GoalScreen(), // Pakeisk į tinkamą puslapį
           ),
         );
       },

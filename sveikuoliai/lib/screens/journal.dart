@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:sveikuoliai/screens/hello.dart';
+import 'package:sveikuoliai/screens/loading.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/screens/journal_day.dart';
@@ -70,6 +71,21 @@ class _JournalScreenState extends State<JournalScreen> {
                 },
                 icon: Icon(
                   Icons.login,
+                  size: 30,
+                ),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoadingScreen()),
+                  );
+                },
+                icon: Icon(
+                  Icons.create,
                   size: 30,
                 ),
               ),
@@ -146,7 +162,8 @@ class _JournalScreenState extends State<JournalScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => JournalDayScreen(selectedDay: selectedDay),
+                builder: (context) =>
+                    JournalDayScreen(selectedDay: selectedDay),
               ),
             );
           }

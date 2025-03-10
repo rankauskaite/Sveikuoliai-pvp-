@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Importuojame intl paketą
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
@@ -17,11 +18,106 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   late DateTime selectedDay;
   String? selectedMood;
   String journalText = '';
+  DateTime? menstruationStart;
+  late DateTime selectedTempDay = selectedDay; // Laikinas pasirinkimas
 
   @override
   void initState() {
     super.initState();
     selectedDay = widget.selectedDay;
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        // Apskaičiuojame eilučių skaičių pagal pasirinktą mėnesį
+        int rowCount = _getRowCountForMonth(selectedDay);
+        return Container(
+          height: 170 +
+              rowCount *
+                  40.0, // Dinaminis aukštis priklausomai nuo eilučių skaičiaus
+          child: Column(
+            children: [
+              Expanded(
+                child: TableCalendar(
+                  firstDay: DateTime(2000),
+                  lastDay: DateTime.now(),
+                  locale: 'lt_LT',
+                  startingDayOfWeek: StartingDayOfWeek.monday,
+                  rowHeight: 40,
+                  focusedDay: selectedTempDay ??
+                      selectedDay!, // Atvaizduojama fokusuota diena
+                  selectedDayPredicate: (day) {
+                    // Patikriname, ar diena yra menstruacijų pradžia
+                    return selectedTempDay != null &&
+                        day.year == selectedTempDay!.year &&
+                        day.month == selectedTempDay!.month &&
+                        day.day == selectedTempDay!.day;
+                  },
+                  onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
+                    setState(() {
+                      selectedTempDay =
+                          selectedDay; // Užtikriname, kad menstruacijų pradžia būtų nustatyta iškart
+                    });
+
+                    // Uždaryti kalendorių
+                    Navigator.pop(context);
+
+                    // Palaukite, kad uždarymas įvyktų, ir tada atidarykite vėl su nauju fokusavimu
+                    Future.delayed(Duration(milliseconds: 1), () {
+                      _selectDate(context); // Atidaryti kalendorių iš naujo
+                    });
+                  },
+
+                  calendarFormat: CalendarFormat.month,
+                  availableCalendarFormats: const {
+                    CalendarFormat.month: 'Month',
+                  },
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    leftChevronIcon: Icon(Icons.arrow_back),
+                    rightChevronIcon: Icon(Icons.arrow_forward),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pop(context), // Uždaryti modalą be pakeitimų
+                    child: Text('Atšaukti'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        menstruationStart =
+                            selectedTempDay; // Išsaugome pasirinktą menstruacijų dieną
+                      });
+                      Navigator.pop(context); // Uždaryti modalą
+                    },
+                    child: Text('Gerai'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  int _getRowCountForMonth(DateTime date) {
+    final firstDayOfMonth = DateTime(date.year, date.month, 1);
+    final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
+
+    // Apskaičiuojame, kiek dienų yra šiame mėnesyje
+    int totalDaysInMonth = lastDayOfMonth.day;
+
+    // Grąžiname eilučių skaičių
+    return (totalDaysInMonth / 7).ceil();
   }
 
   @override
@@ -126,7 +222,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 10),
+                            SizedBox(height: 5),
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 20),
@@ -208,7 +304,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                               ),
                             ),
                             SizedBox(
-                              height: 10,
+                              height: 5,
                             ),
                             Container(
                               width: 200,
@@ -223,7 +319,29 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 10),
+                            SizedBox(height: 5),
+                            GestureDetector(
+                              onTap: () => _selectDate(context),
+                              child: Text(
+                                'Pažymėti mėnesines',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                    decoration: TextDecoration.underline),
+                              ),
+                            ),
+                            if (menstruationStart != null &&
+                                !selectedDay.isBefore(menstruationStart!) &&
+                                selectedDay
+                                        .difference(menstruationStart!)
+                                        .inDays <
+                                    7)
+                              Text(
+                                'Šiandien yra ${selectedDay.difference(menstruationStart!).inDays + 1} mėnesinių diena',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             SizedBox(
                               width: 150, // Užpildo visą galimą plotį
                               child: ElevatedButton(
