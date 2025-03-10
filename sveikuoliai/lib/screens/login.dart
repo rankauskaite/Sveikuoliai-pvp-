@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/main.dart';
 import 'package:sveikuoliai/screens/forgot_password.dart';
+import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/signup.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -72,7 +72,7 @@ class LoginScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => MainScreen()),
+                                builder: (context) => const HomeScreen()),
                           );
                         },
                         style: ElevatedButton.styleFrom(

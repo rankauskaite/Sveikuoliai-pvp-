@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/login.dart';
+import 'package:sveikuoliai/screens/signup.dart';
 
 class HelloScreen extends StatelessWidget {
   @override
@@ -40,8 +41,7 @@ class HelloScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -58,7 +58,10 @@ class HelloScreen extends StatelessWidget {
             ),
             OutlinedButton(
               onPressed: () {
-                // Veiksmas paspaudus mygtuką
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignupScreen()),
+                );
               },
               style: OutlinedButton.styleFrom(
                 minimumSize: Size(300, 50),

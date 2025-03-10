@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/main.dart';
+import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/login.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -62,7 +62,7 @@ class SignupScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => MainScreen()),
+                                builder: (context) => HomeScreen()),
                           );
                         },
                         style: ElevatedButton.styleFrom(

@@ -59,36 +59,36 @@ class _JournalScreenState extends State<JournalScreen> {
           Row(
             children: [
               ProfileButton(),
-              SizedBox(
-                height: 20,
-              ),
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HelloScreen()),
-                  );
-                },
-                icon: Icon(
-                  Icons.login,
-                  size: 30,
-                ),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoadingScreen()),
-                  );
-                },
-                icon: Icon(
-                  Icons.create,
-                  size: 30,
-                ),
-              ),
+              // SizedBox(
+              //   height: 20,
+              // ),
+              // IconButton(
+              //   onPressed: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (context) => HelloScreen()),
+              //     );
+              //   },
+              //   icon: Icon(
+              //     Icons.login,
+              //     size: 30,
+              //   ),
+              // ),
+              // SizedBox(
+              //   height: 20,
+              // ),
+              // IconButton(
+              //   onPressed: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (context) => LoadingScreen()),
+              //     );
+              //   },
+              //   icon: Icon(
+              //     Icons.create,
+              //     size: 30,
+              //   ),
+              // ),
             ],
           ),
           _buildBanner(),
