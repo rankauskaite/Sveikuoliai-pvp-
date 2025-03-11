@@ -9,7 +9,7 @@ class LoadingScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-                        Image.asset(
+            Image.asset(
               'assets/logo.png', // Naudojamas asset kelias
               width: 150,
               height: 150,
