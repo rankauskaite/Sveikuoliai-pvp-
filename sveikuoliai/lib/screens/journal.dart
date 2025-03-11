@@ -3,6 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/loading.dart';
+import 'package:sveikuoliai/screens/meditation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/screens/journal_day.dart';
@@ -59,24 +60,20 @@ class _JournalScreenState extends State<JournalScreen> {
           Row(
             children: [
               ProfileButton(),
-              // SizedBox(
-              //   height: 20,
-              // ),
-              // IconButton(
-              //   onPressed: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(builder: (context) => HelloScreen()),
-              //     );
-              //   },
-              //   icon: Icon(
-              //     Icons.login,
-              //     size: 30,
-              //   ),
-              // ),
-              // SizedBox(
-              //   height: 20,
-              // ),
+              const Expanded(child: SizedBox()),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MeditationScreen()),
+                  );
+                },
+                icon: const Icon(
+                  Icons.self_improvement,
+                  color: Color(0xFFD9D9D5),
+                  size: 50,
+                ),
+              ),
               // IconButton(
               //   onPressed: () {
               //     Navigator.push(
