@@ -1,8 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/home.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -30,6 +33,6 @@ class AuthCheckScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isLoggedIn = false; // Čia vėliau bus tikrinama prisijungimo būsena
 
-    return isLoggedIn ? const HomeScreen() :  HelloScreen();
+    return isLoggedIn ? const HomeScreen() : HelloScreen();
   }
 }
