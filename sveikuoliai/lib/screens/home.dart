@@ -1,6 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/notification_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
+import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,13 +15,55 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final UserService _userService =
+      UserService(); // Sukuriame UserService instanciją
+  final AppNotificationService _notificationService =
+      AppNotificationService(); // Pridėjome pranešimų paslaugą
   bool showNotifications = false; // Ar rodyti pranešimų panelę?
-  final List<String> messages = [
-    'Naujas iššūkis!',
-    'Tavo draugas pasiekė tikslą!',
-    'Nepamiršk palaistyti augalo!',
-    'Šiandien gera diena pradėti naują iššūkį!',
-  ]; // Pranešimų sąrašas
+  List<AppNotification> notifications = []; // Pranešimų sąrašas
+  String userName = "Kraunama...";
+  String userUsername = "Kraunama...";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        UserModel? userData =
+            await _userService.getUserEntryByEmail(user.email!);
+        setState(() {
+          userName = userData?.name ?? "Nežinomas";
+          userUsername = userData?.username ?? "Nežinomas";
+        });
+        // Gauti vartotojo pranešimus
+        _fetchUserNotifications(userUsername);
+      }
+    } catch (e) {
+      setState(() {
+        userName = "Klaida gaunant duomenis";
+      });
+    }
+  }
+
+  // Funkcija, kuri gauna vartotojo pranešimus iš Firestore
+  Future<void> _fetchUserNotifications(String username) async {
+    try {
+      List<AppNotification> userNotifications =
+          await _notificationService.getUserNotifications(username);
+      print("Gauti pranešimai: $userNotifications");
+      setState(() {
+        notifications = userNotifications;
+      });
+    } catch (e) {
+      print("Klaida gaunant pranešimus: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +97,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             height: 50,
                             alignment: Alignment.bottomLeft,
-                            child: const Text(
-                              'VARDAS',
-                              style: TextStyle(fontSize: 20),
+                            child: Text(
+                              userName, // Čia bus rodoma naudotojo vardas
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ),
                           const Spacer(),
@@ -169,21 +216,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Expanded(
                           child: ListView.builder(
-                            itemCount: messages.length,
+                            itemCount: notifications.length,
                             itemBuilder: (context, index) {
-                              bool isUnread = index ==
-                                  0; // Tik pirmas pranešimas yra neperskaitytas
-
+                              bool isUnread = !notifications[index].isRead;
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
                                     // Žymime, kad pranešimas perskaitytas
                                     if (isUnread) {
-                                      messages[0] =
-                                          '✔ ${messages[0]}'; // Žymime kaip skaitytą
+                                      _notificationService
+                                          .markNotificationAsRead(
+                                              notifications[index].id);
                                     }
                                   });
-                                  _showMessageDialog(messages[index]);
+                                  _showMessageDialog(notifications[index].text);
                                 },
                                 child: Container(
                                   margin: const EdgeInsets.symmetric(
@@ -192,14 +238,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   decoration: BoxDecoration(
                                     color: isUnread
                                         ? const Color(
-                                            0xFFFFC0CB) // Šviesiai oranžinė fonui
+                                            0xFFFFC0CB) // Neperskaityti pranešimai
                                         : const Color(0xFF8093F1)
                                             .withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(15),
                                     border: isUnread
                                         ? Border.all(
-                                            color: Colors.pink,
-                                            width: 2) // Rėmelis neperskaitytam
+                                            color: Colors.pink, width: 2)
                                         : null,
                                   ),
                                   child: Row(
@@ -212,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
-                                          messages[index],
+                                          notifications[index].text,
                                           style: const TextStyle(
                                               color: Colors.black,
                                               fontSize: 16),
