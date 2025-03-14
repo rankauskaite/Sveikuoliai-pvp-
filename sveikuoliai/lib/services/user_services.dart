@@ -3,7 +3,7 @@ import '../models/user_model.dart';
 
 class UserService {
   final CollectionReference userCollection =
-      FirebaseFirestore.instance.collection('users'); 
+      FirebaseFirestore.instance.collection('users');
 
   // create
   Future<bool> createUserEntry(UserModel user) async {
@@ -28,6 +28,23 @@ class UserService {
       return UserModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
     } catch (e) {
       print("Klaida gaunant vartotojo duomenis: $e");
+      return null;
+    }
+  }
+
+  Future<UserModel?> getUserEntryByEmail(String email) async {
+    try {
+      QuerySnapshot querySnapshot = await userCollection
+          .where('email', isEqualTo: email)
+          .limit(1) // Gaunam tik vieną vartotoją
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return null;
+
+      var doc = querySnapshot.docs.first;
+      return UserModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    } catch (e) {
+      print("Klaida gaunant vartotojo duomenis pagal el. paštą: $e");
       return null;
     }
   }
@@ -57,7 +74,7 @@ class UserService {
     }
   }
 
-  /// 
+  ///
   Future<bool> isUsernameAvailable(String username) async {
     try {
       var doc = await userCollection.doc(username).get();

@@ -2,8 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/forgot_password.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/signup.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  void _login(BuildContext context) async {
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    var user = await _authService.signInWithEmail(email, password);
+
+    if (user != null) {
+      print("✅ Prisijungimas sėkmingas: ${user.email}");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      print("❌ Prisijungimas nepavyko!");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Neteisingi prisijungimo duomenys")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,13 +41,10 @@ class LoginScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(40),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(
-                20.0), // Užtikrina, kad turinys nebūtų per arti krašto
+            padding: const EdgeInsets.all(20.0),
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center, // Centruoja viską vertikaliai
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Centruoja viską horizontaliai
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Image.asset('assets/logo.png', width: 150, height: 150),
                 SizedBox(height: 20),
@@ -36,13 +58,15 @@ class LoginScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       TextField(
+                        controller: emailController,
                         decoration: InputDecoration(
-                          labelText: 'Slapyvardis',
+                          labelText: 'El. paštas',
                           border: OutlineInputBorder(),
                         ),
                       ),
                       SizedBox(height: 20),
                       TextField(
+                        controller: passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Slaptažodis',
@@ -68,13 +92,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const HomeScreen()),
-                          );
-                        },
+                        onPressed: () => _login(context),
                         style: ElevatedButton.styleFrom(
                           minimumSize: Size(300, 50),
                           iconColor:
@@ -85,14 +103,23 @@ class LoginScreen extends StatelessWidget {
                           style: TextStyle(fontSize: 20),
                         ),
                       ),
+                      // ElevatedButton(
+                      //   onPressed: () => _login(context),
+                      //   style: ElevatedButton.styleFrom(
+                      //     minimumSize: Size(300, 50),
+                      //     backgroundColor: Color(0xFF8093F1),
+                      //   ),
+                      //   child: const Text(
+                      //     'Prisijungti',
+                      //     style: TextStyle(fontSize: 20),
+                      //   ),
+                      // ),
                       SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('Neturi paskyros?'),
-                          SizedBox(
-                            width: 10,
-                          ),
+                          SizedBox(width: 10),
                           ElevatedButton(
                             onPressed: () {
                               Navigator.push(

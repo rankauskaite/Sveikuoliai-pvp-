@@ -40,7 +40,15 @@ class SignupScreen extends StatelessWidget {
                           border: OutlineInputBorder(),
                         ),
                       ),
-                      SizedBox(height: 20),
+                      SizedBox(height: 10),
+                      TextField(
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Vardas',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      SizedBox(height: 10),
                       TextField(
                         obscureText: true,
                         decoration: InputDecoration(
@@ -48,7 +56,7 @@ class SignupScreen extends StatelessWidget {
                           border: OutlineInputBorder(),
                         ),
                       ),
-                      SizedBox(height: 20),
+                      SizedBox(height: 10),
                       TextField(
                         obscureText: true,
                         decoration: InputDecoration(
