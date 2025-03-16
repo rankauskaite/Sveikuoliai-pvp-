@@ -1,14 +1,59 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
+import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/screens/update_profile.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final UserService _userService =
+      UserService(); // Sukuriame UserService instanciją
+  String userName = "Kraunama...";
+  String userUsername = "Kraunama...";
+  String userEmail = "Kraunama...";
+  DateTime userJoinDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        UserModel? userData =
+            await _userService.getUserEntryByEmail(user.email!);
+        setState(() {
+          userName = userData?.name ?? "Nežinomas";
+          userUsername = userData?.username ?? "Nežinomas";
+          userEmail = userData?.email ?? "Nežinomas";
+          userJoinDate = userData?.createdAt ?? DateTime.now();
+        });
+      }
+    } catch (e) {
+      setState(() {
+        userName = "Klaida gaunant duomenis";
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final AuthService _authService = AuthService();
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
@@ -88,7 +133,15 @@ class ProfileScreen extends StatelessWidget {
                         top: 5, // Galite koreguoti atstumą nuo viršaus
                         right: 0, // Galite koreguoti atstumą nuo dešinės
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: () async {
+                            await _authService.signOut();
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HelloScreen()), // Pakeiskite į jūsų prisijungimo ekraną
+                            );
+                          },
                           icon: Icon(
                             Icons.logout,
                             size: 30,
@@ -97,12 +150,12 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const Text(
-                    'VARDAS',
+                  Text(
+                    userName,
                     style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                   ),
-                  const Text(
-                    'USERNAME',
+                  Text(
+                    userUsername,
                     style: TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
                   ),
                   const SizedBox(height: 20),
@@ -119,7 +172,7 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        'el. paštas',
+                        'El. paštas',
                         style: TextStyle(fontSize: 12),
                       ),
                     ],
@@ -128,7 +181,7 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        'asesumergaite@gmail.com',
+                        userEmail,
                         style: TextStyle(
                           fontSize: 15,
                           color: Color(0xFFB388EB),
@@ -142,7 +195,7 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        'kita...',
+                        'Registracijos data',
                         style: TextStyle(fontSize: 12),
                       ),
                     ],
@@ -151,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        '2009-05-16',
+                        userJoinDate.toString().substring(0, 10),
                         style: TextStyle(
                           fontSize: 15,
                           color: Color(0xFFB388EB),
