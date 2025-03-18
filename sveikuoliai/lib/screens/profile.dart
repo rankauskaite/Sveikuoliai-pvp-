@@ -17,12 +17,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = AuthService();
   final UserService _userService =
       UserService(); // Sukuriame UserService instanciją
-  String userName = "Kraunama...";
-  String userUsername = "Kraunama...";
+  String userName = "";
+  String userUsername = "";
   String userEmail = "Kraunama...";
   DateTime userJoinDate = DateTime.now();
+  String userVersion = "nemokama";
 
   @override
   void initState() {
@@ -33,17 +35,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchUserData() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        UserModel? userData =
-            await _userService.getUserEntryByEmail(user.email!);
-        setState(() {
-          userName = userData?.name ?? "Nežinomas";
-          userUsername = userData?.username ?? "Nežinomas";
-          userEmail = userData?.email ?? "Nežinomas";
-          userJoinDate = userData?.createdAt ?? DateTime.now();
-        });
-      }
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userName = sessionData['name'] ?? "Nežinomas";
+          userUsername = sessionData['username'] ?? "Nežinomas";
+          userEmail = sessionData['email'] ?? "Nežinomas";
+        },
+      );
+      UserModel? userData = await _userService.getUserEntry(userUsername);
+      setState(() {
+        userJoinDate = userData?.createdAt ?? DateTime.now();
+        if (userData?.version == "premium") {
+          userVersion = "premium";
+        }
+      });
     } catch (e) {
       setState(() {
         userName = "Klaida gaunant duomenis";
@@ -221,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(fontSize: 15),
                       ),
                       Text(
-                        'nemokama',
+                        userVersion,
                         style:
                             TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
                       )

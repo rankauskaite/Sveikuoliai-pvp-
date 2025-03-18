@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
@@ -15,39 +16,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final UserService _userService =
-      UserService(); // Sukuriame UserService instanciją
+  final AuthService _authService = AuthService();
   final AppNotificationService _notificationService =
       AppNotificationService(); // Pridėjome pranešimų paslaugą
   bool showNotifications = false; // Ar rodyti pranešimų panelę?
   List<AppNotification> notifications = []; // Pranešimų sąrašas
-  String userName = "Kraunama...";
-  String userUsername = "Kraunama...";
+  String userName = "";
+  String userUsername = "";
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
-  Future<void> _fetchUserData() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        UserModel? userData =
-            await _userService.getUserEntryByEmail(user.email!);
+  Future<void> _fetchSessionUser() async {
+    // Patikrinti, ar sesijoje jau yra duomenų
+    if (userName.isEmpty || userUsername.isEmpty) {
+      try {
+        Map<String, String?> sessionData = await _authService.getSessionUser();
         setState(() {
-          userName = userData?.name ?? "Nežinomas";
-          userUsername = userData?.username ?? "Nežinomas";
+          userName = sessionData['name'] ?? "Nežinomas";
+          userUsername = sessionData['username'] ?? "Nežinomas";
         });
-        // Gauti vartotojo pranešimus
         _fetchUserNotifications(userUsername);
+      } catch (e) {
+        setState(() {
+          userName = "Klaida gaunant duomenis";
+        });
       }
-    } catch (e) {
-      setState(() {
-        userName = "Klaida gaunant duomenis";
-      });
     }
   }
 
@@ -56,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       List<AppNotification> userNotifications =
           await _notificationService.getUserNotifications(username);
-      print("Gauti pranešimai: $userNotifications");
       setState(() {
         notifications = userNotifications;
       });

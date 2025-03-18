@@ -1,5 +1,11 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/user_model.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,9 +15,69 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final AuthService _authService = AuthService();
+  final UserService _userService =
+      UserService(); // Sukuriame UserService instanciją
+  String userUsername = "";
   bool notificationsEnabled = true; // Pranešimų būsena
   bool isDarkMode = false; // Temos būsena
   int _selectedDays = 7; // Dabar _selectedDays yra klasės lygyje
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        },
+      );
+      UserModel? userData = await _userService.getUserEntry(userUsername);
+      setState(() {
+        notificationsEnabled = userData?.notifications ?? true;
+        isDarkMode = userData?.darkMode ?? false;
+        _selectedDays = userData?.menstrualLength ?? 7;
+      });
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+      // setState(() {
+      //   userName = "Klaida gaunant duomenis";
+      // });
+    }
+  }
+
+  // Funkcija, kuri išsaugo nustatytus duomenis duomenų bazėje
+// Funkcija, kuri išsaugo tik nustatytus duomenis (pranešimai, tema, mėnesinių trukmė)
+  Future<void> _saveSettings() async {
+    try {
+      bool success = await _userService.updateSettings(
+        userUsername, // Vartotojo vardas
+        notificationsEnabled, // Pranešimų būsena
+        isDarkMode, // Temos būsena
+        _selectedDays, // Mėnesinių trukmė
+      );
+
+      if (success) {
+        String message = 'Nustatymai išsaugoti! 🎉';
+        showCustomSnackBar(context, message, success); // Naudokite funkciją
+      } else {
+        String message = 'Klaida išsaugant nustatymus! ❌';
+        showCustomSnackBar(context, message, success); // Naudokite funkciją
+      }
+    } catch (e) {
+      print("Klaida išsaugant nustatymus: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Įvyko klaida!')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Expanded(child: SizedBox()),
                       ElevatedButton(
                         onPressed: () {
+                          _saveSettings(); // Išsaugo tik nustatytus duomenis
                           Navigator.pop(context);
                         },
                         child: const Text('Išsaugoti'),
@@ -165,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -182,6 +249,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
+                      IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.delete,
+                            color:
+                                isDarkMode ? Colors.white : Colors.deepPurple,
+                          )),
                     ],
                   ),
                 ],
