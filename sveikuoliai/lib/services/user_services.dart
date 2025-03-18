@@ -63,6 +63,26 @@ class UserService {
     }
   }
 
+  // Funkcija, kuri atnaujina tik nustatymus (pranešimus, temą ir mėnesinių trukmę)
+  Future<bool> updateSettings(String username, bool notifications,
+      bool darkMode, int menstrualLength) async {
+    try {
+      // Sukuriame žemėlapį su tik nustatymais
+      Map<String, dynamic> settingsData = {
+        'notifications': notifications,
+        'darkMode': darkMode,
+        'menstrualLength': menstrualLength,
+      };
+
+      // Atnaujiname tik nustatymų laukus Firestore duomenų bazėje
+      await userCollection.doc(username).update(settingsData);
+      return true;
+    } catch (e) {
+      print("Klaida atnaujinant nustatymus: $e");
+      return false;
+    }
+  }
+
   // delete
   Future<bool> deleteUserEntry(String username) async {
     try {
@@ -84,4 +104,6 @@ class UserService {
       return false;
     }
   }
+
+  ///
 }

@@ -7,6 +7,7 @@ class GoalModel {
   DateTime endDate;
   int points;
   bool isCountable;
+  String goalTypeId;
   CategoryType category;
   int endPoints;
   String userId;
@@ -18,6 +19,7 @@ class GoalModel {
     required this.endDate,
     required this.points,
     required this.isCountable,
+    required this.goalTypeId,
     required this.category,
     required this.endPoints,
     required this.userId,
@@ -27,11 +29,12 @@ class GoalModel {
   /// i json
   Map<String, dynamic> toJson() {
     return {
-      'id': id, 
+      'id': id,
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'points': points,
       'isCountable': isCountable,
+      'goalTypeId': goalTypeId,
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'userId': userId,
@@ -47,7 +50,9 @@ class GoalModel {
       endDate: (json['endDate'] as Timestamp).toDate(),
       points: json['points'] ?? 0,
       isCountable: json['isCountable'] ?? false,
-      category: CategoryTypeExtension.fromJson(json['category'] ?? ''), // Enum iš string
+      goalTypeId: json['goalTypeId'] ?? '',
+      category: CategoryTypeExtension.fromJson(
+          json['category'] ?? ''), // Enum iš string
       endPoints: json['endPoints'] ?? 0,
       userId: json['userId'] ?? '',
       plantId: json['plantId'] ?? '',

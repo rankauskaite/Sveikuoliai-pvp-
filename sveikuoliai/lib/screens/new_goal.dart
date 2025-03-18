@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/enums/category_enum.dart';
+import 'package:sveikuoliai/models/goal_model.dart';
+import 'package:sveikuoliai/models/goal_type_model.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/goal_services.dart';
+import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class NewGoalScreen extends StatelessWidget {
   const NewGoalScreen({super.key});
+
+  static List<GoalType> defaultGoalTypes = GoalType.defaultGoalTypes;
+  static Map<String, IconData> goalIcons = GoalType.goalIcons;
 
   @override
   Widget build(BuildContext context) {
@@ -62,31 +72,25 @@ class NewGoalScreen extends StatelessWidget {
                       controller: PageController(
                           viewportFraction: 0.9), // Pagerins sklandumą
                       children: [
+                        ...defaultGoalTypes.map((goal) {
+                          return GoalCard(
+                            goalId: goal.id,
+                            goalName: goal.title,
+                            goalDescription: goal.description,
+                            isCountable: goal.isCountable,
+                            goalIcon: goalIcons[goal.id] ??
+                                Icons
+                                    .help, // Galite naudoti specifinį piktogramą pagal tipą
+                          );
+                        }).toList(),
+                        // Paskutinė kortelė su tikslu
                         GoalCard(
-                          goalName: 'Tikslas 1',
-                          goalDescription: 'Aprašymas 1...',
-                          goalIcon: Icons.sports_tennis,
-                        ),
-                        GoalCard(
-                          goalName: 'Tikslas 2',
-                          goalDescription: 'Aprašymas 2...',
-                          goalIcon: Icons.local_drink,
-                        ),
-                        GoalCard(
-                          goalName: 'Tikslas 3',
-                          goalDescription: 'Aprašymas 3...',
-                          goalIcon: Icons.single_bed,
-                        ),
-                        GoalCard(
-                          goalName: 'Tikslas 4',
-                          goalDescription: 'Aprašymas 4...',
-                          goalIcon: Icons.self_improvement,
-                        ),
-                        GoalCard(
+                          goalId: '',
                           goalName: 'Pridėti savo tikslą',
                           goalDescription: 'Sukurk ir pridėk savo tikslą',
                           goalIcon: Icons.add_circle,
-                          isLast:
+                          isCountable: true,
+                          isCustom:
                               true, // Nurodoma, kad ši kortelė yra paskutinė
                         ),
                       ],
@@ -105,18 +109,23 @@ class NewGoalScreen extends StatelessWidget {
 
 // Atkuriama tikslo kortelė su piktograma, pavadinimu ir aprašymu
 class GoalCard extends StatefulWidget {
+  final String goalId;
   final String goalName;
   final String goalDescription;
   final IconData goalIcon;
+  final bool isCountable;
   final bool
-      isLast; // Naujas parametras, kad žinotume, ar tai paskutinė kortelė
+      isCustom; // Naujas parametras, kad žinotume, ar tai paskutinė kortelė
 
   const GoalCard({
     super.key,
+    required this.goalId,
     required this.goalName,
     required this.goalDescription,
     required this.goalIcon,
-    this.isLast = false, // Jei neapibrėžta, laikome, kad kortelė nėra paskutinė
+    required this.isCountable,
+    this.isCustom =
+        false, // Jei neapibrėžta, laikome, kad kortelė nėra paskutinė
   });
 
   @override
@@ -124,8 +133,42 @@ class GoalCard extends StatefulWidget {
 }
 
 class _GoalCardState extends State<GoalCard> {
-  String? _selectedDuration = '1 mėnesį'; // Pasirinkta trukmė
+  String? _goalName;
+  String? _goalDescription;
+  String userUsername = "";
+  final GoalTypeService _goalTypeService = GoalTypeService();
+  final GoalService _goalService = GoalService();
+  String? _selectedDuration = '1 mėnuo'; // Pasirinkta trukmė
   DateTime _startDate = DateTime.now(); // Pradžios data
+
+  final TextEditingController _goalNameController = TextEditingController();
+  TextEditingController _dateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController.text = DateTime.now().toString().substring(0, 10);
+  }
+
+  final TextEditingController _goalDescriptionController =
+      TextEditingController();
+
+  final AuthService _authService = AuthService();
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        },
+      );
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,10 +200,11 @@ class _GoalCardState extends State<GoalCard> {
                     Text(widget.goalDescription),
                     const SizedBox(height: 20),
                     // Jei tai paskutinė kortelė, naudoti kitus laukus
-                    if (widget.isLast)
+                    if (widget.isCustom)
                       Column(
                         children: [
                           TextFormField(
+                            controller: _goalNameController,
                             decoration: InputDecoration(
                               labelText: 'Pavadinimas',
                               floatingLabelBehavior: FloatingLabelBehavior
@@ -180,6 +224,7 @@ class _GoalCardState extends State<GoalCard> {
                           ),
                           const SizedBox(height: 10),
                           TextFormField(
+                            controller: _goalDescriptionController,
                             decoration: InputDecoration(
                               labelText: 'Aprašymas',
                               floatingLabelBehavior: FloatingLabelBehavior
@@ -217,7 +262,7 @@ class _GoalCardState extends State<GoalCard> {
                       items: <String>[
                         '1 savaitė',
                         '2 savaitės',
-                        '1 mėnesį',
+                        '1 mėnuo',
                         '3 mėnesiai',
                         '6 mėnesiai'
                       ].map<DropdownMenuItem<String>>((String value) {
@@ -233,22 +278,26 @@ class _GoalCardState extends State<GoalCard> {
                     const SizedBox(height: 10),
                     // Pradžios datos pasirinkimas
                     TextFormField(
-                      controller: TextEditingController(
-                          text: '${_startDate.toLocal()}'.split(' ')[0]),
+                      controller: _dateController,
                       decoration: const InputDecoration(
                         labelText: 'Pradžios data',
                         border: OutlineInputBorder(),
                       ),
+                      readOnly: true,
                       onTap: () async {
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
                           initialDate: _startDate,
-                          firstDate: DateTime(2020),
+                          firstDate: DateTime
+                              .now(), // Neleidžia pasirinkti ankstesnių datų
                           lastDate: DateTime(2101),
+                          locale: const Locale('lt', 'LT'),
                         );
                         if (pickedDate != null && pickedDate != _startDate) {
                           setState(() {
                             _startDate = pickedDate;
+                            _dateController.text =
+                                _startDate.toString().substring(0, 10);
                           });
                         }
                       },
@@ -256,10 +305,10 @@ class _GoalCardState extends State<GoalCard> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        // Veiksmas, kai paspaudžiama 'Pateikti'
+                        _submitGoal();
                         Navigator.pop(context);
                       },
-                      child: const Text('Pateikti'),
+                      child: const Text('Išsaugoti'),
                     ),
                   ],
                 ),
@@ -284,6 +333,7 @@ class _GoalCardState extends State<GoalCard> {
             const SizedBox(height: 20),
             Text(
               widget.goalName,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -299,5 +349,145 @@ class _GoalCardState extends State<GoalCard> {
         ),
       ),
     );
+  }
+
+  // Funkcija įrašyti duomenis į duomenų bazę
+  Future<void> _submitGoal() async {
+    String goalId = widget.isCustom
+        ? _goalNameController.text
+            .toLowerCase()
+            .replaceFirstMapped(
+                RegExp(r'(\s[a-z])'), (match) => match.group(0)!.toUpperCase())
+            .replaceAll(' ', '')
+            .replaceAllMapped(RegExp(r'[ąčęėįšųūž]'), (match) {
+            switch (match.group(0)) {
+              case 'ą':
+                return 'a';
+              case 'č':
+                return 'c';
+              case 'ę':
+                return 'e';
+              case 'ė':
+                return 'e';
+              case 'į':
+                return 'i';
+              case 'š':
+                return 's';
+              case 'ų':
+                return 'u';
+              case 'ū':
+                return 'u';
+              case 'ž':
+                return 'z';
+              default:
+                return match.group(0)!;
+            }
+          })
+        : widget.goalId;
+
+    // Sukurkite objektą su įpročio duomenimis
+    if (widget.isCustom) {
+      // Sukurkite objektą su įpročio duomenimis
+      GoalType goalData = GoalType(
+        id: _goalNameController.text
+            .toLowerCase()
+            .replaceFirstMapped(
+                RegExp(r'(\s[a-z])'), (match) => match.group(0)!.toUpperCase())
+            .replaceAll(' ', '')
+            .replaceAllMapped(RegExp(r'[ąčęėįšųūž]'), (match) {
+          switch (match.group(0)) {
+            case 'ą':
+              return 'a';
+            case 'č':
+              return 'c';
+            case 'ę':
+              return 'e';
+            case 'ė':
+              return 'e';
+            case 'į':
+              return 'i';
+            case 'š':
+              return 's';
+            case 'ų':
+              return 'u';
+            case 'ū':
+              return 'u';
+            case 'ž':
+              return 'z';
+            default:
+              return match.group(0)!;
+          }
+        }),
+        title: _goalNameController.text,
+        description: _goalDescriptionController.text,
+        type: "custom", // Jei tai yra vartotojo sukurtas įprotis
+        isCountable: true,
+      );
+
+      try {
+        await _goalTypeService.createGoalTypeEntry(goalData);
+        print('Tikslas pridėtas! 🎉');
+        //showCustomSnackBar(context, message, true); // Naudokite funkciją
+      } catch (e) {
+        print("Klaida pridedant tikslą: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Įvyko klaida!')),
+        );
+      }
+    }
+
+    if (userUsername.isEmpty) {
+      await _fetchUserData(); // Palauk, kol gaus vartotojo vardą
+    }
+    String goalID =
+        '${goalId}${userUsername[0].toUpperCase() + userUsername.substring(1)}$_startDate';
+
+    GoalModel goalModel = GoalModel(
+      id: goalID,
+      startDate: _startDate,
+      endDate: _startDate.add(
+        Duration(
+          days: _selectedDuration == '1 savaitė'
+              ? 7
+              : _selectedDuration == '2 savaitės'
+                  ? 14
+                  : _selectedDuration == '1 mėnuo'
+                      ? 30
+                      : _selectedDuration == '3 mėnesiai'
+                          ? 90
+                          : 180,
+        ),
+      ),
+      points: 0,
+      category: CategoryType.bekategorijos,
+      endPoints: _selectedDuration == '1 savaitė'
+          ? 7
+          : _selectedDuration == '2 savaitės'
+              ? 14
+              : _selectedDuration == '1 mėnuo'
+                  ? 30
+                  : _selectedDuration == '3 mėnesiai'
+                      ? 90
+                      : 180,
+      userId: userUsername,
+      goalTypeId: goalId.trim(),
+      plantId: '',
+      isCountable: widget.isCountable,
+    );
+
+    try {
+      await _goalService.createGoalEntry(goalModel);
+      String message = 'Tikslas pridėtas! 🎉';
+      showCustomSnackBar(context, message, true); // Naudokite funkciją
+    } catch (e) {
+      print("Klaida pridedant tikslą: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Įvyko klaida!')),
+      );
+    }
+
+    // Čia įrašykite kodą, kuris įrašo duomenis į duomenų bazę
+    // Pavyzdžiui, naudojant Firebase, SQLite, ar kitą metodą
+    //print('Įrašyti į duomenų bazę: $habitData');
   }
 }

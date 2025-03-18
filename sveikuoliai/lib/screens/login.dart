@@ -3,6 +3,7 @@ import 'package:sveikuoliai/screens/forgot_password.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/signup.dart';
 import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -17,15 +18,16 @@ class LoginScreen extends StatelessWidget {
 
     if (user != null) {
       print("✅ Prisijungimas sėkmingas: ${user.email}");
+      String message = '✅ Prisijungimas sėkmingas!';
+      showCustomSnackBar(context, message, true);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
       print("❌ Prisijungimas nepavyko!");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Neteisingi prisijungimo duomenys")),
-      );
+      String message = '❌ Prisijungimas nepavyko!';
+      showCustomSnackBar(context, message, false);
     }
   }
 
@@ -35,8 +37,8 @@ class LoginScreen extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFFF7AEF8),
       body: Center(
-          child: SingleChildScrollView(
-        child: ConstrainedBox(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
             constraints:
                 BoxConstraints(minHeight: MediaQuery.of(context).size.height),
             child: IntrinsicHeight(
@@ -152,8 +154,10 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            )),
-      )),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
