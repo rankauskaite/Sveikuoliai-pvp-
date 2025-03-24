@@ -83,6 +83,13 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.png
+    - assets/images/dobiliukas/
+    - assets/images/gervuoge/
+    - assets/images/orchideja/
+    - assets/images/ramuneles/
+    - assets/images/saulegraza/
+    - assets/images/vysnia/
+    - assets/images/zibuokle/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

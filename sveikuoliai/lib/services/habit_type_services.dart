@@ -18,22 +18,21 @@ class HabitTypeService {
 
   // sukelia default
   Future<void> fillDefaultHabitTypes() async {
-  for (var habitType in HabitType.defaultHabitTypes) {
-    bool exists = await doesHabitTypeExist(habitType.id);
-    if (!exists) {
-      try {
-        await createHabitTypeEntry(habitType);
-        print("Pridėtas įprotis: ${habitType.title}");
-      } catch (e) {
-        print("klaida įrašant '${habitType.title}' į Firestore: $e");
+    for (var habitType in HabitType.defaultHabitTypes) {
+      bool exists = await doesHabitTypeExist(habitType.id);
+      if (!exists) {
+        try {
+          await createHabitTypeEntry(habitType);
+          print("Pridėtas įprotis: ${habitType.title}");
+        } catch (e) {
+          print("klaida įrašant '${habitType.title}' į Firestore: $e");
+        }
+      } else {
+        print("Įprotis '${habitType.title}' jau yra Firestore.");
       }
-    } else {
-      print("Įprotis '${habitType.title}' jau yra Firestore.");
     }
+    print(" Visi siūlomi įpročiai patikrinti ir įkelti :)");
   }
-  print(" Visi siūlomi įpročiai patikrinti ir įkelti :)");
-}
-
 
   // read all
   Future<List<HabitType>> getAllHabitTypes() async {

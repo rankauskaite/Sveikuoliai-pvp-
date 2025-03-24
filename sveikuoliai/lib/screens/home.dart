@@ -1,12 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
-import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/services/auth_service.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
-import 'package:sveikuoliai/services/user_services.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -125,10 +122,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _buildPlantColumn('Orchidėja'),
-                            _buildPlantColumn('Dobilas'),
-                            _buildPlantColumn('Žibuoklės'),
-                            _buildPlantColumn('Ramunė'),
+                            _buildPlantColumn('Orchidėja',
+                                imageUrl: 'assets/images/orchideja/16.png'),
+                            _buildPlantColumn('Dobilas',
+                                imageUrl: 'assets/images/dobiliukas/4.png'),
+                            _buildPlantColumn('Žibuoklės', imageUrl: ''),
+                            _buildPlantColumn('Ramunė', imageUrl: ''),
                           ],
                         ),
                       ),
@@ -278,11 +277,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPlantColumn(String plantName) {
+  Widget _buildPlantColumn(String plantName, {String? imageUrl}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.circle, size: 90, color: Color(0xFFD9D9D9)),
+        imageUrl != null && imageUrl.isNotEmpty
+            ? Image.asset(imageUrl, width: 90, height: 90)
+            : const Icon(Icons.circle, size: 90, color: Color(0xFFD9D9D9)),
         Text(plantName, style: const TextStyle(fontSize: 16)),
       ],
     );
