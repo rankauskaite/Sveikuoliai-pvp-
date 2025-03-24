@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
+import 'package:sveikuoliai/models/habit_type_model.dart';
 import 'package:sveikuoliai/screens/goal.dart';
 import 'package:sveikuoliai/screens/habit.dart';
 import 'package:sveikuoliai/screens/new_goal.dart';
 import 'package:sveikuoliai/screens/new_habit.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/habit_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 
 class HabitsGoalsScreen extends StatefulWidget {
@@ -15,6 +21,47 @@ class HabitsGoalsScreen extends StatefulWidget {
 
 class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   int selectedIndex = 0; // 0 - Mano įpročiai, 1 - Mano tikslai
+  String userUsername = "";
+  final AuthService _authService = AuthService();
+  List<HabitInformation> userHabits = [];
+  final HabitService _habitService = HabitService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        },
+      );
+      await _fetchUserHabits(userUsername);
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+
+  Future<void> _fetchUserHabits(String username) async {
+    try {
+      // Gaukime vartotojo įpročius
+      List<HabitInformation> habits =
+          await _habitService.getUserHabits(username);
+
+      // Atnaujiname būsena su naujais duomenimis
+      setState(() {
+        userHabits = habits;
+      });
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant įpročius ❌', false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,10 +258,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             ),
           ],
         ),
-        _habitItem("Įpročio pavadinimas"),
-        _habitItem("Įpročio pavadinimas"),
-        _habitItem("Įpročio pavadinimas"),
-        _habitItem("Įpročio pavadinimas"),
+        ...userHabits.map((habit) => _habitItem(habit)).toList(),
       ],
     );
   }
@@ -304,14 +348,14 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
     );
   }
 
-  Widget _habitItem(String title) {
+  Widget _habitItem(HabitInformation habit) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) =>
-                  const HabitPage()), // Pakeisk į tinkamą puslapį
+            builder: (context) => HabitPage(habit: habit), // Perduodame habit
+          ),
         );
       },
       child: Column(
@@ -337,7 +381,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        habit.habitType.title,
                         style: const TextStyle(
                           fontSize: 18,
                           color: Color(0xFFB388EB),
@@ -345,9 +389,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      const Text(
-                        "Detalesnė informacija\nKą norėsime parašyti?",
-                        style: TextStyle(
+                      Text(
+                        habit.habitType.description,
+                        style: const TextStyle(
                             fontStyle: FontStyle.italic, color: Colors.black54),
                       ),
                     ],
