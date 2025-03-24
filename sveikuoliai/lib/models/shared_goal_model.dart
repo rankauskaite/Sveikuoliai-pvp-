@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../enums/category_enum.dart'; // enumeratorių įtraukimas
+import '../enums/category_enum.dart'; // Enum įtraukimas
 
-class GoalModel {
+class SharedGoal {
   String id;
   DateTime startDate;
   DateTime endDate;
@@ -9,11 +9,12 @@ class GoalModel {
   bool isCountable;
   CategoryType category;
   int endPoints;
-  String userId;
+  String user1Id;
+  String user2Id; 
   String plantId;
-  String? goalTypeId; // Dabar nullable
+  String goalTypeId;
 
-  GoalModel({
+  SharedGoal({
     required this.id,
     required this.startDate,
     required this.endDate,
@@ -21,30 +22,31 @@ class GoalModel {
     required this.isCountable,
     required this.category,
     required this.endPoints,
-    required this.userId,
+    required this.user1Id,
+    required this.user2Id,
     required this.plantId,
-    this.goalTypeId, // Nullable nereikia `required`
+    required this.goalTypeId,
   });
 
   /// Konvertavimas į JSON
   Map<String, dynamic> toJson() {
     return {
-      'id': id, 
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'points': points,
       'isCountable': isCountable,
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
-      'userId': userId,
+      'user1Id': user1Id,
+      'user2Id': user2Id, 
       'plantId': plantId,
-      if (goalTypeId != null) 'goalTypeId': goalTypeId, // Neįdeda į JSON, jei `null`
+      'goalTypeId': goalTypeId,
     };
   }
 
   /// Konvertavimas iš JSON
-  factory GoalModel.fromJson(String id, Map<String, dynamic> json) {
-    return GoalModel(
+  factory SharedGoal.fromJson(String id, Map<String, dynamic> json) {
+    return SharedGoal(
       id: id,
       startDate: (json['startDate'] as Timestamp).toDate(),
       endDate: (json['endDate'] as Timestamp).toDate(),
@@ -52,9 +54,10 @@ class GoalModel {
       isCountable: json['isCountable'] ?? false,
       category: CategoryTypeExtension.fromJson(json['category'] ?? ''), // Enum iš string
       endPoints: json['endPoints'] ?? 0,
-      userId: json['userId'] ?? '',
+      user1Id: json['user1Id'] ?? '',
+      user2Id: json['user2Id'] ?? '', // Buvo `user2ID`
       plantId: json['plantId'] ?? '',
-      goalTypeId: json['goalTypeId'], // Jei nėra lauko, liks `null`
+      goalTypeId: json['goalTypeId'] ?? '',
     );
   }
 }

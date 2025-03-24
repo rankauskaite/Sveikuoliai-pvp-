@@ -4,9 +4,9 @@ class PlantModel {
   String id;
   String name;
   int points;
-  String photoUrl; // Final plant image (when fully grown)
-  int duration; // in days
-  List<String> stages; // Growth stage images
+  String photoUrl; // Galutinis vaizdas
+  int duration; //  dienomis
+  List<String> stages; // saugomos kode
 
   PlantModel({
     required this.id,
@@ -14,22 +14,21 @@ class PlantModel {
     required this.points,
     required this.photoUrl,
     required this.duration,
-    required this.stages, 
+    required this.stages,
   });
 
-  // to json
+  // i json, nesuagojami stages
   Map<String, dynamic> toJson() {
     return {
-      'id': id, 
+      'id': id,
       'name': name,
       'points': points,
       'photoUrl': photoUrl,
       'duration': duration,
-      'stages': stages, 
     };
   }
 
-  // is json
+  // is json be stages
   factory PlantModel.fromJson(String id, Map<String, dynamic> json) {
     return PlantModel(
       id: id,
@@ -37,38 +36,27 @@ class PlantModel {
       points: json['points'] ?? 0,
       photoUrl: json['photoUrl'] ?? '',
       duration: json['duration'] ?? 0,
-      stages: List<String>.from(json['stages'] ?? []), 
+      stages: _getPlantStages(id), // vidine funkcija pagal id 
     );
   }
 
-  /// reiks pakoreguot bet cia prototipas
+  /// nuoroda i masyva(lista?) paimt reikiama paveiksliuka
   String getStageImage(int progressPercentage) {
-    if (stages.isEmpty) return photoUrl; // If no stages, return final image
-    int stageIndex = (progressPercentage / 100 * stages.length).floor();
+    if (stages.isEmpty) return photoUrl; 
+    int stageIndex = (progressPercentage / 100 * (stages.length - 1)).round();
     return stages[stageIndex.clamp(0, stages.length - 1)];
   }
 
-    static List<PlantModel> defaultPlants = [
-    PlantModel(
-      id: "dobiliukas",
-      name: "Dobiliukas",
-      points: 7, // Based on duration
-      photoUrl: "https://example.com/dobiliukas.png",
-      duration: 7,
-      stages: [
+  /// stadiju paveiklsiukai. imama pagal id
+  static List<String> _getPlantStages(String id) {
+    Map<String, List<String>> stagesMap = {
+      "dobiliukas": [
         "https://example.com/dobiliukas_stage1.png",
         "https://example.com/dobiliukas_stage2.png",
         "https://example.com/dobiliukas_stage3.png",
         "https://example.com/dobiliukas_stage4.png",
       ],
-    ),
-    PlantModel(
-      id: "ramunele",
-      name: "Ramunėlė",
-      points: 15,
-      photoUrl: "https://example.com/ramunele.png",
-      duration: 15,
-      stages: [
+      "ramunele": [
         "https://example.com/ramunele_stage1.png",
         "https://example.com/ramunele_stage2.png",
         "https://example.com/ramunele_stage3.png",
@@ -76,114 +64,103 @@ class PlantModel {
         "https://example.com/ramunele_stage5.png",
         "https://example.com/ramunele_stage6.png",
       ],
+      "saulėgraža": [
+        "https://example.com/saulėgraža_stage1.png",
+        "https://example.com/saulėgraža_stage2.png",
+        "https://example.com/saulėgraža_stage3.png",
+        "https://example.com/saulėgraža_stage4.png",
+        "https://example.com/saulėgraža_stage5.png",
+        "https://example.com/saulėgraža_stage6.png",
+        "https://example.com/saulėgraža_stage7.png",
+        "https://example.com/saulėgraža_stage8.png",
+        "https://example.com/saulėgraža_stage9.png",
+        "https://example.com/saulėgraža_stage10.png",
+        "https://example.com/saulėgraža_stage11.png",
+        "https://example.com/saulėgraža_stage12.png",
+      ],
+      "zibuokle": [
+        "https://example.com/zibuokle_stage1.png",
+        "https://example.com/zibuokle_stage2.png",
+        "https://example.com/zibuokle_stage3.png",
+        "https://example.com/zibuokle_stage4.png",
+        "https://example.com/zibuokle_stage5.png",
+        "https://example.com/zibuokle_stage6.png",
+        "https://example.com/zibuokle_stage7.png",
+        "https://example.com/zibuokle_stage8.png",
+      ],
+      "orchideja": [
+        "https://example.com/orchideja_stage1.png",
+        "https://example.com/orchideja_stage2.png",
+        "https://example.com/orchideja_stage3.png",
+        "https://example.com/orchideja_stage4.png",
+        "https://example.com/orchideja_stage5.png",
+        "https://example.com/orchideja_stage6.png",
+        "https://example.com/orchideja_stage7.png",
+        "https://example.com/orchideja_stage8.png",
+        "https://example.com/orchideja_stage9.png",
+        "https://example.com/orchideja_stage10.png",
+        "https://example.com/orchideja_stage11.png",
+        "https://example.com/orchideja_stage12.png",
+        "https://example.com/orchideja_stage13.png",
+        "https://example.com/orchideja_stage14.png",
+        "https://example.com/orchideja_stage15.png",
+        "https://example.com/orchideja_stage16.png",
+      ],
+      "vyšnia": List.generate(36, (index) => "https://example.com/vyšnia_stage${index + 1}.png"),
+    };
+
+    return stagesMap[id] ?? [];
+  }
+
+  /// **Defaultiniai augalai**
+  static List<PlantModel> defaultPlants = [
+    PlantModel(
+      id: "dobiliukas",
+      name: "Dobiliukas",
+      points: 7,
+      photoUrl: "https://example.com/dobiliukas_final.png",
+      duration: 7,
+      stages: _getPlantStages("dobiliukas"),
+    ),
+    PlantModel(
+      id: "ramunele",
+      name: "Ramunėlė",
+      points: 15,
+      photoUrl: "https://example.com/ramunele_final.png",
+      duration: 15,
+      stages: _getPlantStages("ramunele"),
     ),
     PlantModel(
       id: "saulėgraža",
       name: "Saulėgraža",
       points: 45,
-      photoUrl: "https://example.com/saulėgraža.png",
+      photoUrl: "https://example.com/saulėgraža_final.png",
       duration: 45,
-      stages: [
-        "https://example.com/saulėgraža_stage1.png",
-        "https://example.com/saulėgraža_stage2.png",
-        "https://example.com/saulėgraža_stage3.png",
-        "https://example.com/saulėgraža_stage4.png",
-        "https://example.com/saulėgraža_stage5.png",
-        "https://example.com/saulėgraža_stage6.png",
-        "https://example.com/saulėgraža_stage7.png",
-        "https://example.com/saulėgraža_stage8.png",
-        "https://example.com/saulėgraža_stage9.png",
-        "https://example.com/saulėgraža_stage10.png",
-        "https://example.com/saulėgraža_stage11.png",
-        "https://example.com/saulėgraža_stage12.png",
-      ],
+      stages: _getPlantStages("saulėgraža"),
     ),
     PlantModel(
       id: "zibuokle",
-      name: "zibuokle",
+      name: "Žibuoklė",
       points: 21,
-      photoUrl: "https://example.com/saulėgraža.png",
+      photoUrl: "https://example.com/zibuokle_final.png",
       duration: 21,
-      stages: [
-        "https://example.com/saulėgraža_stage1.png",
-        "https://example.com/saulėgraža_stage2.png",
-        "https://example.com/saulėgraža_stage3.png",
-        "https://example.com/saulėgraža_stage4.png",
-        "https://example.com/saulėgraža_stage5.png",
-        "https://example.com/saulėgraža_stage6.png",
-        "https://example.com/saulėgraža_stage7.png",
-        "https://example.com/saulėgraža_stage8.png",
-      ],
+      stages: _getPlantStages("zibuokle"),
     ),
     PlantModel(
       id: "orchideja",
-      name: "orchideja",
+      name: "Orchidėja",
       points: 66,
-      photoUrl: "https://example.com/saulėgraža.png",
+      photoUrl: "https://example.com/orchideja_final.png",
       duration: 66,
-      stages: [
-        "https://example.com/saulėgraža_stage1.png",
-        "https://example.com/saulėgraža_stage2.png",
-        "https://example.com/saulėgraža_stage3.png",
-        "https://example.com/saulėgraža_stage4.png",
-        "https://example.com/saulėgraža_stage5.png",
-        "https://example.com/saulėgraža_stage6.png",
-        "https://example.com/saulėgraža_stage7.png",
-        "https://example.com/saulėgraža_stage8.png",
-        "https://example.com/saulėgraža_stage9.png",
-        "https://example.com/saulėgraža_stage10.png",
-        "https://example.com/saulėgraža_stage11.png",
-        "https://example.com/saulėgraža_stage12.png",
-        "https://example.com/saulėgraža_stage13.png",
-        "https://example.com/saulėgraža_stage14.png",
-        "https://example.com/saulėgraža_stage15.png",
-        "https://example.com/saulėgraža_stage16.png",
-      ],
+      stages: _getPlantStages("orchideja"),
     ),
     PlantModel(
       id: "vyšnia",
       name: "Vyšnia",
-      points: 180, // 
-      photoUrl: "https://example.com/vyšnia.png",
+      points: 180,
+      photoUrl: "https://example.com/vyšnia_final.png",
       duration: 180,
-      stages: [
-        "https://example.com/vyšnia_stage1.png",
-        "https://example.com/vyšnia_stage2.png",
-        "https://example.com/vyšnia_stage3.png",
-        "https://example.com/vyšnia_stage4.png",
-        "https://example.com/vyšnia_stage5.png",
-        "https://example.com/vyšnia_stage6.png",
-        "https://example.com/vyšnia_stage7.png",
-        "https://example.com/vyšnia_stage8.png",
-        "https://example.com/vyšnia_stage9.png",
-        "https://example.com/vyšnia_stage10.png",
-        "https://example.com/vyšnia_stage11.png",
-        "https://example.com/vyšnia_stage12.png",
-        "https://example.com/vyšnia_stage13.png",
-        "https://example.com/vyšnia_stage14.png",
-        "https://example.com/vyšnia_stage15.png",
-        "https://example.com/vyšnia_stage16.png",
-        "https://example.com/vyšnia_stage17.png",
-        "https://example.com/vyšnia_stage18.png",
-        "https://example.com/vyšnia_stage19.png",
-        "https://example.com/vyšnia_stage20.png",
-        "https://example.com/vyšnia_stage21.png",
-        "https://example.com/vyšnia_stage22.png",
-        "https://example.com/vyšnia_stage23.png",
-        "https://example.com/vyšnia_stage24.png",
-        "https://example.com/vyšnia_stage25.png",
-        "https://example.com/vyšnia_stage26.png",
-        "https://example.com/vyšnia_stage27.png",
-        "https://example.com/vyšnia_stage28.png",
-        "https://example.com/vyšnia_stage29.png",
-        "https://example.com/vyšnia_stage30.png",
-        "https://example.com/vyšnia_stage31.png",
-        "https://example.com/vyšnia_stage32.png",
-        "https://example.com/vyšnia_stage33.png",
-        "https://example.com/vyšnia_stage34.png",
-        "https://example.com/vyšnia_stage35.png",
-        "https://example.com/vyšnia_stage36.png",
-      ],
+      stages: _getPlantStages("vyšnia"),
     ),
   ];
 }

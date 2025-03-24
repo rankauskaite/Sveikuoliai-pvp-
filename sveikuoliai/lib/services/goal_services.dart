@@ -7,7 +7,10 @@ class GoalService {
 
   // create
   Future<void> createGoalEntry(GoalModel goal) async {
-    await goalCollection.doc(goal.id).set(goal.toJson()); 
+    final docRef = goal.id.isNotEmpty
+        ? goalCollection.doc(goal.id)
+        : goalCollection.doc(); // Jei goal.id tuščias kuriam naują
+    await docRef.set(goal.toJson()..['id'] = docRef.id); // Išsaugom id firestore
   }
 
   // read
@@ -21,11 +24,16 @@ class GoalService {
   Future<void> updateGoalEntry(GoalModel goal) async {
     Map<String, dynamic> data = goal.toJson();
     data.removeWhere((key, value) => value == null); // Pašalinam null laukus
-    await goalCollection.doc(goal.id).update(data);
+    if (data.isNotEmpty) {
+      await goalCollection.doc(goal.id).update(data);
+    }
   }
 
   // delete
-  Future<void> deleteGoalEntry(String id) async {
+  Future<bool> deleteGoalEntry(String id) async {
+    DocumentSnapshot doc = await goalCollection.doc(id).get();
+    if (!doc.exists) return false;
     await goalCollection.doc(id).delete();
+    return true;
   }
 }
