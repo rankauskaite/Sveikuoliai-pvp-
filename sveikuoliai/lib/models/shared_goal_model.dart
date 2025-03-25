@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../enums/category_enum.dart'; // Enum įtraukimas
+import 'package:sveikuoliai/enums/category_enum.dart'; // Enum įtraukimas
 
 class SharedGoal {
   String id;

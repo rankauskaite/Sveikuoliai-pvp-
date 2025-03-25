@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/shared_goal_model.dart';
+import 'package:sveikuoliai/models/shared_goal_model.dart';
 
 class SharedGoalService {
   final CollectionReference sharedGoalCollection =

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../enums/category_enum.dart'; // enumeratorių įtraukimas
+import 'package:sveikuoliai/enums/category_enum.dart'; // enumeratorių įtraukimas
 
 class GoalModel {
   String id;

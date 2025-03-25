@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/goal_task_model.dart';
+import 'package:sveikuoliai/models/goal_task_model.dart';
 
 class GoalTaskService {
   final CollectionReference goalTaskCollection =

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/goal_type_model.dart';
+import 'package:sveikuoliai/models/goal_type_model.dart';
 
 class GoalTypeService {
   final CollectionReference goalTypeCollection =

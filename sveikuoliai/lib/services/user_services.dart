@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 
 class UserService {
   final CollectionReference userCollection =

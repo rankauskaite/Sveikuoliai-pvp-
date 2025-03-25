@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/habit_model.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
 
 class HabitService {
   final CollectionReference habitCollection =

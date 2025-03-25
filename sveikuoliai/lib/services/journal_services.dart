@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/journal_model.dart';
+import 'package:sveikuoliai/models/journal_model.dart';
 
 class JournalService {
   final CollectionReference journalCollection =

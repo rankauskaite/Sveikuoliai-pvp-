@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/plant_model.dart';
+import 'package:sveikuoliai/models/plant_model.dart';
 
 class PlantService {
   final CollectionReference plantCollection =
