@@ -90,6 +90,7 @@ flutter:
     - assets/images/saulegraza/
     - assets/images/vysnia/
     - assets/images/zibuokle/
+    - assets/images/nuotaikos/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

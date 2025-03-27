@@ -197,11 +197,20 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             Text('Šiandien jaučiuosi:',
                                 style: TextStyle(fontSize: 15)),
                             SizedBox(height: 10),
-                            _buildMoodCircle('Laiminga'),
-                            _buildMoodCircle('Liūdna'),
-                            _buildMoodCircle('Nusivylusi'),
-                            _buildMoodCircle('Euforija'),
-                            _buildMoodCircle('Rami'),
+                            _buildMoodCircle('Laiminga',
+                                'assets/images/nuotaikos/laiminga.png'),
+                            _buildMoodCircle(
+                                'Liūdna', 'assets/images/nuotaikos/liudna.png'),
+                            _buildMoodCircle(
+                                'Pikta', 'assets/images/nuotaikos/pikta.png'),
+                            _buildMoodCircle('Pavargusi',
+                                'assets/images/nuotaikos/pavargus.png'),
+                            _buildMoodCircle('Motyvuota',
+                                'assets/images/nuotaikos/motyvuota.png'),
+                            _buildMoodCircle('Ryžtinga',
+                                'assets/images/nuotaikos/ryztingaStipri.png'),
+                            _buildMoodCircle('Suglumusi',
+                                'assets/images/nuotaikos/suglumusi.png'),
                           ],
                         ),
                       ),
@@ -386,7 +395,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     return day.toString().padLeft(2, '0');
   }
 
-  Widget _buildMoodCircle(String mood) {
+  Widget _buildMoodCircle(String mood, String imageUrl) {
     bool isSelected = selectedMood == mood;
     return GestureDetector(
       onTap: () {
@@ -397,9 +406,9 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
       child: Column(
         children: [
           CircleAvatar(
-            radius: 36,
-            backgroundColor: isSelected ? Color(0xFFB388EB) : Color(0xFFFCE5FC),
-            child: Icon(Icons.circle, color: Color(0xFFD9D9D9), size: 70),
+            radius: 37,
+            backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
+            child: Image.asset(imageUrl, width: 70, height: 70),
           ),
           Text(mood,
               style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
