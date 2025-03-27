@@ -2,12 +2,14 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/screens/habit_progress.dart';
 import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
 class HabitPage extends StatelessWidget {
-  const HabitPage({super.key});
+  final HabitInformation habit;
+  const HabitPage({Key? key, required this.habit}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -71,8 +73,8 @@ class HabitPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Įpročio pavadinimas',
+                    Text(
+                      habit.habitType.title,
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
@@ -90,7 +92,8 @@ class HabitPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const HabitProgressScreen()),
+                              builder: (context) =>
+                                  const HabitProgressScreen()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -107,16 +110,24 @@ class HabitPage extends StatelessWidget {
                       'Apie įprotį',
                       style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
                     ),
-                    const Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Detalesnė informacija apie įprotį,\nkoks jis yra: aprašymas',
-                            style: TextStyle(fontSize: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          // Užtikrina, kad tekstas užims visą eilutės plotį
+                          child: Text(
+                            habit.habitType.description,
+                            style: const TextStyle(fontSize: 18),
+                            softWrap:
+                                true, // Leisti tekstui kelti į kitą eilutę
+                            overflow:
+                                TextOverflow.visible, // Nesutrumpinti teksto
                           ),
-                        ]),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 10),
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Text(
@@ -124,7 +135,7 @@ class HabitPage extends StatelessWidget {
                           style: TextStyle(fontSize: 18),
                         ),
                         Text(
-                          '2 mėnesiai',
+                          "${habit.endPoints} dienos",
                           style:
                               TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
                         )

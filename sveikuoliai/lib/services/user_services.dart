@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class UserService {
   final CollectionReference userCollection =
-      FirebaseFirestore.instance.collection('users'); 
+      FirebaseFirestore.instance.collection('users');
 
   // create
   Future<bool> createUserEntry(UserModel user) async {
@@ -36,6 +36,23 @@ class UserService {
     }
   }
 
+  Future<UserModel?> getUserEntryByEmail(String email) async {
+    try {
+      QuerySnapshot querySnapshot = await userCollection
+          .where('email', isEqualTo: email)
+          .limit(1) // Gaunam tik vieną vartotoją
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return null;
+
+      var doc = querySnapshot.docs.first;
+      return UserModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    } catch (e) {
+      print("Klaida gaunant vartotojo duomenis pagal el. paštą: $e");
+      return null;
+    }
+  }
+
   // update
   Future<bool> updateUserEntry(UserModel user) async {
     try {
@@ -46,6 +63,26 @@ class UserService {
       return true;
     } catch (e) {
       print("Klaida atnaujinant vartotoją: $e");
+      return false;
+    }
+  }
+
+  // Funkcija, kuri atnaujina tik nustatymus (pranešimus, temą ir mėnesinių trukmę)
+  Future<bool> updateSettings(String username, bool notifications,
+      bool darkMode, int menstrualLength) async {
+    try {
+      // Sukuriame žemėlapį su tik nustatymais
+      Map<String, dynamic> settingsData = {
+        'notifications': notifications,
+        'darkMode': darkMode,
+        'menstrualLength': menstrualLength,
+      };
+
+      // Atnaujiname tik nustatymų laukus Firestore duomenų bazėje
+      await userCollection.doc(username).update(settingsData);
+      return true;
+    } catch (e) {
+      print("Klaida atnaujinant nustatymus: $e");
       return false;
     }
   }
@@ -61,7 +98,7 @@ class UserService {
     }
   }
 
-  /// 
+  ///
   Future<bool> isUsernameAvailable(String username) async {
     try {
       var doc = await userCollection.doc(username).get();
@@ -71,4 +108,6 @@ class UserService {
       return false;
     }
   }
+
+  ///
 }

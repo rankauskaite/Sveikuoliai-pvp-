@@ -1,4 +1,4 @@
-# 🌱 [Projekto pavadinimas] - Tikslų ir įpročių sekimo aplikacija
+# 🌱 GIJA - Tikslų ir įpročių sekimo aplikacija
 
 ## 📖 Aprašymas
 Ši aplikacija padeda vartotojams **stebėti ir pasiekti savo tikslus**, skatindama juos auginti virtualią gėlytę. Kuo daugiau tikslų įvykdoma – tuo gražiau gėlė žydi!  

@@ -19,7 +19,7 @@ class HelloScreen extends StatelessWidget {
               ),
             ),
             Text(
-              '[APPSO PAVADINIMAS]',
+              'GIJA',
               style: TextStyle(
                 fontSize: 35,
                 color: Colors.black,

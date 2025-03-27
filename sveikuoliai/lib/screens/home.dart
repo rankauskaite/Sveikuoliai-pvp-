@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/notification_model.dart';
+import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 
@@ -10,13 +13,51 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final AuthService _authService = AuthService();
+  final AppNotificationService _notificationService =
+      AppNotificationService(); // Pridėjome pranešimų paslaugą
   bool showNotifications = false; // Ar rodyti pranešimų panelę?
-  final List<String> messages = [
-    'Naujas iššūkis!',
-    'Tavo draugas pasiekė tikslą!',
-    'Nepamiršk palaistyti augalo!',
-    'Šiandien gera diena pradėti naują iššūkį!',
-  ]; // Pranešimų sąrašas
+  List<AppNotification> notifications = []; // Pranešimų sąrašas
+  String userName = "";
+  String userUsername = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchSessionUser() async {
+    // Patikrinti, ar sesijoje jau yra duomenų
+    if (userName.isEmpty || userUsername.isEmpty) {
+      try {
+        Map<String, String?> sessionData = await _authService.getSessionUser();
+        setState(() {
+          userName = sessionData['name'] ?? "Nežinomas";
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        });
+        _fetchUserNotifications(userUsername);
+      } catch (e) {
+        setState(() {
+          userName = "Klaida gaunant duomenis";
+        });
+      }
+    }
+  }
+
+  // Funkcija, kuri gauna vartotojo pranešimus iš Firestore
+  Future<void> _fetchUserNotifications(String username) async {
+    try {
+      List<AppNotification> userNotifications =
+          await _notificationService.getUserNotifications(username);
+      setState(() {
+        notifications = userNotifications;
+      });
+    } catch (e) {
+      print("Klaida gaunant pranešimus: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             height: 50,
                             alignment: Alignment.bottomLeft,
-                            child: const Text(
-                              'VARDAS',
-                              style: TextStyle(fontSize: 20),
+                            child: Text(
+                              userName, // Čia bus rodoma naudotojo vardas
+                              style: const TextStyle(fontSize: 20),
                             ),
                           ),
                           const Spacer(),
@@ -81,10 +122,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _buildPlantColumn('Orchidėja'),
-                            _buildPlantColumn('Dobilas'),
-                            _buildPlantColumn('Žibuoklės'),
-                            _buildPlantColumn('Ramunė'),
+                            _buildPlantColumn('Orchidėja',
+                                imageUrl: 'assets/images/orchideja/16.png'),
+                            _buildPlantColumn('Dobilas',
+                                imageUrl: 'assets/images/dobiliukas/4.png'),
+                            _buildPlantColumn('Žibuoklės', imageUrl: ''),
+                            _buildPlantColumn('Ramunė', imageUrl: ''),
                           ],
                         ),
                       ),
@@ -169,21 +212,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Expanded(
                           child: ListView.builder(
-                            itemCount: messages.length,
+                            itemCount: notifications.length,
                             itemBuilder: (context, index) {
-                              bool isUnread = index ==
-                                  0; // Tik pirmas pranešimas yra neperskaitytas
-
+                              bool isUnread = !notifications[index].isRead;
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
                                     // Žymime, kad pranešimas perskaitytas
                                     if (isUnread) {
-                                      messages[0] =
-                                          '✔ ${messages[0]}'; // Žymime kaip skaitytą
+                                      _notificationService
+                                          .markNotificationAsRead(
+                                              notifications[index].id);
                                     }
                                   });
-                                  _showMessageDialog(messages[index]);
+                                  _showMessageDialog(notifications[index].text);
                                 },
                                 child: Container(
                                   margin: const EdgeInsets.symmetric(
@@ -192,14 +234,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   decoration: BoxDecoration(
                                     color: isUnread
                                         ? const Color(
-                                            0xFFFFC0CB) // Šviesiai oranžinė fonui
+                                            0xFFFFC0CB) // Neperskaityti pranešimai
                                         : const Color(0xFF8093F1)
                                             .withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(15),
                                     border: isUnread
                                         ? Border.all(
-                                            color: Colors.pink,
-                                            width: 2) // Rėmelis neperskaitytam
+                                            color: Colors.pink, width: 2)
                                         : null,
                                   ),
                                   child: Row(
@@ -212,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
-                                          messages[index],
+                                          notifications[index].text,
                                           style: const TextStyle(
                                               color: Colors.black,
                                               fontSize: 16),
@@ -236,11 +277,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPlantColumn(String plantName) {
+  Widget _buildPlantColumn(String plantName, {String? imageUrl}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.circle, size: 90, color: Color(0xFFD9D9D9)),
+        imageUrl != null && imageUrl.isNotEmpty
+            ? Image.asset(imageUrl, width: 90, height: 90)
+            : const Icon(Icons.circle, size: 90, color: Color(0xFFD9D9D9)),
         Text(plantName, style: const TextStyle(fontSize: 16)),
       ],
     );

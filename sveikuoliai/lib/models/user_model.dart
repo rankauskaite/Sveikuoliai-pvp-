@@ -62,23 +62,44 @@ class UserModel {
     );
   }
 
-  // 
+  //
   Future<void> saveToFirestore() async {
-    await FirebaseFirestore.instance.collection('users').doc(username).set(toJson());
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(username)
+        .set(toJson());
   }
 
   // ar unikalus username
   static Future<bool> isUsernameAvailable(String username) async {
-    var doc = await FirebaseFirestore.instance.collection('users').doc(username).get();
+    var doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(username)
+        .get();
     return !doc.exists;
   }
 
-  // 
+  //
   static Future<UserModel?> getUser(String username) async {
-    var doc = await FirebaseFirestore.instance.collection('users').doc(username).get();
+    var doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(username)
+        .get();
     if (doc.exists && doc.data() != null) {
       return UserModel.fromJson(username, doc.data()!);
     }
     return null;
   }
+}
+
+class UserModelMod {
+  String username; // Unikalus ID, pasirenkamas naudotojo
+  String name;
+  String email;
+
+  UserModelMod({
+    required this.username,
+    required this.name,
+    required this.email,
+  });
 }
