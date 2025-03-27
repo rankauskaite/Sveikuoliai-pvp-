@@ -33,7 +33,7 @@ class UserModel {
       'name': name,
       'email': email,
       'version': version,
-      'password': password,
+      //'password': password,
       'role': role,
       'notifications': notifications,
       'darkMode': darkMode,

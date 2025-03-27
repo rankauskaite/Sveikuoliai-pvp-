@@ -11,6 +11,11 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    //namespace = "com.example.habit_tracker"
+    //compileSdk = flutter.compileSdkVersion
+    //ndkVersion = "27.0.12077973" <- testavime pas mane veikė tik su šitu, 
+    // bet čia gali būt tiesiog pagal mano emuliatorių
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
