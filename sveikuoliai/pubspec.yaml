@@ -80,6 +80,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.png
+    - assets/stadijos/Dobiliukas/
+    - assets/stadijos/Gervuogė/
+    - assets/stadijos/Orchidėja/
+    - assets/stadijos/Ramunėlės/
+    - assets/stadijos/Saulėgrąža/
+    - assets/stadijos/Vyšnia/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
