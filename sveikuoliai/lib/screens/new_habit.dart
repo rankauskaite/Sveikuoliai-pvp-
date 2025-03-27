@@ -261,6 +261,8 @@ class _HabitCardState extends State<HabitCard> {
                         '1 savaitė',
                         '2 savaitės',
                         '1 mėnuo',
+                        '1,5 menesio',
+                        '2 mėnesiai',
                         '3 mėnesiai',
                         '6 mėnesiai'
                       ].map<DropdownMenuItem<String>>((String value) {
@@ -463,13 +465,29 @@ class _HabitCardState extends State<HabitCard> {
               ? 14
               : _selectedDuration == '1 mėnuo'
                   ? 30
-                  : _selectedDuration == '3 mėnesiai'
-                      ? 90
-                      : 180,
+                  : _selectedDuration == '1,5 menesio'
+                      ? 45
+                      : _selectedDuration == '2 mėnesiai'
+                          ? 60
+                          : _selectedDuration == '3 mėnesiai'
+                              ? 90
+                              : 180,
       repetition: '',
       userId: userUsername,
       habitTypeId: habitId.trim(),
-      plantId: '',
+      plantId: _selectedDuration == '1 savaitė'
+          ? 'dobiliukas'
+          : _selectedDuration == '2 savaitės'
+              ? 'ramuneles'
+              : _selectedDuration == '1 mėnuo'
+                  ? 'zibuokle'
+                  : _selectedDuration == '1,5 menesio'
+                      ? 'saulegraza'
+                      : _selectedDuration == '2 mėnesiai'
+                          ? 'orchideja'
+                          : _selectedDuration == '3 mėnesiai'
+                              ? 'gervuoge'
+                              : 'vysnia',
     );
 
     try {
