@@ -14,18 +14,18 @@ class PlantModel {
     required this.points,
     required this.photoUrl,
     required this.duration,
-    required this.stages, 
+    required this.stages,
   });
 
   // to json
   Map<String, dynamic> toJson() {
     return {
-      'id': id, 
+      'id': id,
       'name': name,
       'points': points,
       'photoUrl': photoUrl,
       'duration': duration,
-      'stages': stages, 
+      'stages': stages,
     };
   }
 
@@ -37,7 +37,7 @@ class PlantModel {
       points: json['points'] ?? 0,
       photoUrl: json['photoUrl'] ?? '',
       duration: json['duration'] ?? 0,
-      stages: List<String>.from(json['stages'] ?? []), 
+      stages: List<String>.from(json['stages'] ?? []),
     );
   }
 
@@ -48,7 +48,7 @@ class PlantModel {
     return stages[stageIndex.clamp(0, stages.length - 1)];
   }
 
-    static List<PlantModel> defaultPlants = [
+  static List<PlantModel> defaultPlants = [
     PlantModel(
       id: "dobiliukas",
       name: "Dobiliukas",
@@ -63,11 +63,11 @@ class PlantModel {
       ],
     ),
     PlantModel(
-      id: "ramunele",
-      name: "Ramunėlė",
-      points: 15,
+      id: "ramuneles",
+      name: "Ramunėlės",
+      points: 14,
       photoUrl: "https://example.com/ramunele.png",
-      duration: 15,
+      duration: 14,
       stages: [
         "https://example.com/ramunele_stage1.png",
         "https://example.com/ramunele_stage2.png",
@@ -78,8 +78,8 @@ class PlantModel {
       ],
     ),
     PlantModel(
-      id: "saulėgraža",
-      name: "Saulėgraža",
+      id: "saulegraza",
+      name: "Saulėgrąža",
       points: 45,
       photoUrl: "https://example.com/saulėgraža.png",
       duration: 45,
@@ -100,10 +100,10 @@ class PlantModel {
     ),
     PlantModel(
       id: "zibuokle",
-      name: "zibuokle",
-      points: 21,
+      name: "Žibuoklė",
+      points: 30,
       photoUrl: "https://example.com/saulėgraža.png",
-      duration: 21,
+      duration: 30,
       stages: [
         "https://example.com/saulėgraža_stage1.png",
         "https://example.com/saulėgraža_stage2.png",
@@ -117,10 +117,10 @@ class PlantModel {
     ),
     PlantModel(
       id: "orchideja",
-      name: "orchideja",
-      points: 66,
+      name: "Orchidėja",
+      points: 60,
       photoUrl: "https://example.com/saulėgraža.png",
-      duration: 66,
+      duration: 60,
       stages: [
         "https://example.com/saulėgraža_stage1.png",
         "https://example.com/saulėgraža_stage2.png",
@@ -141,9 +141,9 @@ class PlantModel {
       ],
     ),
     PlantModel(
-      id: "vyšnia",
+      id: "vysnia",
       name: "Vyšnia",
-      points: 180, // 
+      points: 180, //
       photoUrl: "https://example.com/vyšnia.png",
       duration: 180,
       stages: [
