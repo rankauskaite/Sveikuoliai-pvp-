@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../enums/mood_enum.dart';
+import 'package:sveikuoliai/enums/mood_enum.dart';
 
 class JournalModel {
   String id;

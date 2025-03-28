@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../enums/category_enum.dart'; // enumeratoriu itraukiu
+import 'package:sveikuoliai/enums/category_enum.dart'; // enumeratorių įtraukimas
 
 class GoalModel {
   String id;
@@ -12,6 +12,7 @@ class GoalModel {
   int endPoints;
   String userId;
   String plantId;
+  String? goalTypeId; // Dabar nullable
 
   GoalModel({
     required this.id,
@@ -24,9 +25,10 @@ class GoalModel {
     required this.endPoints,
     required this.userId,
     required this.plantId,
+    this.goalTypeId, // Nullable nereikia `required`
   });
 
-  /// i json
+  /// Konvertavimas į JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -39,10 +41,11 @@ class GoalModel {
       'endPoints': endPoints,
       'userId': userId,
       'plantId': plantId,
+      if (goalTypeId != null) 'goalTypeId': goalTypeId, // Neįdeda į JSON, jei `null`
     };
   }
 
-  /// is json
+  /// Konvertavimas iš JSON
   factory GoalModel.fromJson(String id, Map<String, dynamic> json) {
     return GoalModel(
       id: id,
@@ -56,6 +59,7 @@ class GoalModel {
       endPoints: json['endPoints'] ?? 0,
       userId: json['userId'] ?? '',
       plantId: json['plantId'] ?? '',
+      goalTypeId: json['goalTypeId'], // Jei nėra lauko, liks `null`
     );
   }
 }
