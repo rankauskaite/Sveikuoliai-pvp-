@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
-import 'package:sveikuoliai/models/habit_type_model.dart';
 import 'package:sveikuoliai/screens/goal.dart';
 import 'package:sveikuoliai/screens/habit.dart';
 import 'package:sveikuoliai/screens/new_goal.dart';
 import 'package:sveikuoliai/screens/new_habit.dart';
 import 'package:sveikuoliai/services/auth_service.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
-import 'package:sveikuoliai/services/habit_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
@@ -351,12 +349,17 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   Widget _habitItem(HabitInformation habit) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HabitPage(habit: habit), // Perduodame habit
-          ),
-        );
+        if (habit == null) {
+          debugPrint("KLAIDA: habit yra null!");
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HabitScreen(habit: habit!),
+            ),
+          );
+        }
+        ;
       },
       child: Column(
         children: [

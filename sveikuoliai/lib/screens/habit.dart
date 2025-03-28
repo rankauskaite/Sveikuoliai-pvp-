@@ -1,15 +1,52 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart' show DateFormat;
+//import 'package:intl/intl.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
+import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habit_progress.dart';
 import 'package:sveikuoliai/screens/update_habit_goal.dart';
+import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-class HabitPage extends StatelessWidget {
+class HabitScreen extends StatefulWidget {
   final HabitInformation habit;
-  const HabitPage({Key? key, required this.habit}) : super(key: key);
+  const HabitScreen({Key? key, required this.habit}) : super(key: key);
+
+  @override
+  _HabitScreenState createState() => _HabitScreenState();
+}
+
+class _HabitScreenState extends State<HabitScreen> {
+  PlantModel plant = PlantModel(
+      id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
+  final PlantService _plantService = PlantService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlantData();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchPlantData() async {
+    try {
+      PlantModel? fetchedPlant =
+          await _plantService.getPlantEntry(widget.habit.plantId);
+      if (fetchedPlant != null) {
+        setState(() {
+          plant = fetchedPlant;
+        });
+      } else {
+        throw Exception("Gautas `null` augalo objektas");
+      }
+    } catch (e) {
+      String message = 'Klaida gaunant augalo duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +111,7 @@ class HabitPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      habit.habitType.title,
+                      widget.habit.habitType.title,
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
@@ -84,7 +121,7 @@ class HabitPage extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Progreso indikatorius su procentais
-                    _buildProgressIndicator(0.3), // Pvz., 60% progresas
+                    _buildProgressIndicator(0.1), // Pvz., 60% progresas
 
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -105,26 +142,34 @@ class HabitPage extends StatelessWidget {
                         style: TextStyle(fontSize: 20),
                       ),
                     ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Streak: ',
+                          style:
+                              TextStyle(fontSize: 15, color: Color(0xFFB388EB)),
+                        ),
+                        Text(
+                          "0",
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF8093F1),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
                     const Text(
                       'Apie įprotį',
                       style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          // Užtikrina, kad tekstas užims visą eilutės plotį
-                          child: Text(
-                            habit.habitType.description,
-                            style: const TextStyle(fontSize: 18),
-                            softWrap:
-                                true, // Leisti tekstui kelti į kitą eilutę
-                            overflow:
-                                TextOverflow.visible, // Nesutrumpinti teksto
-                          ),
-                        ),
-                      ],
+                    Text(
+                      widget.habit.habitType.description,
+                      style: const TextStyle(fontSize: 18),
+                      softWrap: true, // Leisti tekstui kelti į kitą eilutę
+                      overflow: TextOverflow.visible, // Nesutrumpinti teksto
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -135,7 +180,69 @@ class HabitPage extends StatelessWidget {
                           style: TextStyle(fontSize: 18),
                         ),
                         Text(
-                          "${habit.endPoints} dienos",
+                          widget.habit.endPoints == 7
+                              ? "1 savaitė"
+                              : widget.habit.endPoints == 14
+                                  ? "2 savaitės"
+                                  : widget.habit.endPoints == 30
+                                      ? "1 mėnuo"
+                                      : widget.habit.endPoints == 45
+                                          ? "1,5 mėnesio"
+                                          : widget.habit.endPoints == 60
+                                              ? "2 mėnesiai"
+                                              : widget.habit.endPoints == 90
+                                                  ? "3 mėnesiai"
+                                                  : "6 mėnesiai",
+                          style:
+                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pradžios data: ',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        Text(
+                          DateFormat('yyyy MMMM d', 'lt')
+                              .format(widget.habit.startDate),
+                          style:
+                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
+                        )
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pabaigos data: ',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        Text(
+                          DateFormat('yyyy MMMM d', 'lt')
+                              .format(widget.habit.endDate),
+                          style:
+                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Augaliukas: ',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        Text(
+                          plant.name,
                           style:
                               TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
                         )
@@ -187,10 +294,10 @@ class HabitPage extends StatelessWidget {
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.local_florist,
-              size: 170,
-              color: Color(0xFFB388EB),
+            Image.asset(
+              'assets/images/${widget.habit.plantId}/2.png',
+              width: 170,
+              height: 170,
             ),
           ],
         ),
