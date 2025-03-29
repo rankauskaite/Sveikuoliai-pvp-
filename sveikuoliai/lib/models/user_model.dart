@@ -57,7 +57,7 @@ class UserModel {
       role: json['role'] ?? '',
       notifications: json['notifications'] ?? false,
       darkMode: json['darkMode'] ?? false,
-      menstrualLength: json['menstrualLength'] ?? 0,
+      menstrualLength: json['menstrualLength'] ?? 7,
       password: json['password'] ?? '',
     );
   }

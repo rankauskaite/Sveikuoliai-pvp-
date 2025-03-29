@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HabitProgress {
   String id;
-  String habitId; 
+  String habitId;
   String description;
   int points;
   int streak;
@@ -23,14 +23,14 @@ class HabitProgress {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id, 
-      'habitId': habitId, 
+      'id': id,
+      'habitId': habitId,
       'description': description,
       'points': points,
       'streak': streak,
       'plantUrl': plantUrl,
       'date': Timestamp.fromDate(date),
-      'isCompleted':isCompleted,
+      'isCompleted': isCompleted,
     };
   }
 
@@ -42,8 +42,8 @@ class HabitProgress {
       points: json['points'] ?? 0,
       streak: (json['streak'] as int?) ?? 0,
       plantUrl: json['plantUrl'] ?? '',
-      date: (json['date'] as Timestamp).toDate(), 
-      isCompleted: json['isCompleted'] ?? false,    
+      date: (json['date'] as Timestamp).toDate(),
+      isCompleted: json['isCompleted'] ?? false,
     );
   }
 
@@ -62,7 +62,7 @@ class HabitProgress {
       return 1; // pirmas streak = 1
     }
 
-    // VEIKS TIK KASDIENIAMS 
+    // VEIKS TIK KASDIENIAMS
     final lastProgress = snapshot.docs.first;
     final lastDate = (lastProgress['date'] as Timestamp).toDate();
     final today = DateTime.now();
@@ -73,7 +73,8 @@ class HabitProgress {
       return 0; // jei buvo pertrauka – reset į 0
     }
 
-    return (lastProgress['streak'] as int?) ?? 1; // jei šiandien jau atlikta – streak nesikeičia
+    return (lastProgress['streak'] as int?) ??
+        1; // jei šiandien jau atlikta – streak nesikeičia
   }
 
   /// ar paskutinė užduotis buvo vakar

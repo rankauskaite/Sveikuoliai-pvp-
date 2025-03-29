@@ -36,34 +36,34 @@ class PlantModel {
       points: json['points'] ?? 0,
       photoUrl: json['photoUrl'] ?? '',
       duration: json['duration'] ?? 0,
-      stages: _getPlantStages(id), // vidine funkcija pagal id 
+      stages: _getPlantStages(id), // vidine funkcija pagal id
     );
   }
 
   /// nuoroda i masyva(lista?) paimt reikiama paveiksliuka
   String getStageImage(int progressPercentage) {
-    if (stages.isEmpty) return photoUrl; 
+    if (stages.isEmpty) return photoUrl;
     int stageIndex = (progressPercentage / 100 * (stages.length - 1)).round();
     return stages[stageIndex.clamp(0, stages.length - 1)];
   }
 
- /// stadiju paveiklsiukai. imama pagal id
+  /// stadiju paveiklsiukai. imama pagal id
   static List<String> _getPlantStages(String id) {
     Map<String, List<String>> stagesMap = {
       "dobiliukas": [
-      "assets/images/dobiliukas/1.png",
-      "assets/images/dobiliukas/2.png",
-      "assets/images/dobiliukas/3.png",
-      "assets/images/dobiliukas/4.png",
-    ],
-    "ramuneles": [
-      "assets/images/ramuneles/1.png",
-      "assets/images/ramuneles/2.png",
-      "assets/images/ramuneles/3.png",
-      "assets/images/ramuneles/4.png",
-      "assets/images/ramuneles/5.png",
-      "assets/images/ramuneles/6.png",
-    ],
+        "assets/images/dobiliukas/1.png",
+        "assets/images/dobiliukas/2.png",
+        "assets/images/dobiliukas/3.png",
+        "assets/images/dobiliukas/4.png",
+      ],
+      "ramuneles": [
+        "assets/images/ramuneles/1.png",
+        "assets/images/ramuneles/2.png",
+        "assets/images/ramuneles/3.png",
+        "assets/images/ramuneles/4.png",
+        "assets/images/ramuneles/5.png",
+        "assets/images/ramuneles/6.png",
+      ],
       "zibuokle": [
         "assets/images/zibuokle/1.png",
         "assets/images/zibuokle/2.png",
@@ -73,7 +73,7 @@ class PlantModel {
         "assets/images/zibuokle/6.png",
         "assets/images/zibuokle/7.png",
         "assets/images/zibuokle/8.png",
-    ],
+      ],
       "saulegraza": [
         "assets/images/saulegraza/1.png",
         "assets/images/saulegraza/2.png",
@@ -87,7 +87,7 @@ class PlantModel {
         "assets/images/saulegraza/10.png",
         "assets/images/saulegraza/11.png",
         "assets/images/saulegraza/12.png",
-    ],
+      ],
       "gervuoge": [
         "assets/images/gervuoge/1.png",
         "assets/images/gervuoge/2.png",
@@ -114,8 +114,8 @@ class PlantModel {
         "assets/images/gervuoge/23.png",
         "assets/images/gervuoge/24.png",
       ],
-
       "orchideja": [
+        "assets/images/orchideja/1.png",
         "assets/images/orchideja/2.png",
         "assets/images/orchideja/3.png",
         "assets/images/orchideja/4.png",
@@ -180,7 +180,7 @@ class PlantModel {
       id: "dobiliukas",
       name: "Dobiliukas",
       points: 7,
-      photoUrl: "assets/stadijos/Dobiliukas/4.png",
+      photoUrl: "assets/images/dobiliukas/4.png",
       duration: 7,
       stages: _getPlantStages("dobiliukas"),
     ),
@@ -207,7 +207,7 @@ class PlantModel {
       photoUrl: "assets/images/gervuoge/24.png",
       duration: 90, // 3 men ? ar 92/92
       stages: _getPlantStages("gervuoge"),
-      ),
+    ),
     PlantModel(
       id: "zibuokle",
       name: "Žibuoklė",

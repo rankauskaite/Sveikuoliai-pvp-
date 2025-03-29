@@ -2,11 +2,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
-//import 'package:intl/intl.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
+import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habit_progress.dart';
 import 'package:sveikuoliai/screens/update_habit_goal.dart';
+import 'package:sveikuoliai/services/habit_progress_services.dart';
+import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -23,11 +25,26 @@ class _HabitScreenState extends State<HabitScreen> {
   PlantModel plant = PlantModel(
       id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
   final PlantService _plantService = PlantService();
+  final HabitProgressService _habitProgressService = HabitProgressService();
+  HabitProgress habitProgress = HabitProgress(
+      id: '',
+      habitId: '',
+      description: '',
+      points: 0,
+      plantUrl: '',
+      date: DateTime.now(),
+      isCompleted: false);
 
   @override
   void initState() {
     super.initState();
-    _fetchPlantData();
+    _loadData();
+  }
+
+  // Funkcija duomenims užkrauti
+  Future<void> _loadData() async {
+    await _fetchPlantData();
+    await _fetchHabitProgress();
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -46,6 +63,28 @@ class _HabitScreenState extends State<HabitScreen> {
       String message = 'Klaida gaunant augalo duomenis ❌';
       showCustomSnackBar(context, message, false);
     }
+  }
+
+  Future<void> _fetchHabitProgress() async {
+    try {
+      HabitProgress? fetchedHabitProgress =
+          await _habitProgressService.getLatestHabitProgress(widget.habit.id);
+
+      if (fetchedHabitProgress != null) {
+        setState(() {
+          habitProgress = fetchedHabitProgress;
+        });
+      } else {
+        //throw Exception("Gautas `null` įpročio progreso objektas");
+      }
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
+    }
+  }
+
+  double _calculateProgress() {
+    if (widget.habit.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
+    return habitProgress.points / widget.habit.endPoints;
   }
 
   @override
@@ -121,7 +160,8 @@ class _HabitScreenState extends State<HabitScreen> {
                     const SizedBox(height: 20),
 
                     // Progreso indikatorius su procentais
-                    _buildProgressIndicator(0.7), // Pvz., 60% progresas
+                    _buildProgressIndicator(
+                        _calculateProgress()), // Pvz., 60% progresas
 
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -129,8 +169,9 @@ class _HabitScreenState extends State<HabitScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  const HabitProgressScreen()),
+                              builder: (context) => HabitProgressScreen(
+                                    habit: widget.habit,
+                                  )),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -151,7 +192,11 @@ class _HabitScreenState extends State<HabitScreen> {
                               TextStyle(fontSize: 15, color: Color(0xFFB388EB)),
                         ),
                         Text(
-                          "0",
+                          (habitProgress.date.day == DateTime.now().day ||
+                                  habitProgress.date.day ==
+                                      DateTime.now().day - 1)
+                              ? habitProgress.streak.toString()
+                              : "0",
                           style: TextStyle(
                             fontSize: 15,
                             color: Color(0xFF8093F1),
@@ -268,6 +313,10 @@ class _HabitScreenState extends State<HabitScreen> {
 
   // Progreso indikatorius su procentais
   Widget _buildProgressIndicator(double progress) {
+    String plantType =
+        widget.habit.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
+    int userPoints = habitProgress.points;
+    String imagePath = PlantImageService.getPlantImage(plantType, userPoints);
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -295,7 +344,7 @@ class _HabitScreenState extends State<HabitScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/images/${widget.habit.plantId}/2.png',
+              imagePath,
               width: 170,
               height: 170,
             ),
@@ -351,10 +400,6 @@ class PercentagePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = Colors.deepPurple
-      ..style = PaintingStyle.fill;
-
     final TextPainter textPainter = TextPainter(
       text: TextSpan(
         text: '${(progress * 100).toStringAsFixed(0)}%',
