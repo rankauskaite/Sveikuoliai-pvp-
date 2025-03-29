@@ -33,9 +33,9 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
   void _loadProgress() async {
     final habitProgressService = HabitProgressService();
     HabitProgress? progress =
-        await habitProgressService.getTodayHabitProgress(widget.habit.id);
+        await habitProgressService.getTodayHabitProgress(widget.habit.habitModel.id);
     HabitProgress? lastProgress =
-        await habitProgressService.getLatestHabitProgress(widget.habit.id);
+        await habitProgressService.getLatestHabitProgress(widget.habit.habitModel.id);
 
     if (progress != null) {
       setState(() {
@@ -47,7 +47,7 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
     } else if (lastProgress != null) {
       setState(
         () {
-          pointss = lastProgress!.points;
+          pointss = lastProgress.points;
           if (lastProgress.date.day == DateTime.now().day - 1) {
             streakk = lastProgress.streak;
           }
@@ -63,27 +63,27 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
 
     HabitProgress habitProgress = HabitProgress(
       id: _currentProgressId ??
-          '${widget.habit.habitTypeId}${widget.habit.userId[0].toUpperCase() + widget.habit.userId.substring(1)}${DateTime.now()}',
-      habitId: widget.habit.id,
+          '${widget.habit.habitModel.habitTypeId}${widget.habit.habitModel.userId[0].toUpperCase() + widget.habit.habitModel.userId.substring(1)}${DateTime.now()}',
+      habitId: widget.habit.habitModel.id,
       description: _progressController.text,
       points: _currentProgressId != null ? pointss : ++pointss,
       streak: _currentProgressId != null ? streakk : ++streakk,
-      plantUrl: PlantImageService.getPlantImage(widget.habit.plantId, pointss),
+      plantUrl: PlantImageService.getPlantImage(widget.habit.habitModel.plantId, pointss),
       date: DateTime.now(),
       isCompleted: true,
     );
 
     HabitModel habit = HabitModel(
-        id: widget.habit.id,
-        startDate: widget.habit.startDate,
-        endDate: widget.habit.endDate,
+        id: widget.habit.habitModel.id,
+        startDate: widget.habit.habitModel.startDate,
+        endDate: widget.habit.habitModel.endDate,
         points: habitProgress.points,
-        category: widget.habit.category,
-        endPoints: widget.habit.endPoints,
-        repetition: widget.habit.repetition,
-        userId: widget.habit.userId,
-        habitTypeId: widget.habit.habitTypeId,
-        plantId: widget.habit.plantId);
+        category: widget.habit.habitModel.category,
+        endPoints: widget.habit.habitModel.endPoints,
+        repetition: widget.habit.habitModel.repetition,
+        userId: widget.habit.habitModel.userId,
+        habitTypeId: widget.habit.habitModel.habitTypeId,
+        plantId: widget.habit.habitModel.plantId);
 
     if (_currentProgressId != null) {
       await habitProgressService.updateHabitProgressEntry(habitProgress);

@@ -141,7 +141,7 @@ class _HabitCardState extends State<HabitCard> {
   DateTime _startDate = DateTime.now(); // Pradžios data
 
   final TextEditingController _habitNameController = TextEditingController();
-  TextEditingController _dateController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
 
   @override
   void initState() {

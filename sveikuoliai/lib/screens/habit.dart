@@ -53,7 +53,7 @@ class _HabitScreenState extends State<HabitScreen> {
   Future<void> _fetchPlantData() async {
     try {
       PlantModel? fetchedPlant =
-          await _plantService.getPlantEntry(widget.habit.plantId);
+          await _plantService.getPlantEntry(widget.habit.habitModel.plantId);
       if (fetchedPlant != null) {
         setState(() {
           plant = fetchedPlant;
@@ -70,7 +70,7 @@ class _HabitScreenState extends State<HabitScreen> {
   Future<void> _fetchHabitProgress() async {
     try {
       HabitProgress? fetchedHabitProgress =
-          await _habitProgressService.getLatestHabitProgress(widget.habit.id);
+          await _habitProgressService.getLatestHabitProgress(widget.habit.habitModel.id);
 
       if (fetchedHabitProgress != null) {
         setState(() {
@@ -85,15 +85,15 @@ class _HabitScreenState extends State<HabitScreen> {
   }
 
   double _calculateProgress() {
-    if (widget.habit.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
-    return habitProgress.points / widget.habit.endPoints;
+    if (widget.habit.habitModel.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
+    return habitProgress.points / widget.habit.habitModel.endPoints;
   }
 
   Future<void> _deleteHabit() async {
     try {
       final habitService = HabitService();
       await habitService
-          .deleteHabitEntry(widget.habit.id); // Ištrinti įprotį iš serverio
+          .deleteHabitEntry(widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
@@ -325,17 +325,17 @@ class _HabitScreenState extends State<HabitScreen> {
                           style: TextStyle(fontSize: 18),
                         ),
                         Text(
-                          widget.habit.endPoints == 7
+                          widget.habit.habitModel.endPoints == 7
                               ? "1 savaitė"
-                              : widget.habit.endPoints == 14
+                              : widget.habit.habitModel.endPoints == 14
                                   ? "2 savaitės"
-                                  : widget.habit.endPoints == 30
+                                  : widget.habit.habitModel.endPoints == 30
                                       ? "1 mėnuo"
-                                      : widget.habit.endPoints == 45
+                                      : widget.habit.habitModel.endPoints == 45
                                           ? "1,5 mėnesio"
-                                          : widget.habit.endPoints == 60
+                                          : widget.habit.habitModel.endPoints == 60
                                               ? "2 mėnesiai"
-                                              : widget.habit.endPoints == 90
+                                              : widget.habit.habitModel.endPoints == 90
                                                   ? "3 mėnesiai"
                                                   : "6 mėnesiai",
                           style:
@@ -355,7 +355,7 @@ class _HabitScreenState extends State<HabitScreen> {
                         ),
                         Text(
                           DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.habit.startDate),
+                              .format(widget.habit.habitModel.startDate),
                           style:
                               TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
                         )
@@ -370,7 +370,7 @@ class _HabitScreenState extends State<HabitScreen> {
                         ),
                         Text(
                           DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.habit.endDate),
+                              .format(widget.habit.habitModel.endDate),
                           style:
                               TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
                         )
@@ -414,7 +414,7 @@ class _HabitScreenState extends State<HabitScreen> {
   // Progreso indikatorius su procentais
   Widget _buildProgressIndicator(double progress) {
     String plantType =
-        widget.habit.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
+        widget.habit.habitModel.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
     int userPoints = habitProgress.points;
     String imagePath = PlantImageService.getPlantImage(plantType, userPoints);
     return Stack(

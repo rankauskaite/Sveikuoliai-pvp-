@@ -3,7 +3,7 @@ import 'package:sveikuoliai/models/goal_task_model.dart';
 
 class GoalTaskService {
   final CollectionReference goalTaskCollection =
-      FirebaseFirestore.instance.collection('goalTasks');
+      FirebaseFirestore.instance.collection('goal_tasks');
 
   // create
   Future<void> createGoalTaskEntry(GoalTask goalTask) async {
@@ -17,6 +17,17 @@ class GoalTaskService {
     return GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>);
   }
 
+  // read all goal's tasks
+  Future<List<GoalTask>> getGoalTasks(String goalId) async {
+    QuerySnapshot snapshot =
+        await goalTaskCollection.where('goalId', isEqualTo: goalId).get();
+
+    return snapshot.docs
+        .map((doc) =>
+            GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
   // update
   Future<void> updateGoalTaskEntry(GoalTask goalTask) async {
     Map<String, dynamic> data = goalTask.toJson();
@@ -24,8 +35,29 @@ class GoalTaskService {
     await goalTaskCollection.doc(goalTask.id).update(data);
   }
 
+  Future<void> updateGoalTaskState(
+      String id, bool isCompleted, int points) async {
+    // Atnaujinimas į duomenų bazę, pavyzdžiui, Firebase
+    await goalTaskCollection.doc(id).update({
+      'isCompleted': isCompleted,
+      'points': points,
+    });
+  }
+
   // delete
   Future<void> deleteGoalTaskEntry(String id) async {
     await goalTaskCollection.doc(id).delete();
+  }
+
+  Future<void> deleteGoalTasks(String goalId) async {
+    // Atlikti užklausą, kad gautum visus įrašus su tokiu habitId
+    var snapshot = await goalTaskCollection
+        .where('goalId', isEqualTo: goalId) // Filtruoti pagal habitId
+        .get();
+
+    // Ištrinti visus atitinkančius įrašus
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete(); // Ištrina kiekvieną dokumentą
+    }
   }
 }
