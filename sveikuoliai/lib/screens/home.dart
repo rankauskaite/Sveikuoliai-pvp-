@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
-import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
@@ -139,13 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 250,
                             height: 150,
                             color: const Color(0xFFB388EB),
-                            child: const Center(
-                              child: Text(
-                                'PREMIUM VERSIJOS REKLAMA',
-                                style: TextStyle(
-                                    fontSize: 30, color: Colors.white),
-                                textAlign: TextAlign.center,
-                              ),
+                            child: Image.asset(
+                              'assets/gif/premium.gif',
+                              fit: BoxFit.cover, // Kad užpildytų visą plotą
                             ),
                           ),
                         ],

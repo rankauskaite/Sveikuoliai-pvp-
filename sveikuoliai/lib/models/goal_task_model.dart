@@ -5,16 +5,18 @@ class GoalTask {
   String goalId;
   bool isCompleted;
   DateTime date;
+  String title;
   String description;
   int points;
 
   GoalTask({
     required this.id,
     required this.goalId,
-    required this.isCompleted,
+    this.isCompleted = false,
+    required this.title,
     required this.description,
     required this.date,
-    required this.points,
+    this.points = 0,
   });
 
   // i json
@@ -23,6 +25,7 @@ class GoalTask {
       'id': id, // Pridedame ID
       'goalId': goalId,
       'isCompleted': isCompleted,
+      'title': title,
       'description': description,
       'date': Timestamp.fromDate(date),
       'points': points,
@@ -35,6 +38,7 @@ class GoalTask {
       id: id,
       goalId: json['goalId'] ?? '',
       isCompleted: json['isCompleted'] ?? false,
+      title: json['title'] ?? '',
       description: json['description'] ?? '',
       date: json['date'] is Timestamp
           ? (json['date'] as Timestamp).toDate()

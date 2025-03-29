@@ -2,11 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
-//import 'package:intl/intl.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
+import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habit_progress.dart';
+import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/screens/update_habit_goal.dart';
+import 'package:sveikuoliai/services/habit_progress_services.dart';
+import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -23,18 +27,33 @@ class _HabitScreenState extends State<HabitScreen> {
   PlantModel plant = PlantModel(
       id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
   final PlantService _plantService = PlantService();
+  final HabitProgressService _habitProgressService = HabitProgressService();
+  HabitProgress habitProgress = HabitProgress(
+      id: '',
+      habitId: '',
+      description: '',
+      points: 0,
+      plantUrl: '',
+      date: DateTime.now(),
+      isCompleted: false);
 
   @override
   void initState() {
     super.initState();
-    _fetchPlantData();
+    _loadData();
+  }
+
+  // Funkcija duomenims užkrauti
+  Future<void> _loadData() async {
+    await _fetchPlantData();
+    await _fetchHabitProgress();
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchPlantData() async {
     try {
       PlantModel? fetchedPlant =
-          await _plantService.getPlantEntry(widget.habit.plantId);
+          await _plantService.getPlantEntry(widget.habit.habitModel.plantId);
       if (fetchedPlant != null) {
         setState(() {
           plant = fetchedPlant;
@@ -45,6 +64,44 @@ class _HabitScreenState extends State<HabitScreen> {
     } catch (e) {
       String message = 'Klaida gaunant augalo duomenis ❌';
       showCustomSnackBar(context, message, false);
+    }
+  }
+
+  Future<void> _fetchHabitProgress() async {
+    try {
+      HabitProgress? fetchedHabitProgress =
+          await _habitProgressService.getLatestHabitProgress(widget.habit.habitModel.id);
+
+      if (fetchedHabitProgress != null) {
+        setState(() {
+          habitProgress = fetchedHabitProgress;
+        });
+      } else {
+        //throw Exception("Gautas `null` įpročio progreso objektas");
+      }
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
+    }
+  }
+
+  double _calculateProgress() {
+    if (widget.habit.habitModel.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
+    return habitProgress.points / widget.habit.habitModel.endPoints;
+  }
+
+  Future<void> _deleteHabit() async {
+    try {
+      final habitService = HabitService();
+      await habitService
+          .deleteHabitEntry(widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
+      // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+      ); // Grįžti atgal į pagrindinį ekraną
+      showCustomSnackBar(context, "Įprotis sėkmingai ištrintas ✅", true);
+    } catch (e) {
+      showCustomSnackBar(context, "Klaida trinant įprotį ❌", false);
     }
   }
 
@@ -78,7 +135,11 @@ class _HabitScreenState extends State<HabitScreen> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => HabitsGoalsScreen()),
+                            );
                           },
                           icon: const Icon(
                             Icons.arrow_back_ios,
@@ -92,7 +153,7 @@ class _HabitScreenState extends State<HabitScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      const UpdateHabitScreen()),
+                                      UpdateHabitScreen(habit: widget.habit)),
                             );
                           },
                           icon: Icon(
@@ -101,7 +162,85 @@ class _HabitScreenState extends State<HabitScreen> {
                           ),
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Rodyti dialogą su klausimu
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text.rich(
+                                    TextSpan(
+                                      text:
+                                          "${widget.habit.habitType.title}\n", // Pirmoji dalis (pavadinimas)
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 25,
+                                          color: Colors
+                                              .deepPurple), // Pavadinimo stilius
+                                      children: [
+                                        TextSpan(
+                                          text:
+                                              "Ar tikrai norite ištrinti šį įprotį?", // Antra dalis
+                                          style: TextStyle(
+                                            fontWeight: FontWeight
+                                                .normal, // Normalus svoris
+                                            color: Colors.black,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  content: Text(
+                                      "Šio įpročio ištrynimas bus negrįžtamas."),
+                                  actions: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .center, // Centruoja mygtukus
+                                      children: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(
+                                                context); // Uždaro dialogą (Ne pasirinkimas)
+                                          },
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: Colors.deepPurple
+                                                .withOpacity(
+                                                    0.2), // Neryškus fonas
+                                          ),
+                                          child: Text(
+                                            "Ne",
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                            width: 20), // Tarpas tarp mygtukų
+                                        TextButton(
+                                          onPressed: () {
+                                            _deleteHabit(); // Ištrina įprotį
+                                            Navigator.pop(
+                                                context); // Uždarome dialogą
+                                          },
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: Colors.red
+                                                .withOpacity(
+                                                    0.2), // Neryškus fonas
+                                          ),
+                                          child: Text(
+                                            "Taip",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                           icon: Icon(
                             Icons.remove_circle_outline,
                             size: 30,
@@ -121,7 +260,8 @@ class _HabitScreenState extends State<HabitScreen> {
                     const SizedBox(height: 20),
 
                     // Progreso indikatorius su procentais
-                    _buildProgressIndicator(0.1), // Pvz., 60% progresas
+                    _buildProgressIndicator(
+                        _calculateProgress()), // Pvz., 60% progresas
 
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -129,8 +269,9 @@ class _HabitScreenState extends State<HabitScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  const HabitProgressScreen()),
+                              builder: (context) => HabitProgressScreen(
+                                    habit: widget.habit,
+                                  )),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -151,7 +292,11 @@ class _HabitScreenState extends State<HabitScreen> {
                               TextStyle(fontSize: 15, color: Color(0xFFB388EB)),
                         ),
                         Text(
-                          "0",
+                          (habitProgress.date.day == DateTime.now().day ||
+                                  habitProgress.date.day ==
+                                      DateTime.now().day - 1)
+                              ? habitProgress.streak.toString()
+                              : "0",
                           style: TextStyle(
                             fontSize: 15,
                             color: Color(0xFF8093F1),
@@ -180,17 +325,17 @@ class _HabitScreenState extends State<HabitScreen> {
                           style: TextStyle(fontSize: 18),
                         ),
                         Text(
-                          widget.habit.endPoints == 7
+                          widget.habit.habitModel.endPoints == 7
                               ? "1 savaitė"
-                              : widget.habit.endPoints == 14
+                              : widget.habit.habitModel.endPoints == 14
                                   ? "2 savaitės"
-                                  : widget.habit.endPoints == 30
+                                  : widget.habit.habitModel.endPoints == 30
                                       ? "1 mėnuo"
-                                      : widget.habit.endPoints == 45
+                                      : widget.habit.habitModel.endPoints == 45
                                           ? "1,5 mėnesio"
-                                          : widget.habit.endPoints == 60
+                                          : widget.habit.habitModel.endPoints == 60
                                               ? "2 mėnesiai"
-                                              : widget.habit.endPoints == 90
+                                              : widget.habit.habitModel.endPoints == 90
                                                   ? "3 mėnesiai"
                                                   : "6 mėnesiai",
                           style:
@@ -210,7 +355,7 @@ class _HabitScreenState extends State<HabitScreen> {
                         ),
                         Text(
                           DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.habit.startDate),
+                              .format(widget.habit.habitModel.startDate),
                           style:
                               TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
                         )
@@ -225,7 +370,7 @@ class _HabitScreenState extends State<HabitScreen> {
                         ),
                         Text(
                           DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.habit.endDate),
+                              .format(widget.habit.habitModel.endDate),
                           style:
                               TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
                         )
@@ -268,6 +413,10 @@ class _HabitScreenState extends State<HabitScreen> {
 
   // Progreso indikatorius su procentais
   Widget _buildProgressIndicator(double progress) {
+    String plantType =
+        widget.habit.habitModel.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
+    int userPoints = habitProgress.points;
+    String imagePath = PlantImageService.getPlantImage(plantType, userPoints);
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -295,7 +444,7 @@ class _HabitScreenState extends State<HabitScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/images/${widget.habit.plantId}/2.png',
+              imagePath,
               width: 170,
               height: 170,
             ),
@@ -351,10 +500,6 @@ class PercentagePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = Colors.deepPurple
-      ..style = PaintingStyle.fill;
-
     final TextPainter textPainter = TextPainter(
       text: TextSpan(
         text: '${(progress * 100).toStringAsFixed(0)}%',
@@ -367,35 +512,31 @@ class PercentagePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    // Apskaičiuojame kampą pagal progresą (360 laipsnių apskritimas)
-    double angle = progress * 2 * pi; // Kampas pagal progresą (procentai)
+    // Kampas pagal progresą (0% = -90° (aukščiausias taškas), 100% = pilnas apskritimas)
+    double angle = -pi / 2 + progress * 2 * pi;
 
-    // Išdėstome tekstą aplink apskritimą, t.y., ant progreso juostos
-    double x = (size.width / 2) +
-        (size.width / 2) * 0.6 * cos(angle); // X koordinačių skaičiavimas
-    double y = (size.height / 2) +
-        (size.height / 2) * 0.6 * sin(angle); // Y koordinačių skaičiavimas
+    // Apskaičiuojame tekstą ant apskritimo krašto
+    double radius = size.width / 2; // Pusė apskritimo skersmens
+    double textX = size.width / 2 + radius * cos(angle);
+    double textY = size.height / 2 + radius * sin(angle);
 
-    // Pakeiskime tekstą, kad jis būtų apatinėje pusėje
-    y = (size.height / 2) +
-        (size.height / 2) *
-            0.9 *
-            sin(angle); // padidinkime atstumą nuo centro, kad tekstas būtų žemiau
-    x = (size.width / 1);
-    y = (size.height / 1.5);
+    // Šiek tiek patraukiam procentus nuo krašto, kad jie nesiliestų prie linijos
+    double textOffset = 10;
+    textX += textOffset * cos(angle);
+    textY += textOffset * sin(angle);
 
-    // Nustatome tekstą pagal progresą
+    // Nubrėžiame procentus
     textPainter.paint(
       canvas,
       Offset(
-        x - textPainter.width / 2, // Pritaikome tekstą pagal jo plotį
-        y - textPainter.height / 2, // Pritaikome tekstą pagal jo aukštį
+        textX - textPainter.width / 2, // Centruojame tekstą X ašyje
+        textY - textPainter.height / 2, // Centruojame tekstą Y ašyje
       ),
     );
   }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
+    return true;
   }
 }

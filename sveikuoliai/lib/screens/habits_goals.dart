@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/screens/goal.dart';
 import 'package:sveikuoliai/screens/habit.dart';
 import 'package:sveikuoliai/screens/new_goal.dart';
 import 'package:sveikuoliai/screens/new_habit.dart';
-import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
+import 'package:sveikuoliai/services/goal_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
@@ -22,7 +25,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   String userUsername = "";
   final AuthService _authService = AuthService();
   List<HabitInformation> userHabits = [];
+  List<GoalInformation> userGoals = [];
   final HabitService _habitService = HabitService();
+  final GoalService _goalService = GoalService();
 
   @override
   void initState() {
@@ -40,6 +45,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         },
       );
       await _fetchUserHabits(userUsername);
+      await _fetchUserGoals(userUsername);
     } catch (e) {
       String message = 'Klaida gaunant duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -58,6 +64,20 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
       });
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant įpročius ❌', false);
+    }
+  }
+
+  Future<void> _fetchUserGoals(String username) async {
+    try {
+      // Gaukime vartotojo įpročius
+      List<GoalInformation> goals = await _goalService.getUserGoals(username);
+
+      // Atnaujiname būsena su naujais duomenimis
+      setState(() {
+        userGoals = goals;
+      });
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant tikslus ❌', false);
     }
   }
 
@@ -256,7 +276,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             ),
           ],
         ),
-        ...userHabits.map((habit) => _habitItem(habit)).toList(),
+        ...userHabits.map((habit) => _habitItem(habit)),
       ],
     );
   }
@@ -338,10 +358,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             ),
           ],
         ),
-        _goalItem("Tikslo pavadinimas"),
-        _goalItem("Tikslo pavadinimas"),
-        _goalItem("Tikslo pavadinimas"),
-        _goalItem("Tikslo pavadinimas"),
+        ...userGoals.map((goal) => _goalItem(goal)),
       ],
     );
   }
@@ -349,16 +366,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   Widget _habitItem(HabitInformation habit) {
     return GestureDetector(
       onTap: () {
-        if (habit == null) {
-          debugPrint("KLAIDA: habit yra null!");
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HabitScreen(habit: habit!),
-            ),
-          );
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HabitScreen(habit: habit),
+          ),
+        );
         ;
       },
       child: Column(
@@ -371,10 +384,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 // Ikona / Paveikslėlis kairėje
                 ClipRRect(
                   borderRadius: BorderRadius.circular(50), // Apvalūs kampai
-                  child: Icon(
-                    Icons.circle,
-                    size: 80,
-                    color: Color(0xFFD9D9D9),
+                  child: Image.asset(
+                    PlantImageService.getPlantImage(
+                        habit.habitModel.plantId, habit.habitModel.points),
+                    width: 80,
+                    height: 80,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -413,14 +427,14 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
     );
   }
 
-  Widget _goalItem(String title) {
+  Widget _goalItem(GoalInformation goal) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) =>
-                const GoalScreen(), // Pakeisk į tinkamą puslapį
+                GoalScreen(goal: goal), // Pakeisk į tinkamą puslapį
           ),
         );
       },
@@ -434,10 +448,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 // Ikona / Paveikslėlis kairėje
                 ClipRRect(
                   borderRadius: BorderRadius.circular(50), // Apvalūs kampai
-                  child: Icon(
-                    Icons.circle,
-                    size: 80,
-                    color: Color(0xFFD9D9D9),
+                  child: Image.asset(
+                    PlantImageService.getPlantImage(
+                        goal.goalModel.plantId, goal.goalModel.points),
+                    width: 80,
+                    height: 80,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -447,7 +462,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        goal.goalType.title,
                         style: const TextStyle(
                           fontSize: 18,
                           color: Color(0xFF72ddf7),
@@ -455,8 +470,8 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      const Text(
-                        "Detalesnė informacija\nKą norėsime parašyti?",
+                      Text(
+                        goal.goalType.description,
                         style: TextStyle(
                             fontStyle: FontStyle.italic, color: Colors.black54),
                       ),

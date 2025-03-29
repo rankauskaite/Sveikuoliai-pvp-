@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
-import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/screens/habits_goals.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -142,7 +143,7 @@ class _GoalCardState extends State<GoalCard> {
   DateTime _startDate = DateTime.now(); // Pradžios data
 
   final TextEditingController _goalNameController = TextEditingController();
-  TextEditingController _dateController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
 
   @override
   void initState() {
@@ -263,6 +264,8 @@ class _GoalCardState extends State<GoalCard> {
                         '1 savaitė',
                         '2 savaitės',
                         '1 mėnuo',
+                        '1,5 menesio',
+                        '2 mėnesiai',
                         '3 mėnesiai',
                         '6 mėnesiai'
                       ].map<DropdownMenuItem<String>>((String value) {
@@ -306,7 +309,13 @@ class _GoalCardState extends State<GoalCard> {
                     ElevatedButton(
                       onPressed: () {
                         _submitGoal();
-                        Navigator.pop(context);
+                        _dateController.text =
+                            _startDate.toString().substring(0, 10);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => HabitsGoalsScreen()),
+                        );
                       },
                       child: const Text('Išsaugoti'),
                     ),
@@ -471,7 +480,19 @@ class _GoalCardState extends State<GoalCard> {
                       : 180,
       userId: userUsername,
       goalTypeId: goalId.trim(),
-      plantId: '',
+      plantId: _selectedDuration == '1 savaitė'
+          ? 'dobiliukas'
+          : _selectedDuration == '2 savaitės'
+              ? 'ramuneles'
+              : _selectedDuration == '1 mėnuo'
+                  ? 'zibuokle'
+                  : _selectedDuration == '1,5 menesio'
+                      ? 'saulegraza'
+                      : _selectedDuration == '2 mėnesiai'
+                          ? 'orchideja'
+                          : _selectedDuration == '3 mėnesiai'
+                              ? 'gervuoge'
+                              : 'vysnia',
       isCountable: widget.isCountable,
     );
 

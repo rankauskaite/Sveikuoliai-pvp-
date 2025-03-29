@@ -1,20 +1,115 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
+import 'package:sveikuoliai/models/habit_progress_model.dart';
+import 'package:sveikuoliai/screens/habit.dart';
+import 'package:sveikuoliai/services/habit_progress_services.dart'; // <-- Pridėtas servisų importas
+import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class HabitProgressScreen extends StatefulWidget {
-  const HabitProgressScreen({super.key});
+  final HabitInformation habit;
+  const HabitProgressScreen({Key? key, required this.habit}) : super(key: key);
 
   @override
   _HabitProgressScreenState createState() => _HabitProgressScreenState();
 }
 
 class _HabitProgressScreenState extends State<HabitProgressScreen> {
-  bool _isChecked = false; // Pradinis checkbox būsenos nustatymas
+  final TextEditingController _progressController = TextEditingController();
+  String? _currentProgressId; // Saugo esamo progreso ID, jei jis egzistuoja
+  int pointss = 0;
+  int streakk = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
+  // Užkrauna esamą progresą
+  void _loadProgress() async {
+    final habitProgressService = HabitProgressService();
+    HabitProgress? progress =
+        await habitProgressService.getTodayHabitProgress(widget.habit.habitModel.id);
+    HabitProgress? lastProgress =
+        await habitProgressService.getLatestHabitProgress(widget.habit.habitModel.id);
+
+    if (progress != null) {
+      setState(() {
+        _progressController.text = progress.description;
+        _currentProgressId = progress.id; // Išsaugome ID atnaujinimui
+        pointss = lastProgress!.points;
+        streakk = lastProgress.streak;
+      });
+    } else if (lastProgress != null) {
+      setState(
+        () {
+          pointss = lastProgress.points;
+          if (lastProgress.date.day == DateTime.now().day - 1) {
+            streakk = lastProgress.streak;
+          }
+        },
+      );
+    }
+  }
+
+  // Išsaugo arba atnaujina progresą
+  void _saveProgress() async {
+    final habitProgressService = HabitProgressService();
+    final habitService = HabitService();
+
+    HabitProgress habitProgress = HabitProgress(
+      id: _currentProgressId ??
+          '${widget.habit.habitModel.habitTypeId}${widget.habit.habitModel.userId[0].toUpperCase() + widget.habit.habitModel.userId.substring(1)}${DateTime.now()}',
+      habitId: widget.habit.habitModel.id,
+      description: _progressController.text,
+      points: _currentProgressId != null ? pointss : ++pointss,
+      streak: _currentProgressId != null ? streakk : ++streakk,
+      plantUrl: PlantImageService.getPlantImage(widget.habit.habitModel.plantId, pointss),
+      date: DateTime.now(),
+      isCompleted: true,
+    );
+
+    HabitModel habit = HabitModel(
+        id: widget.habit.habitModel.id,
+        startDate: widget.habit.habitModel.startDate,
+        endDate: widget.habit.habitModel.endDate,
+        points: habitProgress.points,
+        category: widget.habit.habitModel.category,
+        endPoints: widget.habit.habitModel.endPoints,
+        repetition: widget.habit.habitModel.repetition,
+        userId: widget.habit.habitModel.userId,
+        habitTypeId: widget.habit.habitModel.habitTypeId,
+        plantId: widget.habit.habitModel.plantId);
+
+    if (_currentProgressId != null) {
+      await habitProgressService.updateHabitProgressEntry(habitProgress);
+      if (mounted) {
+        showCustomSnackBar(context, 'Progresas atnaujintas! ✅', true);
+      }
+    } else {
+      await habitProgressService.createHabitProgressEntry(habitProgress);
+      await habitService.updateHabitEntry(habit);
+      if (mounted) {
+        setState(() {
+          _currentProgressId = habitProgress.id;
+        });
+        showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _progressController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Gauti dabartinę datą ir laiką
     String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     return Scaffold(
@@ -53,16 +148,14 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  const SizedBox(height: 20),
                   Text(
                     'Atnaujink savo progresą',
                     style: TextStyle(fontSize: 18),
                   ),
-                  const Text(
-                    'Įpročio pavadinimas',
-                    style: TextStyle(
+                  Text(
+                    widget.habit.habitType.title,
+                    style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
                     ),
@@ -82,7 +175,7 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
                     children: [
                       SizedBox(width: 10),
                       Text(
-                        'Informacija:',
+                        'Šios dienos progresas:',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -92,10 +185,15 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Įvedimo laukas
+                  // Įvedimo laukas su esamu progresu
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: TextField(
+                      controller: _progressController,
+                      maxLines: null, // Automatinis dydžio keitimas
+                      minLines: 1,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
                       decoration: InputDecoration(
                         labelText: 'Įveskite informaciją',
                         labelStyle: TextStyle(
@@ -107,35 +205,23 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
                     ),
                   ),
 
-                  // Checkbox su tekstu šalia
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: CheckboxListTile(
-                      title: Text(
-                        'Patvirtinti informaciją',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      value: _isChecked,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isChecked = value ?? false;
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity.leading,
-                      activeColor: Colors.deepPurple,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 100,
-                  ),
+                  const SizedBox(height: 20),
+
+                  // Išsaugojimo mygtukas
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      _saveProgress();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => HabitScreen(
+                                  habit: widget.habit,
+                                )),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(200, 50),
-                      iconColor: const Color(0xFFB388EB), // Violetinė spalva
+                      iconColor: const Color(0xFFB388EB),
                     ),
                     child: const Text(
                       'Išsaugoti',
@@ -145,7 +231,7 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
                 ],
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
+            const BottomNavigation(),
           ],
         ),
       ),

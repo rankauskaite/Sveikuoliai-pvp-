@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sveikuoliai/enums/category_enum.dart'; // enumeratorių įtraukimas
+import 'package:sveikuoliai/enums/category_enum.dart';
+import 'package:sveikuoliai/models/goal_type_model.dart'; // enumeratorių įtraukimas
 
 class GoalModel {
   String id;
@@ -7,7 +8,6 @@ class GoalModel {
   DateTime endDate;
   int points;
   bool isCountable;
-  String goalTypeId;
   CategoryType category;
   int endPoints;
   String userId;
@@ -20,7 +20,6 @@ class GoalModel {
     required this.endDate,
     required this.points,
     required this.isCountable,
-    required this.goalTypeId,
     required this.category,
     required this.endPoints,
     required this.userId,
@@ -36,12 +35,12 @@ class GoalModel {
       'endDate': Timestamp.fromDate(endDate),
       'points': points,
       'isCountable': isCountable,
-      'goalTypeId': goalTypeId,
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'userId': userId,
       'plantId': plantId,
-      if (goalTypeId != null) 'goalTypeId': goalTypeId, // Neįdeda į JSON, jei `null`
+      if (goalTypeId != null)
+        'goalTypeId': goalTypeId, // Neįdeda į JSON, jei `null`
     };
   }
 
@@ -53,13 +52,30 @@ class GoalModel {
       endDate: (json['endDate'] as Timestamp).toDate(),
       points: json['points'] ?? 0,
       isCountable: json['isCountable'] ?? false,
-      goalTypeId: json['goalTypeId'] ?? '',
       category: CategoryTypeExtension.fromJson(
           json['category'] ?? ''), // Enum iš string
       endPoints: json['endPoints'] ?? 0,
       userId: json['userId'] ?? '',
       plantId: json['plantId'] ?? '',
       goalTypeId: json['goalTypeId'], // Jei nėra lauko, liks `null`
+    );
+  }
+}
+
+class GoalInformation {
+  GoalModel goalModel;
+  GoalType goalType;
+
+  GoalInformation({
+    required this.goalModel,
+    required this.goalType,
+  });
+
+  /// Konvertavimas iš JSON
+  factory GoalInformation.fromJson(GoalModel goalModel, GoalType goalType) {
+    return GoalInformation(
+      goalModel: goalModel,
+      goalType: goalType,
     );
   }
 }
