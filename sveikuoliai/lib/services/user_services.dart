@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserService {
   final CollectionReference userCollection =
@@ -11,12 +12,15 @@ class UserService {
       DocumentSnapshot doc = await userCollection.doc(user.username).get();
       if (doc.exists) return false; // Jei username jau užimtas, false
 
+      // 1. useris Firebase authentification
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: user.email,
+        password: user.password,
+      );
+      // 2. useris į duombazę
       await userCollection.doc(user.username).set(user.toJson());
       return true;
-    } catch (e) {
-      print("Klaida kuriant vartotoją: $e");
-      return false;
-    }
+    } 
   }
 
   /// read

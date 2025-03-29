@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sveikuoliai/enums/category_enum.dart'; // Importuoju enum
 import 'package:sveikuoliai/models/habit_type_model.dart';
 import '../enums/category_enum.dart'; // Importuoju enum
 

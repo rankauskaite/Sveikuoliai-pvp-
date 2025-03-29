@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/habit_type_model.dart';
 import 'package:sveikuoliai/services/habit_type_services.dart';

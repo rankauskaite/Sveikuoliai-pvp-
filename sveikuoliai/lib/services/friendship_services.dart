@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/friendship_model.dart';
+import 'package:sveikuoliai/models/friendship_model.dart';
 
 class FriendshipService {
   final CollectionReference friendshipCollection = FirebaseFirestore.instance.collection('friendships'); 

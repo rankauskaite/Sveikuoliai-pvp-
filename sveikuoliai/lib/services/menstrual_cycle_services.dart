@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/menstrual_cycle_model.dart';
+import 'package:sveikuoliai/models/menstrual_cycle_model.dart';
 
 class MenstrualCycleService {
   final CollectionReference menstrualCycleCollection =
