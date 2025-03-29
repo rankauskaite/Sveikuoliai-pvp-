@@ -7,7 +7,7 @@ import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/screens/update_profile.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
-import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

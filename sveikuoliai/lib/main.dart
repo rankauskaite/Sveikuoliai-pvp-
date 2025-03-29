@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/home.dart';
-import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {

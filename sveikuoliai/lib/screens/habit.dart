@@ -121,7 +121,7 @@ class _HabitScreenState extends State<HabitScreen> {
                     const SizedBox(height: 20),
 
                     // Progreso indikatorius su procentais
-                    _buildProgressIndicator(0.1), // Pvz., 60% progresas
+                    _buildProgressIndicator(0.7), // Pvz., 60% progresas
 
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -367,35 +367,31 @@ class PercentagePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    // Apskaičiuojame kampą pagal progresą (360 laipsnių apskritimas)
-    double angle = progress * 2 * pi; // Kampas pagal progresą (procentai)
+    // Kampas pagal progresą (0% = -90° (aukščiausias taškas), 100% = pilnas apskritimas)
+    double angle = -pi / 2 + progress * 2 * pi;
 
-    // Išdėstome tekstą aplink apskritimą, t.y., ant progreso juostos
-    double x = (size.width / 2) +
-        (size.width / 2) * 0.6 * cos(angle); // X koordinačių skaičiavimas
-    double y = (size.height / 2) +
-        (size.height / 2) * 0.6 * sin(angle); // Y koordinačių skaičiavimas
+    // Apskaičiuojame tekstą ant apskritimo krašto
+    double radius = size.width / 2; // Pusė apskritimo skersmens
+    double textX = size.width / 2 + radius * cos(angle);
+    double textY = size.height / 2 + radius * sin(angle);
 
-    // Pakeiskime tekstą, kad jis būtų apatinėje pusėje
-    y = (size.height / 2) +
-        (size.height / 2) *
-            0.9 *
-            sin(angle); // padidinkime atstumą nuo centro, kad tekstas būtų žemiau
-    x = (size.width / 1);
-    y = (size.height / 1.5);
+    // Šiek tiek patraukiam procentus nuo krašto, kad jie nesiliestų prie linijos
+    double textOffset = 10;
+    textX += textOffset * cos(angle);
+    textY += textOffset * sin(angle);
 
-    // Nustatome tekstą pagal progresą
+    // Nubrėžiame procentus
     textPainter.paint(
       canvas,
       Offset(
-        x - textPainter.width / 2, // Pritaikome tekstą pagal jo plotį
-        y - textPainter.height / 2, // Pritaikome tekstą pagal jo aukštį
+        textX - textPainter.width / 2, // Centruojame tekstą X ašyje
+        textY - textPainter.height / 2, // Centruojame tekstą Y ašyje
       ),
     );
   }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
+    return true;
   }
 }

@@ -20,7 +20,10 @@ class UserService {
       // 2. useris į duombazę
       await userCollection.doc(user.username).set(user.toJson());
       return true;
-    } 
+    } catch (e) {
+      print("Klaida kuriant vartotojo įrašą: $e");
+      return false;
+    }
   }
 
   /// read

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/forgot_password.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/signup.dart';
-import 'package:sveikuoliai/services/auth_service.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class LoginScreen extends StatelessWidget {
