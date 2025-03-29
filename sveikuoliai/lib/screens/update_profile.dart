@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'dart:ui';
 

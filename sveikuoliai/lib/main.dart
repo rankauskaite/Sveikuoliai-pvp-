@@ -75,10 +75,8 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   @override
   Widget build(BuildContext context) {
     // Kol tikrinama prisijungimo būsena, rodomas laukimo ekranas
-    return isLoggedIn == null
-        ? const Center(child: CircularProgressIndicator())
-        : isLoggedIn
-            ? const HomeScreen() // Jei prisijungęs, rodomas pagrindinis ekranas
-            : HelloScreen(); // Jei neprisijungęs, rodomas pasisveikinimo ekranas
+    return isLoggedIn
+        ? const HomeScreen() // Jei prisijungęs, rodomas pagrindinis ekranas
+        : HelloScreen(); // Jei neprisijungęs, rodomas pasisveikinimo ekranas
   }
 }

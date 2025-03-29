@@ -155,7 +155,6 @@ class _GoalPageState extends State<GoalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    DateTime _startDate = DateTime.now();
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(

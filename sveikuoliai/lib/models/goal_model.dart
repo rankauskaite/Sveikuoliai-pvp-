@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
-import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart'; // enumeratorių įtraukimas
 
 class GoalModel {
