@@ -6,6 +6,7 @@ import 'package:sveikuoliai/screens/new_goal.dart';
 import 'package:sveikuoliai/screens/new_habit.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
@@ -371,10 +372,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 // Ikona / Paveikslėlis kairėje
                 ClipRRect(
                   borderRadius: BorderRadius.circular(50), // Apvalūs kampai
-                  child: Icon(
-                    Icons.circle,
-                    size: 80,
-                    color: Color(0xFFD9D9D9),
+                  child: Image.asset(
+                    PlantImageService.getPlantImage(
+                        habit.plantId, habit.points),
+                    width: 80,
+                    height: 80,
                   ),
                 ),
                 const SizedBox(width: 10),

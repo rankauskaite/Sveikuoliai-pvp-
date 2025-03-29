@@ -4,6 +4,8 @@ import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/screens/habit.dart';
 import 'package:sveikuoliai/services/habit_progress_services.dart'; // <-- Pridėtas servisų importas
+import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -19,7 +21,7 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
   final TextEditingController _progressController = TextEditingController();
   String? _currentProgressId; // Saugo esamo progreso ID, jei jis egzistuoja
   int pointss = 0;
-  int streakk = -1;
+  int streakk = 0;
 
   @override
   void initState() {
@@ -39,6 +41,8 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
       setState(() {
         _progressController.text = progress.description;
         _currentProgressId = progress.id; // Išsaugome ID atnaujinimui
+        pointss = lastProgress!.points;
+        streakk = lastProgress.streak;
       });
     } else if (lastProgress != null) {
       setState(
@@ -55,32 +59,47 @@ class _HabitProgressScreenState extends State<HabitProgressScreen> {
   // Išsaugo arba atnaujina progresą
   void _saveProgress() async {
     final habitProgressService = HabitProgressService();
+    final habitService = HabitService();
 
     HabitProgress habitProgress = HabitProgress(
-      id: //_currentProgressId ??
+      id: _currentProgressId ??
           '${widget.habit.habitTypeId}${widget.habit.userId[0].toUpperCase() + widget.habit.userId.substring(1)}${DateTime.now()}',
       habitId: widget.habit.id,
       description: _progressController.text,
-      points: /*_currentProgressId != null ? points :*/ ++pointss,
-      streak: /*_currentProgressId != null ? streak :*/ ++streakk,
-      plantUrl: '',
+      points: _currentProgressId != null ? pointss : ++pointss,
+      streak: _currentProgressId != null ? streakk : ++streakk,
+      plantUrl: PlantImageService.getPlantImage(widget.habit.plantId, pointss),
       date: DateTime.now(),
       isCompleted: true,
     );
 
-    // if (_currentProgressId != null) {
-    //   await habitProgressService.updateHabitProgressEntry(habitProgress);
-    //   showCustomSnackBar(context, 'Progresas atnaujintas! ✅', true);
-    // } else {
-    await habitProgressService.createHabitProgressEntry(habitProgress);
-    if (mounted) {
-      setState(() {
-        _currentProgressId = habitProgress.id;
-      });
-      showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
-    }
+    HabitModel habit = HabitModel(
+        id: widget.habit.id,
+        startDate: widget.habit.startDate,
+        endDate: widget.habit.endDate,
+        points: habitProgress.points,
+        category: widget.habit.category,
+        endPoints: widget.habit.endPoints,
+        repetition: widget.habit.repetition,
+        userId: widget.habit.userId,
+        habitTypeId: widget.habit.habitTypeId,
+        plantId: widget.habit.plantId);
 
-    //}
+    if (_currentProgressId != null) {
+      await habitProgressService.updateHabitProgressEntry(habitProgress);
+      if (mounted) {
+        showCustomSnackBar(context, 'Progresas atnaujintas! ✅', true);
+      }
+    } else {
+      await habitProgressService.createHabitProgressEntry(habitProgress);
+      await habitService.updateHabitEntry(habit);
+      if (mounted) {
+        setState(() {
+          _currentProgressId = habitProgress.id;
+        });
+        showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
+      }
+    }
   }
 
   @override

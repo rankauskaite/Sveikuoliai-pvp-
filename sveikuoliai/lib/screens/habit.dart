@@ -6,8 +6,10 @@ import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habit_progress.dart';
+import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/services/habit_progress_services.dart';
+import 'package:sveikuoliai/services/habit_services.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -87,6 +89,22 @@ class _HabitScreenState extends State<HabitScreen> {
     return habitProgress.points / widget.habit.endPoints;
   }
 
+  Future<void> _deleteHabit() async {
+    try {
+      final habitService = HabitService();
+      await habitService
+          .deleteHabitEntry(widget.habit.id); // Ištrinti įprotį iš serverio
+      // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+      ); // Grįžti atgal į pagrindinį ekraną
+      showCustomSnackBar(context, "Įprotis sėkmingai ištrintas ✅", true);
+    } catch (e) {
+      showCustomSnackBar(context, "Klaida trinant įprotį ❌", false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,7 +135,11 @@ class _HabitScreenState extends State<HabitScreen> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => HabitsGoalsScreen()),
+                            );
                           },
                           icon: const Icon(
                             Icons.arrow_back_ios,
@@ -131,7 +153,7 @@ class _HabitScreenState extends State<HabitScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      const UpdateHabitScreen()),
+                                      UpdateHabitScreen(habit: widget.habit)),
                             );
                           },
                           icon: Icon(
@@ -140,7 +162,85 @@ class _HabitScreenState extends State<HabitScreen> {
                           ),
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Rodyti dialogą su klausimu
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text.rich(
+                                    TextSpan(
+                                      text:
+                                          "${widget.habit.habitType.title}\n", // Pirmoji dalis (pavadinimas)
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 25,
+                                          color: Colors
+                                              .deepPurple), // Pavadinimo stilius
+                                      children: [
+                                        TextSpan(
+                                          text:
+                                              "Ar tikrai norite ištrinti šį įprotį?", // Antra dalis
+                                          style: TextStyle(
+                                            fontWeight: FontWeight
+                                                .normal, // Normalus svoris
+                                            color: Colors.black,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  content: Text(
+                                      "Šio įpročio ištrynimas bus negrįžtamas."),
+                                  actions: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .center, // Centruoja mygtukus
+                                      children: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(
+                                                context); // Uždaro dialogą (Ne pasirinkimas)
+                                          },
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: Colors.deepPurple
+                                                .withOpacity(
+                                                    0.2), // Neryškus fonas
+                                          ),
+                                          child: Text(
+                                            "Ne",
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                            width: 20), // Tarpas tarp mygtukų
+                                        TextButton(
+                                          onPressed: () {
+                                            _deleteHabit(); // Ištrina įprotį
+                                            Navigator.pop(
+                                                context); // Uždarome dialogą
+                                          },
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: Colors.red
+                                                .withOpacity(
+                                                    0.2), // Neryškus fonas
+                                          ),
+                                          child: Text(
+                                            "Taip",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                           icon: Icon(
                             Icons.remove_circle_outline,
                             size: 30,

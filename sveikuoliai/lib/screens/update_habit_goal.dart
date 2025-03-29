@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
 class UpdateHabitScreen extends StatefulWidget {
-  const UpdateHabitScreen({super.key});
+  final HabitInformation habit;
+  const UpdateHabitScreen({Key? key, required this.habit}) : super(key: key);
 
   @override
   _UpdateHabitScreenState createState() => _UpdateHabitScreenState();
@@ -11,6 +13,25 @@ class UpdateHabitScreen extends StatefulWidget {
 class _UpdateHabitScreenState extends State<UpdateHabitScreen> {
   String? _selectedDuration;
   DateTime _startDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDuration = widget.habit.endPoints == 7
+        ? "1 savaitė"
+        : widget.habit.endPoints == 14
+            ? "2 savaitės"
+            : widget.habit.endPoints == 30
+                ? "1 mėnuo"
+                : widget.habit.endPoints == 45
+                    ? "1,5 mėnesio"
+                    : widget.habit.endPoints == 60
+                        ? "2 mėnesiai"
+                        : widget.habit.endPoints == 90
+                            ? "3 mėnesiai"
+                            : "6 mėnesiai";
+    _startDate = widget.habit.startDate;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +81,13 @@ class _UpdateHabitScreenState extends State<UpdateHabitScreen> {
                     ),
                     const SizedBox(height: 40),
                     TextFormField(
-                      decoration: const InputDecoration(
+                      initialValue: widget.habit.habitType.title,
+                      decoration: InputDecoration(
                         labelText: 'Įpročio pavadinimas',
-                        hintText: 'Įpročio pavadinimas',
                         floatingLabelBehavior: FloatingLabelBehavior.always,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-                        border: OutlineInputBorder(
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0, horizontal: 10),
+                        border: const OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.transparent)),
                       ),
                       onChanged: (String newValue) {
@@ -75,12 +96,14 @@ class _UpdateHabitScreenState extends State<UpdateHabitScreen> {
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
+                      initialValue: widget.habit.habitType.description,
+                      maxLines: null,
+                      minLines: 1,
                       decoration: const InputDecoration(
                         labelText: 'Aprašymas',
-                        hintText: 'Aprašymas',
                         floatingLabelBehavior: FloatingLabelBehavior.always,
                         contentPadding:
-                            EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.transparent)),
                       ),
@@ -108,6 +131,8 @@ class _UpdateHabitScreenState extends State<UpdateHabitScreen> {
                         '1 savaitė',
                         '2 savaitės',
                         '1 mėnuo',
+                        '1.5 mėnesio',
+                        '2 mėnesiai',
                         '3 mėnesiai',
                         '6 mėnesiai'
                       ].map<DropdownMenuItem<String>>((String value) {

@@ -77,4 +77,16 @@ class HabitProgressService {
   Future<void> deleteHabitProgressEntry(String id) async {
     await habitProgressCollection.doc(id).delete();
   }
+
+  Future<void> deleteHabitProgresses(String habitId) async {
+    // Atlikti užklausą, kad gautum visus įrašus su tokiu habitId
+    var snapshot = await habitProgressCollection
+        .where('habitId', isEqualTo: habitId) // Filtruoti pagal habitId
+        .get();
+
+    // Ištrinti visus atitinkančius įrašus
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete(); // Ištrina kiekvieną dokumentą
+    }
+  }
 }
