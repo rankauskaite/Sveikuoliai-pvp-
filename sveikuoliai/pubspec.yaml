@@ -36,6 +36,7 @@ dependencies:
   #intl: ^0.19.0 # Įsitikinkite, kad naudojate teisingą versiją
   provider: ^6.0.3
   flutter_launcher_icons: ^0.14.3 # Patikrink naujausią versiją
+  rive: ^0.13.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -86,6 +87,7 @@ flutter:
   assets:
     - assets/logo.png
     - assets/gif/premium.gif
+    - assets/rive/meditacija.riv
     - assets/images/dobiliukas/
     - assets/images/gervuoge/
     - assets/images/orchideja/

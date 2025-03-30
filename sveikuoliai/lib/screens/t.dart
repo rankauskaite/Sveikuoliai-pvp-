@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:rive/rive.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 
@@ -11,143 +10,143 @@ class MeditationScreen extends StatefulWidget {
   _MeditationScreenState createState() => _MeditationScreenState();
 }
 
-class _MeditationScreenState extends State<MeditationScreen> {
-  late RiveAnimationController _riveController;
+class _MeditationScreenState extends State<MeditationScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _sizeAnimation;
+  late Animation<double> _circleFadeAnimation;
   bool _isBreathing = false;
-  bool _isAnimationRunning =
-      false; // Naujas kintamasis, kad sekame animacijos būseną
+  late Timer _breathTimer = Timer(Duration(seconds: 0), () {});
+
   int _breathStage = 0; // 0 = Inhale, 1 = Hold, 2 = Exhale
-  int _elapsedTime = 0;
+  int _elapsedTime = 0; // Sekundės pagal etapus
   int _counts = 0; // Kiek kartų atlikta ciklą
 
-  // Kvėpavimo etapo trukmės
+  // Nustatome trukmes (sekundėmis) kiekvienam etapui
   final int inhaleDuration = 3; // Įkvėpimas
   final int holdDuration = 3; // Sulaikymas
   final int exhaleDuration = 4; // Iškvepimas
-  int totalCycleRepetiton = 2; // Bendras ciklo kartojimo skaičius
+  int totalCycleRepetiton = 2; // Bendras ciklo laikas (kartojasi)
 
-  String _breathingText = ""; // Kvėpavimo tekstas
+  String _breathingText = ""; // Pridėjome kintamąjį tekstui saugoti
   String _timerText = ""; // Atbulinio laikymo tekstas
-  // Removed this line as it is misplaced and causes errors
 
   @override
   void initState() {
     super.initState();
-    _riveController = SimpleAnimation('Timeline 1', autoplay: false);
-    _riveController.isActive = false; // Animacija pradžioje neaktyvi
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: inhaleDuration),
+    );
+
+    _sizeAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(_controller);
+    _circleFadeAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    if (_breathTimer.isActive) {
+      _breathTimer.cancel(); // Atšaukti timer, jei jis aktyvus
+    }
+    super.dispose();
   }
 
   void _startBreathing() {
     setState(() {
       _isBreathing = true;
-      _counts = 0; // Nustatome ciklus į 0
-      _breathStage = 0; // Pradėdami nuo įkvėpimo
+      _breathStage = 0; // Nustatome, kad ciklas prasideda nuo įkvėpimo
+      _elapsedTime = 0; // Atnaujiname laiką
+      _counts = 0; // Nustatome ciklų skaičių į 0
       _breathingText = "Įkvėpiama"; // Pradinis tekstas
       _timerText =
           inhaleDuration.toString(); // Užrašykite laiką nuo pirmos sekundės
-      _isAnimationRunning = true; // Animacija prasideda
     });
 
-    _riveController.isActive = true; // Activate the Rive animation controller
-
     // Timer'is valdo kvėpavimo etapus
-    Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!_isAnimationRunning || !mounted) {
-        timer.cancel(); // Cancel the timer if the widget is no longer mounted
-        return; // Prevent any further updates
-      }
-
+    _breathTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _elapsedTime++; // Didiname laiką
       });
 
       if (_breathStage == 0) {
-        // Įkvėpimas
+        // Įkvėpimas (3 sekundės)
         if (_elapsedTime <= inhaleDuration) {
+          _controller.forward();
           setState(() {
-            _breathingText = "Įkvėpiama";
             _timerText =
                 (inhaleDuration - _elapsedTime).toString(); // Atbulinis laikas
           });
         } else {
           setState(() {
             _breathStage = 1; // Pereiname į sulaikymą
-            _elapsedTime = 0; // Resetuoja laiką
-            _breathingText = "Sulaikyk";
+            _elapsedTime = 0; // Resetuoja laiką sulaikymo etapui
+            _breathingText = "Sulaikyk"; // Atnaujintas tekstas
             _timerText =
                 holdDuration.toString(); // Atbulinis laikas sulaikymo etapui
           });
+          _controller.stop();
         }
       } else if (_breathStage == 1) {
-        // Sulaikymas
+        // Sulaikymas (3 sekundės)
         if (_elapsedTime <= holdDuration) {
           setState(() {
-            _breathingText = "Sulaikyk";
             _timerText =
                 (holdDuration - _elapsedTime).toString(); // Atbulinis laikas
           });
         } else {
           setState(() {
             _breathStage = 2; // Pereiname į iškvėpimą
-            _elapsedTime = 0; // Resetuoja laiką
-            _breathingText = "Iškvepiama";
+            _elapsedTime = 0; // Resetuoja laiką iškvėpimo etapui
+            _breathingText = "Iškvepiama"; // Atnaujintas tekstas
             _timerText =
                 exhaleDuration.toString(); // Atbulinis laikas iškvėpimo etapui
           });
+          _controller.reverse();
         }
       } else if (_breathStage == 2) {
-        // Iškvepimas
+        // Iškvepimas (4 sekundės)
         if (_elapsedTime <= exhaleDuration) {
+          _controller.reverse();
           setState(() {
-            _breathingText = "Iškvepiama";
             _timerText =
                 (exhaleDuration - _elapsedTime).toString(); // Atbulinis laikas
           });
         } else {
           setState(() {
-            _breathStage = 0; // Grįžtame prie įkvėpimo
-            _elapsedTime = 0;
+            _breathStage = 0; // Pradeda naują ciklą
+            _elapsedTime = 0; // Resetuoja laiką
             _counts++; // Padidiname atliktų ciklų skaičių
+            _breathingText = "Įkvėpiama";
             _timerText =
                 inhaleDuration.toString(); // Atbulinis laikas įkvėpimo etapui
           });
-
-          if (_counts >= totalCycleRepetiton) {
-            setState(() {
-              _isBreathing = false;
-              _breathingText = "Meditacija baigta";
-              _isAnimationRunning = false; // Animacija sustoja
-            });
-            _riveController.isActive =
-                false; // Deactivate the animation when done
-            timer.cancel();
-          }
+          _controller.reset();
         }
       }
-    });
-  }
 
-  // Funkcija, kuri sugeneruoja patarimo kortelę
-  Widget _buildAdviceCard(String adviceText) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10), // Tarpai tarp kortelių
-      padding: EdgeInsets.all(15), // Padidintas užpildymas
-      decoration: BoxDecoration(
-        color: Colors.pink.shade50, // Fono spalva
-        borderRadius: BorderRadius.circular(10), // Užapvalinti kampai
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            offset: Offset(0, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: Text(
-        adviceText,
-        style: TextStyle(fontSize: 16, color: Colors.black),
-      ),
-    );
+      // Baigiam meditaciją, kai atlikta tiek ciklų, kiek numatyta
+      if (_counts >= totalCycleRepetiton) {
+        _breathTimer.cancel();
+        setState(() {
+          _isBreathing = false;
+          _breathingText =
+              "Meditacija baigta"; // Pridėjome užrašą po meditacijos
+        });
+
+        // Resetavimas po meditacijos
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+            _breathingText = ""; // Išvalome kvėpavimo tekstą
+            _counts = 0; // Nustatome ciklų skaičių į 0
+            _breathStage = 0; // Nustatome kvėpavimo etapą į pradžios būseną
+            _elapsedTime = 0; // Išvalome laiką
+          });
+        });
+      }
+    });
   }
 
   void _showStressDialog(BuildContext context) {
@@ -181,8 +180,36 @@ class _MeditationScreenState extends State<MeditationScreen> {
     );
   }
 
+// Funkcija, kuri sugeneruoja patarimo kortelę
+  Widget _buildAdviceCard(String adviceText) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10), // Tarpai tarp kortelių
+      padding: EdgeInsets.all(15), // Padidintas užpildymas
+      decoration: BoxDecoration(
+        color: Colors.pink.shade50, // Fono spalva
+        borderRadius: BorderRadius.circular(10), // Užapvalinti kampai
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Text(
+        adviceText,
+        style: TextStyle(fontSize: 16, color: Colors.black),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double iconSize = 250;
+    double circleRadius = (iconSize * 1.1) / 2;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
@@ -212,7 +239,7 @@ class _MeditationScreenState extends State<MeditationScreen> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_back_ios,
                           size: 30,
                         ),
@@ -230,24 +257,44 @@ class _MeditationScreenState extends State<MeditationScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
+                  SizedBox(height: 20),
+                  Text(
                     'Meditacija',
                     style: TextStyle(fontSize: 35),
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: 250,
-                    height: 250,
+                  SizedBox(height: 20),
+                  Expanded(
                     child: Center(
-                      child: RiveAnimation.asset(
-                        'assets/rive/meditacija.riv',
-                        controllers: [_riveController],
-                        fit: BoxFit.contain,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Animuojamas apskritimas, kuris pradeda keisti permatomumą
+                          AnimatedBuilder(
+                            animation: _controller,
+                            builder: (context, child) {
+                              return CustomPaint(
+                                painter: BreathingCirclePainter(
+                                  radius: circleRadius,
+                                  opacity: _circleFadeAnimation.value,
+                                ),
+                              );
+                            },
+                          ),
+                          AnimatedBuilder(
+                            animation: _controller,
+                            builder: (context, child) {
+                              return Icon(
+                                Icons.self_improvement,
+                                size: iconSize * _sizeAnimation.value,
+                                color: Color(0xFFB388EB),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   if (!_isBreathing) ...[
                     Text(
                       'Kiek kartų noretum kvepuoti?',
@@ -316,5 +363,27 @@ class _MeditationScreenState extends State<MeditationScreen> {
         ),
       ),
     );
+  }
+}
+
+class BreathingCirclePainter extends CustomPainter {
+  final double radius;
+  final double opacity;
+
+  BreathingCirclePainter({required this.radius, required this.opacity});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = Color(0xFFB388EB).withOpacity(opacity)
+      ..strokeWidth = 10
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }
