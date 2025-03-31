@@ -1,9 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/user_model.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'dart:ui';
 
-class UpdateProfileScreen extends StatelessWidget {
-  const UpdateProfileScreen({super.key});
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/widgets/versionSelection.dart';
+
+class UpdateProfileScreen extends StatefulWidget {
+  final String version;
+  const UpdateProfileScreen({Key? key, required this.version})
+      : super(key: key);
+
+  @override
+  _UpdateProfileScreenState createState() => _UpdateProfileScreenState();
+}
+
+class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
+  final AuthService _authService = AuthService();
+  final UserService _userService =
+      UserService(); // Sukuriame UserService instanciją
+  String userUsername = "";
+  String userName = "";
+  String userEmail = "";
+  String userVersion = "";
+
+  TextEditingController _userNameController = TextEditingController();
+  TextEditingController _userEmailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(() {
+        userUsername = sessionData['username'] ?? "Nežinomas";
+        userName = sessionData['name'] ?? "Nežinomas";
+        userEmail = sessionData['email'] ?? "Nežinomas";
+        userVersion = sessionData['version'] ?? "Nežinomas";
+
+        _userNameController.text =
+            userName; // Priskiriame gautus duomenis į TextEditingController
+        _userEmailController.text = userEmail;
+      });
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+
+  // Funkcija, kad išsaugoti vartotojo duomenis
+  Future<void> _saveUserData() async {
+    try {
+      String newName = _userNameController.text;
+      String newEmail = _userEmailController.text;
+      String newVersion = userVersion;
+
+      // Atnaujiname vartotojo duomenis paslaugos pagalba
+      await _userService.updateUserData(
+          userUsername, newName, newEmail, newVersion);
+
+      // Atvaizduojame sėkmės pranešimą
+      String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
+      showCustomSnackBar(context, successMessage, true);
+
+      // Uždarome ekraną po sėkmingo atnaujinimo
+      Navigator.pop(context);
+    } catch (e) {
+      // Rodo klaidos pranešimą
+      String errorMessage = 'Klaida išsaugant duomenis ❌';
+      showCustomSnackBar(context, errorMessage, false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,12 +117,7 @@ class UpdateProfileScreen extends StatelessWidget {
                       ),
                       const Expanded(child: SizedBox()),
                       ElevatedButton(
-                        onPressed: () {
-                          // setState(() {
-                          //   journalText = tempText; // Išsaugome tekstą
-                          // });
-                          Navigator.pop(context); // Uždaro modalą
-                        },
+                        onPressed: _saveUserData, // Paspaudus išsaugoti
                         child: Text('Išsaugoti'),
                       ),
                     ],
@@ -78,11 +147,10 @@ class UpdateProfileScreen extends StatelessWidget {
                             ),
                           ),
                           const Text(
-                            'Keisti profilio\nnuotrauką', // Čia įrašyk norimą tekstą
+                            'Keisti profilio\nnuotrauką',
                             style: TextStyle(
                               fontSize: 24,
-                              color:
-                                  Colors.black, // Pakeisk spalvą pagal poreikį
+                              color: Colors.black,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -92,22 +160,20 @@ class UpdateProfileScreen extends StatelessWidget {
                   ),
                   IntrinsicWidth(
                     child: TextField(
-                      controller: TextEditingController(text: 'VARDAS'),
+                      controller: _userNameController, // Naudojame kontrollerį
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       decoration: InputDecoration(
-                        border:
-                            OutlineInputBorder(), // Pridedame rėmelį aplink lauką
-                        labelText:
-                            'Vardas', // Label tekstas, kuris pasirodo viršuje
+                        border: OutlineInputBorder(),
+                        labelText: 'Vardas',
                       ),
                     ),
                   ),
-                  const Text(
-                    'USERNAME',
+                  Text(
+                    userUsername,
                     style: TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -125,8 +191,8 @@ class UpdateProfileScreen extends StatelessWidget {
                     children: [
                       IntrinsicWidth(
                         child: TextField(
-                          controller: TextEditingController(
-                              text: 'asesumergaite@gmail.com'),
+                          controller:
+                              _userEmailController, // Naudojame kontrollerį
                           style: TextStyle(
                             fontSize: 15,
                             color: Color(0xFFB388EB),
@@ -134,10 +200,8 @@ class UpdateProfileScreen extends StatelessWidget {
                             decorationColor: Color(0xFFB388EB),
                           ),
                           decoration: InputDecoration(
-                            border:
-                                OutlineInputBorder(), // Pridedame rėmelį aplink lauką
-                            labelText:
-                                'el. paštas', // Label tekstas, kuris pasirodo viršuje
+                            border: OutlineInputBorder(),
+                            labelText: 'el. paštas',
                           ),
                         ),
                       ),
@@ -149,39 +213,23 @@ class UpdateProfileScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      IntrinsicWidth(
-                        child: TextField(
-                          controller: TextEditingController(text: '2009-05-16'),
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFFB388EB),
-                            decorationColor: Color(0xFFB388EB),
-                          ),
-                          decoration: InputDecoration(
-                            border:
-                                OutlineInputBorder(), // Pridedame rėmelį aplink lauką
-                            labelText:
-                                'kita', // Label tekstas, kuris pasirodo viršuje
-                          ),
-                        ),
+                      Text(
+                        'Versija:',
+                        style: TextStyle(fontSize: 20),
                       ),
                     ],
                   ),
-                  // const SizedBox(height: 20),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.start,
-                  //   children: [
-                  //     Text(
-                  //       'Versija: ',
-                  //       style: TextStyle(fontSize: 15),
-                  //     ),
-                  //     Text(
-                  //       'nemokama',
-                  //       style:
-                  //           TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
-                  //     )
-                  //   ],
-                  // ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  VersionSelection(
+                    currentVersion: widget.version,
+                    onVersionChanged: (newVersion) {
+                      setState(() {
+                        userVersion = newVersion;
+                      });
+                    },
+                  ),
                 ],
               ),
             ),
