@@ -13,7 +13,7 @@ class AuthService {
     return _instance;
   }
 
-  AuthService._internal(); // Privatus konstruktorius singleton'ui
+  AuthService._internal(); // Privatus konstruktorius singleton'uii
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();

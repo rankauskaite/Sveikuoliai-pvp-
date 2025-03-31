@@ -75,7 +75,7 @@ class UserService {
     try {
       Map<String, dynamic> dataToUpdate = {};
 
-      // Jei vardas pakeistas, pridedame jį į atnaujinimo laukus
+      // Jei vardas pakeistas, pridedame jį į atnaujinimo laukuss
       if (name.isNotEmpty) {
         dataToUpdate['name'] = name;
       }

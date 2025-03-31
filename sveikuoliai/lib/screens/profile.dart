@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchUserData();
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  // Funkcija, kad gauti prisijungusio vartotojo duomeniss
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
