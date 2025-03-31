@@ -7,6 +7,14 @@ import 'user_services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
+  static final AuthService _instance = AuthService._internal();
+
+  factory AuthService() {
+    return _instance;
+  }
+
+  AuthService._internal(); // Privatus konstruktorius singleton'ui
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();
   final FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -62,7 +70,8 @@ class AuthService {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
 
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
@@ -88,10 +97,15 @@ class AuthService {
     }
   }
 
+  // Future<void> updateSessionUser(UserModel user) async {
+  //   await _saveUserToSession(user);
+  // }
+
   Future<void> _saveUserToSession(UserModel user) async {
     await _storage.write(key: "username", value: user.username);
     await _storage.write(key: "name", value: user.name);
     await _storage.write(key: "email", value: user.email);
+    await _storage.write(key: "version", value: user.version);
   }
 
   Future<Map<String, String?>> getSessionUser() async {
@@ -99,6 +113,7 @@ class AuthService {
       "username": await _storage.read(key: "username"),
       "name": await _storage.read(key: "name"),
       "email": await _storage.read(key: "email"),
+      "version": await _storage.read(key: "version")
     };
   }
 }

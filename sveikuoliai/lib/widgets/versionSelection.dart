@@ -34,8 +34,12 @@ class _VersionSelectionState extends State<VersionSelection> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildVersionButton('Nemokama', '0€', selectedVersion == 'nemokama',
-            Color(0xFF72ddf7), 'free'),
+        _buildVersionButton(
+            'Nemokama',
+            '0€',
+            selectedVersion == 'nemokama' || selectedVersion == 'free',
+            Color(0xFF72ddf7),
+            'free'),
         const SizedBox(width: 10),
         _buildVersionButton('Premium', '9.99€', selectedVersion == 'premium',
             Color(0xFFB388EB), 'premium'),
