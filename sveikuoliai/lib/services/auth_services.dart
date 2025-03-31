@@ -62,8 +62,7 @@ class AuthService {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
@@ -93,7 +92,6 @@ class AuthService {
     await _storage.write(key: "username", value: user.username);
     await _storage.write(key: "name", value: user.name);
     await _storage.write(key: "email", value: user.email);
-    await _storage.write(key: "version", value: user.version);
   }
 
   Future<Map<String, String?>> getSessionUser() async {
@@ -101,7 +99,6 @@ class AuthService {
       "username": await _storage.read(key: "username"),
       "name": await _storage.read(key: "name"),
       "email": await _storage.read(key: "email"),
-      "version": await _storage.read(key: "version"),
     };
   }
 }

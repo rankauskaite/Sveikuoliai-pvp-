@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    UpdateProfileScreen(version: userVersion,)),
+                                    const UpdateProfileScreen()),
                           );
                         },
                         icon: Icon(
