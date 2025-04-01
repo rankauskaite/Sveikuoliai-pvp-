@@ -70,6 +70,39 @@ class UserService {
     }
   }
 
+  Future<bool> updateUserData(
+      String username, String name, String email, String version) async {
+    try {
+      Map<String, dynamic> dataToUpdate = {};
+
+      // Jei vardas pakeistas, pridedame jį į atnaujinimo laukus
+      if (name.isNotEmpty) {
+        dataToUpdate['name'] = name;
+      }
+
+      // Jei el. paštas pakeistas, pridedame jį į atnaujinimo laukus
+      if (email.isNotEmpty) {
+        dataToUpdate['email'] = email;
+      }
+
+      // Jei versija pakeista, pridedame ją į atnaujinimo laukus
+      if (version.isNotEmpty) {
+        dataToUpdate['version'] = version;
+      }
+
+      // Jei yra ką atnaujinti
+      if (dataToUpdate.isNotEmpty) {
+        await userCollection.doc(username).update(dataToUpdate);
+        return true;
+      }
+
+      return false; // Jeigu nėra ką atnaujinti
+    } catch (e) {
+      print("Klaida atnaujinant vartotoją: $e");
+      return false;
+    }
+  }
+
   // Funkcija, kuri atnaujina tik nustatymus (pranešimus, temą ir mėnesinių trukmę)
   Future<bool> updateSettings(String username, bool notifications,
       bool darkMode, int menstrualLength) async {
