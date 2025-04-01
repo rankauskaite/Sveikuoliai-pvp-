@@ -1,8 +1,13 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Importuojame intl paketą
+import 'package:intl/intl.dart';
+import 'package:sveikuoliai/enums/mood_enum.dart';
+import 'package:sveikuoliai/models/journal_model.dart';
+import 'package:sveikuoliai/screens/journal.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
+import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class JournalDayScreen extends StatefulWidget {
@@ -15,16 +20,84 @@ class JournalDayScreen extends StatefulWidget {
 }
 
 class _JournalDayScreenState extends State<JournalDayScreen> {
+  final JournalService _journalService = JournalService();
+  final AuthService _authService = AuthService();
   late DateTime selectedDay;
-  String? selectedMood;
+  MoodType selectedMood = MoodType.neutrali;
   String journalText = '';
   DateTime? menstruationStart;
   late DateTime selectedTempDay = selectedDay; // Laikinas pasirinkimas
+  String userUsername = "";
 
   @override
   void initState() {
     super.initState();
     selectedDay = widget.selectedDay;
+    _fetchUserData().then((_) {
+      _fetchJournalEntry(selectedDay);
+    });
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        },
+      );
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+
+  Future<void> _fetchJournalEntry(DateTime date) async {
+    try {
+      JournalModel? entry =
+          await _journalService.getJournalEntryByDay(userUsername, date);
+      if (entry != null) {
+        setState(() {
+          journalText = entry.note;
+          selectedMood = entry.mood;
+        });
+      } else {
+        setState(() {
+          journalText = '';
+          selectedMood = MoodType.neutrali;
+        });
+      }
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+    }
+  }
+
+  Future<void> _saveJournalEntry() async {
+    if (journalText.isNotEmpty) {
+      JournalModel journalModel = JournalModel(
+        id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
+        userId: userUsername,
+        note: journalText,
+        photoUrl: "",
+        mood: selectedMood,
+        date: selectedDay,
+      );
+
+      await _journalService.createJournalEntry(journalModel);
+
+      // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
+      if (mounted) {
+        String message = 'Įrašas išsaugotas! 🎉';
+        showCustomSnackBar(context, message, true);
+      }
+    } else {
+      // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
+      if (mounted) {
+        String message = 'Užpildyk visus laukus!';
+        showCustomSnackBar(context, message, false);
+      }
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -155,6 +228,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             selectedDay =
                                 selectedDay.subtract(Duration(days: 1));
                           });
+                          _fetchJournalEntry(selectedDay);
                         },
                       ),
                       Text(
@@ -169,6 +243,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             setState(() {
                               selectedDay = selectedDay.add(Duration(days: 1));
                             });
+                            _fetchJournalEntry(selectedDay);
                           },
                         )
                       else
@@ -197,19 +272,19 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             Text('Šiandien jaučiuosi:',
                                 style: TextStyle(fontSize: 15)),
                             SizedBox(height: 10),
-                            _buildMoodCircle('Laiminga',
+                            _buildMoodCircle(MoodType.laiminga,
                                 'assets/images/nuotaikos/laiminga.png'),
-                            _buildMoodCircle(
-                                'Liūdna', 'assets/images/nuotaikos/liudna.png'),
-                            _buildMoodCircle(
-                                'Pikta', 'assets/images/nuotaikos/pikta.png'),
-                            _buildMoodCircle('Pavargusi',
+                            _buildMoodCircle(MoodType.liudna,
+                                'assets/images/nuotaikos/liudna.png'),
+                            _buildMoodCircle(MoodType.pikta,
+                                'assets/images/nuotaikos/pikta.png'),
+                            _buildMoodCircle(MoodType.pavargusi,
                                 'assets/images/nuotaikos/pavargus.png'),
-                            _buildMoodCircle('Motyvuota',
+                            _buildMoodCircle(MoodType.motyvuota,
                                 'assets/images/nuotaikos/motyvuota.png'),
-                            _buildMoodCircle('Ryžtinga',
-                                'assets/images/nuotaikos/ryztingaStipri.png'),
-                            _buildMoodCircle('Suglumusi',
+                            _buildMoodCircle(MoodType.ryztinga,
+                                'assets/images/nuotaikos/ryztinga.png'),
+                            _buildMoodCircle(MoodType.suglumusi,
                                 'assets/images/nuotaikos/suglumusi.png'),
                           ],
                         ),
@@ -356,7 +431,12 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   setState(() {});
-                                  Navigator.pop(context); // Uždaro modalą
+                                  _saveJournalEntry();
+                                  Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              JournalScreen()));
                                 },
                                 child: Text(
                                   'Išsaugoti',
@@ -395,7 +475,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     return day.toString().padLeft(2, '0');
   }
 
-  Widget _buildMoodCircle(String mood, String imageUrl) {
+  Widget _buildMoodCircle(MoodType mood, String imageUrl) {
     bool isSelected = selectedMood == mood;
     return GestureDetector(
       onTap: () {
@@ -410,7 +490,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
             backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
             child: Image.asset(imageUrl, width: 70, height: 70),
           ),
-          Text(mood,
+          Text(mood.toDisplayName(),
               style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
           SizedBox(height: 10),
         ],
