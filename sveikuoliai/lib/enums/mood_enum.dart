@@ -4,12 +4,14 @@ enum MoodType {
   pavargusi,
   pikta,
   motyvuota,
-  sunerimusi,
-  isitempusi,
-  dekinga,
-  vienisa,
-  rami,
-  nusivylusi,
+  ryztinga,
+  suglumusi,
+  // sunerimusi,
+  // isitempusi,
+  // dekinga,
+  // vienisa,
+  // rami,
+  // nusivylusi,
   neutrali //default reikšmė (jei nepasirinkta)
 }
 
@@ -21,12 +23,14 @@ extension MoodTypeExtension on MoodType {
     MoodType.pavargusi: "Pavargusi",
     MoodType.pikta: "Pikta",
     MoodType.motyvuota: "Motyvuota",
-    MoodType.sunerimusi: "Suserimusi",
-    MoodType.isitempusi: "Įsitempusi",
-    MoodType.dekinga: "Dėkinga",
-    MoodType.vienisa: "Vieniša",
-    MoodType.rami: "Rami",
-    MoodType.nusivylusi: "Nusivylusi",
+    MoodType.ryztinga: "Ryžtinga",
+    MoodType.suglumusi: "Suglumusi",
+    // MoodType.sunerimusi: "Suserimusi",
+    // MoodType.isitempusi: "Įsitempusi",
+    // MoodType.dekinga: "Dėkinga",
+    // MoodType.vienisa: "Vieniša",
+    // MoodType.rami: "Rami",
+    // MoodType.nusivylusi: "Nusivylusi",
     MoodType.neutrali: "Neutrali",
   };
 
@@ -36,9 +40,9 @@ extension MoodTypeExtension on MoodType {
   }
 
   // Firebase saugo mažosiomis be lietuviškų raidžių
-  String toJson() => name; 
+  String toJson() => name;
 
-  // 
+  //
   static MoodType fromJson(String mood) {
     return MoodType.values.firstWhere(
       (e) => e.name == mood,
