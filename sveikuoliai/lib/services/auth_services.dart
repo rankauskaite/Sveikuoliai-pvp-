@@ -7,14 +7,6 @@ import 'user_services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
-  static final AuthService _instance = AuthService._internal();
-
-  factory AuthService() {
-    return _instance;
-  }
-
-  AuthService._internal(); // Privatus konstruktorius singleton'uii
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();
   final FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -97,10 +89,6 @@ class AuthService {
     }
   }
 
-  // Future<void> updateSessionUser(UserModel user) async {
-  //   await _saveUserToSession(user);
-  // }
-
   Future<void> _saveUserToSession(UserModel user) async {
     await _storage.write(key: "username", value: user.username);
     await _storage.write(key: "name", value: user.name);
@@ -113,7 +101,7 @@ class AuthService {
       "username": await _storage.read(key: "username"),
       "name": await _storage.read(key: "name"),
       "email": await _storage.read(key: "email"),
-      "version": await _storage.read(key: "version")
+      "version": await _storage.read(key: "version"),
     };
   }
 }

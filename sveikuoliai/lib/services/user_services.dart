@@ -75,7 +75,7 @@ class UserService {
     try {
       Map<String, dynamic> dataToUpdate = {};
 
-      // Jei vardas pakeistas, pridedame jį į atnaujinimo laukuss
+      // Jei vardas pakeistas, pridedame jį į atnaujinimo laukus
       if (name.isNotEmpty) {
         dataToUpdate['name'] = name;
       }
@@ -93,7 +93,6 @@ class UserService {
       // Jei yra ką atnaujinti
       if (dataToUpdate.isNotEmpty) {
         await userCollection.doc(username).update(dataToUpdate);
-
         return true;
       }
 

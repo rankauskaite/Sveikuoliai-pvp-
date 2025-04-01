@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/screens/profile.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'dart:ui';
-
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/versionSelection.dart';
 
@@ -63,18 +61,14 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       String newVersion = userVersion;
 
       // Atnaujiname vartotojo duomenis paslaugos pagalba
-      await _userService.updateUserData(
-          userUsername, newName, newEmail, newVersion);
+      await _userService.updateUserData(userUsername, newName, newEmail, newVersion);
 
       // Atvaizduojame sėkmės pranešimą
       String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
       showCustomSnackBar(context, successMessage, true);
 
       // Uždarome ekraną po sėkmingo atnaujinimo
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ProfileScreen()),
-      );
+      Navigator.pop(context);
     } catch (e) {
       // Rodo klaidos pranešimą
       String errorMessage = 'Klaida išsaugant duomenis ❌';

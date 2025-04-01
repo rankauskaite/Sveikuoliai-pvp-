@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchUserData();
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomeniss
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
@@ -99,9 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => UpdateProfileScreen(
-                                      version: userVersion,
-                                    )),
+                                builder: (context) =>
+                                    UpdateProfileScreen(version: userVersion,)),
                           );
                         },
                         icon: Icon(
