@@ -4,6 +4,10 @@ import 'package:sveikuoliai/screens/login.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 
 class SignupScreen extends StatelessWidget {
+
+
+  final _formKey = GlobalKey<FormState>(); //formos raktas validacijai
+
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -67,43 +71,85 @@ class SignupScreen extends StatelessWidget {
                             fontSize: 30, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: 30),
+                  
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: usernameController,
-                              decoration: InputDecoration(
-                                labelText: 'Slapyvardis',
-                                border: OutlineInputBorder(),
+                        child: Form(
+                          // form widget aplink visus laukuis
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              // slapyvardžio validacija
+                              TextFormField(
+                                controller: usernameController,
+                                decoration: InputDecoration(
+                                  labelText: 'Slapyvardis',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Įveskite slapyvardį';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ),
-                            SizedBox(height: 10),
-                            TextField(
-                              controller: nameController,
-                              decoration: InputDecoration(
-                                labelText: 'Vardas',
-                                border: OutlineInputBorder(),
+                              SizedBox(height: 10),
+
+                              // Vardas
+                              TextFormField(
+                                controller: nameController,
+                                decoration: InputDecoration(
+                                  labelText: 'Vardas',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Įveskite vardą';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ),
-                            SizedBox(height: 10),
-                            TextField(
-                              controller: emailController,
-                              decoration: InputDecoration(
-                                labelText: 'El. paštas',
-                                border: OutlineInputBorder(),
+                              SizedBox(height: 10),
+
+                              // El. paštas
+                              TextFormField(
+                                controller: emailController,
+                                decoration: InputDecoration(
+                                  labelText: 'El. paštas',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Įveskite el. paštą';
+                                  }
+                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
+                                      .hasMatch(value)) {
+                                    return 'Netinkamas el. pašto formatas';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ),
-                            SizedBox(height: 10),
-                            TextField(
-                              obscureText: true,
-                              controller: passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Slaptažodis',
-                                border: OutlineInputBorder(),
+                              SizedBox(height: 10),
+
+                              // slaptažodis
+                              TextFormField(
+                                controller: passwordController,
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Slaptažodis',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Įveskite slaptažodį';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Slaptažodis per trumpas (min. 6 simboliai)';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ),
-                            SizedBox(height: 10),
+                              SizedBox(height: 10),
                             // TextField(
                             //   obscureText: true,
                             //   decoration: InputDecoration(
@@ -113,7 +159,12 @@ class SignupScreen extends StatelessWidget {
                             // ),
                             // SizedBox(height: 10),
                             ElevatedButton(
-                              onPressed: () => _signup(context),
+                              onPressed: () {
+                                 if (_formKey.currentState!.validate()) {
+                                    _signup(context);
+                                 }
+                                },
+
                               style: ElevatedButton.styleFrom(
                                 minimumSize: Size(300, 50),
                                 iconColor:
@@ -162,6 +213,7 @@ class SignupScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ),
                       ),
                     ],
                   ),
