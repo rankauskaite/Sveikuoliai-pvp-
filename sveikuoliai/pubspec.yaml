@@ -86,6 +86,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.png
+    - assets/island.png
+    - assets/island2.png
+    - assets/island3.jpg
     - assets/gif/premium.gif
     - assets/rive/meditacija.riv
     - assets/images/dobiliukas/

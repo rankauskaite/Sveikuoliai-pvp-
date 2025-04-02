@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
+import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -111,11 +112,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 40),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Mano augalai',
-                            style: TextStyle(fontSize: 17),
-                          ),
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => GardenScreen()),
+                              );
+                            },
+                            child: Text(
+                              'Mano augalai',
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: Colors.blue, // Paryškinti kaip nuorodą
+                                decoration: TextDecoration
+                                    .underline, // Pabraukta kaip tikra nuoroda
+                              ),
+                            ),
+                          )
                         ],
                       ),
                       SingleChildScrollView(
