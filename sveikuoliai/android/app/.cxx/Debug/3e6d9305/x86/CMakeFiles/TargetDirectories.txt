@@ -1,2 +1,0 @@
-C:/Users/rugil/Documents/GitHub/Sveikuoliai-pvp-/sveikuoliai/android/app/.cxx/Debug/3e6d9305/x86/CMakeFiles/edit_cache.dir
-C:/Users/rugil/Documents/GitHub/Sveikuoliai-pvp-/sveikuoliai/android/app/.cxx/Debug/3e6d9305/x86/CMakeFiles/rebuild_cache.dir

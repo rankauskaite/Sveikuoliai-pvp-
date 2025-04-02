@@ -4,8 +4,6 @@ import 'package:sveikuoliai/screens/login.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 
 class SignupScreen extends StatelessWidget {
-
-
   final _formKey = GlobalKey<FormState>(); //formos raktas validacijai
 
   final TextEditingController usernameController = TextEditingController();
@@ -71,7 +69,6 @@ class SignupScreen extends StatelessWidget {
                             fontSize: 30, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: 30),
-                  
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Form(
@@ -122,7 +119,8 @@ class SignupScreen extends StatelessWidget {
                                   if (value == null || value.isEmpty) {
                                     return 'Įveskite el. paštą';
                                   }
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
+                                  if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
                                       .hasMatch(value)) {
                                     return 'Netinkamas el. pašto formatas';
                                   }
@@ -150,70 +148,70 @@ class SignupScreen extends StatelessWidget {
                                 },
                               ),
                               SizedBox(height: 10),
-                            // TextField(
-                            //   obscureText: true,
-                            //   decoration: InputDecoration(
-                            //     labelText: 'Pakartoti slaptažodį',
-                            //     border: OutlineInputBorder(),
-                            //   ),
-                            // ),
-                            // SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: () {
-                                 if (_formKey.currentState!.validate()) {
+                              // TextField(
+                              //   obscureText: true,
+                              //   decoration: InputDecoration(
+                              //     labelText: 'Pakartoti slaptažodį',
+                              //     border: OutlineInputBorder(),
+                              //   ),
+                              // ),
+                              // SizedBox(height: 10),
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
                                     _signup(context);
-                                 }
+                                  }
                                 },
-
-                              style: ElevatedButton.styleFrom(
-                                minimumSize: Size(300, 50),
-                                iconColor:
-                                    const Color(0xFF8093F1), // Violetinė spalva
-                              ),
-                              child: const Text(
-                                'Registruotis',
-                                style: TextStyle(fontSize: 20),
-                              ),
-                            ),
-                            // ElevatedButton(
-                            //   onPressed: () => _login(context),
-                            //   style: ElevatedButton.styleFrom(
-                            //     minimumSize: Size(300, 50),
-                            //     backgroundColor: Color(0xFF8093F1),
-                            //   ),
-                            //   child: const Text(
-                            //     'Prisijungti',
-                            //     style: TextStyle(fontSize: 20),
-                            //   ),
-                            // ),
-                            SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('Jau turi paskyrą?'),
-                                SizedBox(
-                                  width: 10,
+                                style: ElevatedButton.styleFrom(
+                                  minimumSize: Size(300, 50),
+                                  iconColor: const Color(
+                                      0xFF8093F1), // Violetinė spalva
                                 ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => LoginScreen()),
-                                    );
-                                  },
-                                  child: Text(
-                                    'Prisijungti',
-                                    style: TextStyle(
-                                      color: Colors.deepPurple,
+                                child: const Text(
+                                  'Registruotis',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ),
+                              // ElevatedButton(
+                              //   onPressed: () => _login(context),
+                              //   style: ElevatedButton.styleFrom(
+                              //     minimumSize: Size(300, 50),
+                              //     backgroundColor: Color(0xFF8093F1),
+                              //   ),
+                              //   child: const Text(
+                              //     'Prisijungti',
+                              //     style: TextStyle(fontSize: 20),
+                              //   ),
+                              // ),
+                              SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('Jau turi paskyrą?'),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                LoginScreen()),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Prisijungti',
+                                      style: TextStyle(
+                                        color: Colors.deepPurple,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                       ),
                     ],
                   ),
