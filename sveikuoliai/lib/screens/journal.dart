@@ -206,6 +206,20 @@ class _JournalScreenState extends State<JournalScreen> {
             );
           }
         },
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, date, events) {
+            if (_markedDays.any((markedDay) =>
+                markedDay.year == date.year &&
+                markedDay.month == date.month &&
+                markedDay.day == date.day)) {
+              return Positioned(
+                bottom: 5,
+                child: Text(
+                  '✓',
+                  style: TextStyle(
+                    color: Colors.deepPurple.withOpacity(0.6),
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
         // calendarBuilders: CalendarBuilders(
         //   markerBuilder: (context, date, events) {
         //     if (_markedDays.any((markedDay) =>

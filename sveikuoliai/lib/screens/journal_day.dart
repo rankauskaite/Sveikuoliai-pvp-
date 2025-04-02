@@ -9,7 +9,7 @@ import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
-
+ 
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
 
