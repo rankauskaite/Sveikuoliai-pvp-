@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:sveikuoliai/screens/hello.dart';
-import 'package:sveikuoliai/screens/loading.dart';
 import 'package:sveikuoliai/screens/meditation.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
+import 'package:sveikuoliai/services/journal_services.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/screens/journal_day.dart';
@@ -17,12 +18,52 @@ class JournalScreen extends StatefulWidget {
 }
 
 class _JournalScreenState extends State<JournalScreen> {
+  AuthService _authService = AuthService();
+  JournalService _journalService = JournalService();
+  String userUsername = '';
+  Set<DateTime> _markedDays = {};
+
   @override
   void initState() {
     super.initState();
+    _fetchUserData();
     initializeDateFormatting(
         'lt_LT', null); // Inicijuojame lietuvišką datų formatą
   }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        },
+      );
+      await _loadMarkedDays(userUsername);
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+
+  Future<void> _loadMarkedDays(String username) async {
+    // Čia gautųsi duomenys iš Firestore ar kito šaltinio
+    List<DateTime> savedDates = await _journalService.getSavedJournalEntries(username);
+
+    setState(() {
+      _markedDays = savedDates.toSet();
+    });
+  }
+
+  // Future<List<DateTime>> getSavedJournalEntries() async {
+  //   // Simuliacija, bet čia turėtum iš DB paimti realias dienas, kai buvo užpildyta
+  //   return [
+  //     DateTime.utc(2025, 03, 28),
+  //     DateTime.utc(2025, 03, 30),
+  //     DateTime.utc(2025, 04, 01),
+  //   ];
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +189,7 @@ class _JournalScreenState extends State<JournalScreen> {
           defaultTextStyle:
               TextStyle(color: Colors.black), // Dienų skaičių spalva
           weekendTextStyle:
-              TextStyle(color: Colors.purple), // Savaitgalių skaičių spalva
+              TextStyle(color: Colors.purple), // Savaitgalių spalva
         ),
         rowHeight: 40, // Nustatykite mažesnį aukštį tarp savaičių
         enabledDayPredicate: (day) {
@@ -165,6 +206,59 @@ class _JournalScreenState extends State<JournalScreen> {
             );
           }
         },
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, date, events) {
+            if (_markedDays.any((markedDay) =>
+                markedDay.year == date.year &&
+                markedDay.month == date.month &&
+                markedDay.day == date.day)) {
+              return Positioned(
+                bottom: 5,
+                child: Text(
+                  '✓',
+                  style: TextStyle(
+                    color: Colors.deepPurple.withOpacity(0.6),
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+        // calendarBuilders: CalendarBuilders(
+        //   markerBuilder: (context, date, events) {
+        //     if (_markedDays.any((markedDay) =>
+        //         markedDay.year == date.year &&
+        //         markedDay.month == date.month &&
+        //         markedDay.day == date.day)) {
+        //       return Positioned(
+        //         bottom: 5,
+        //         child: Text(
+        //           '✓',
+        //           style: TextStyle(
+        //             color: Colors.deepPurple,
+        //             fontSize: 25,
+        //             fontWeight: FontWeight.bold,
+        //           ),
+        //         ),
+        //       );
+        //     }
+        //     return SizedBox();
+        //   },
+        // ),
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, date, events) {
+            if (_markedDays.contains(date)) {
+              return Positioned(
+                bottom: 5,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }
+            return SizedBox();
+          },
+        ),
       ),
     );
   }
