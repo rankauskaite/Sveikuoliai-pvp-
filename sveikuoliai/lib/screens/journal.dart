@@ -49,7 +49,8 @@ class _JournalScreenState extends State<JournalScreen> {
 
   Future<void> _loadMarkedDays(String username) async {
     // Čia gautųsi duomenys iš Firestore ar kito šaltinio
-    List<DateTime> savedDates = await _journalService.getSavedJournalEntries(username);
+    List<DateTime> savedDates =
+        await _journalService.getSavedJournalEntries(username);
 
     setState(() {
       _markedDays = savedDates.toSet();
@@ -206,38 +207,20 @@ class _JournalScreenState extends State<JournalScreen> {
             );
           }
         },
-        // calendarBuilders: CalendarBuilders(
-        //   markerBuilder: (context, date, events) {
-        //     if (_markedDays.any((markedDay) =>
-        //         markedDay.year == date.year &&
-        //         markedDay.month == date.month &&
-        //         markedDay.day == date.day)) {
-        //       return Positioned(
-        //         bottom: 5,
-        //         child: Text(
-        //           '✓',
-        //           style: TextStyle(
-        //             color: Colors.deepPurple,
-        //             fontSize: 25,
-        //             fontWeight: FontWeight.bold,
-        //           ),
-        //         ),
-        //       );
-        //     }
-        //     return SizedBox();
-        //   },
-        // ),
         calendarBuilders: CalendarBuilders(
           markerBuilder: (context, date, events) {
-            if (_markedDays.contains(date)) {
+            if (_markedDays.any((markedDay) =>
+                markedDay.year == date.year &&
+                markedDay.month == date.month &&
+                markedDay.day == date.day)) {
               return Positioned(
                 bottom: 5,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
+                child: Text(
+                  '✓',
+                  style: TextStyle(
                     color: Colors.deepPurple.withOpacity(0.6),
-                    shape: BoxShape.circle,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               );
