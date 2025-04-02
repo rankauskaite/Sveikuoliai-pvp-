@@ -12,11 +12,6 @@ class UserService {
       DocumentSnapshot doc = await userCollection.doc(user.username).get();
       if (doc.exists) return false; // Jei username jau užimtas, false
 
-      // 1. useris Firebase authentification
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: user.email,
-        password: user.password,
-      );
       // 2. useris į duombazę
       await userCollection.doc(user.username).set(user.toJson());
       return true;

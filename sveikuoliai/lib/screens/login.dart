@@ -1,3 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:sveikuoliai/screens/forgot_password.dart';
+import 'package:sveikuoliai/screens/home.dart';
+import 'package:sveikuoliai/screens/signup.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -71,7 +78,8 @@ class LoginScreen extends StatelessWidget {
                                   if (value == null || value.isEmpty) {
                                     return 'Įveskite el. paštą';
                                   }
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
+                                  if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
                                       .hasMatch(value)) {
                                     return 'Netinkamas el. pašto formatas';
                                   }
