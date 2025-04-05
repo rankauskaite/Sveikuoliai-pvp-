@@ -58,6 +58,49 @@ class AuthService {
     return null;
   }
 
+  Future<User?> registerWithGoogle(String username) async {
+    try {
+      // Pirmiausia atlikime prisijungimą su Google
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null)
+        return null; // Jei vartotojas atsisako prisijungimo
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Pabandykite prisijungti su Google ir sukurti vartotoją
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      User? user = userCredential.user;
+      if (user != null) {
+        UserModel newUser = UserModel(
+          username: username,
+          name: '${user.displayName}',
+          password: '',
+          email: '${user.email}',
+          role: "user",
+          notifications: true,
+          darkMode: false,
+          menstrualLength: 7,
+          version: "free",
+          createdAt: DateTime.now(),
+        );
+        await _userService.createUserEntry(newUser);
+        await _saveUserToSession(newUser);
+        return user;
+      }
+    } catch (e) {
+      print("Klaida registruojant su Google: $e");
+    }
+    return null;
+  }
+
   Future<UserCredential?> signInWithGoogle() async {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) return null;
@@ -70,7 +113,17 @@ class AuthService {
       idToken: googleAuth.idToken,
     );
 
-    return await FirebaseAuth.instance.signInWithCredential(credential);
+    UserCredential userCredential =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+
+    User? user = userCredential.user;
+    if (user != null) {
+      UserModel? userData = await _userService.getUserEntryByEmail(user.email!);
+      if (userData != null) {
+        await _saveUserToSession(userData);
+      }
+    }
+    return userCredential;
   }
 
   Future<void> signOut() async {
