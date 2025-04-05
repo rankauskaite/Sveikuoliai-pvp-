@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sveikuoliai/screens/forgot_password.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/signup.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  bool _isEmailSignup = false;
+  bool _showButtons = true;
 
   void _login(BuildContext context) async {
     String email = emailController.text.trim();
@@ -29,6 +37,29 @@ class LoginScreen extends StatelessWidget {
       print("❌ Prisijungimas nepavyko!");
       showCustomSnackBar(context, '❌ Prisijungimas nepavyko!', false);
     }
+  }
+
+  void _signInWithGoogle(BuildContext context) async {
+    var user = await _authService.signInWithGoogle();
+    if (user != null) {
+      print("✅ Google prisijungimas sėkmingas: ${user.user?.email}");
+      showCustomSnackBar(context, '✅ Prisijungimas sėkmingas!', true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      print("❌ Google prisijungimas nepavyko!");
+      showCustomSnackBar(context, 'Nepavyko prisijungti su Google ❌', false);
+      await GoogleSignIn().signOut();
+    }
+  }
+
+  void _resetSelection() {
+    setState(() {
+      _showButtons = true;
+      _isEmailSignup = false;
+    });
   }
 
   @override
@@ -61,110 +92,170 @@ class LoginScreen extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 30, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 30),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              TextFormField(
-                                controller: emailController,
-                                decoration: InputDecoration(
-                                  labelText: 'El. paštas',
-                                  border: OutlineInputBorder(),
+                      SizedBox(height: 20),
+                      if (_showButtons)
+                        Column(
+                          children: [
+                            Container(
+                                height: 1.0,
+                                color: Colors.grey[300],
+                                width: double.infinity),
+                            SizedBox(height: 10),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showButtons = false;
+                                      _isEmailSignup = true;
+                                    });
+                                  },
+                                  child: Text('Prisijungti su el. paštu'),
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Įveskite el. paštą';
-                                  }
-                                  if (!RegExp(
-                                          r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
-                                      .hasMatch(value)) {
-                                    return 'Netinkamas el. pašto formatas';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              SizedBox(height: 20),
-                              TextFormField(
-                                controller: passwordController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Slaptažodis',
-                                  border: OutlineInputBorder(),
+                                SizedBox(height: 10),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showButtons = false;
+                                      _isEmailSignup = false;
+                                      _signInWithGoogle(context);
+                                    });
+                                  },
+                                  child: Text('Prisijungti su Google'),
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Įveskite slaptažodį';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Slaptažodis turi būti bent 6 simboliai';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              SizedBox(height: 10),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            ForgotPasswordScreen()),
-                                  );
-                                },
-                                child: Text(
-                                  'Pamiršai slaptažodį?',
-                                  style: TextStyle(
-                                    color: Colors.deepPurple,
-                                    decoration: TextDecoration.underline,
+                              ],
+                            ),
+                          ],
+                        ),
+                      if (!_showButtons)
+                        _isEmailSignup
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: Form(
+                                  key: _formKey,
+                                  child: Column(
+                                    children: [
+                                      TextFormField(
+                                        controller: emailController,
+                                        decoration: InputDecoration(
+                                          labelText: 'El. paštas',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Įveskite el. paštą';
+                                          }
+                                          if (!RegExp(
+                                                  r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
+                                              .hasMatch(value)) {
+                                            return 'Netinkamas el. pašto formatas';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      SizedBox(height: 20),
+                                      TextFormField(
+                                        controller: passwordController,
+                                        obscureText: true,
+                                        decoration: InputDecoration(
+                                          labelText: 'Slaptažodis',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Įveskite slaptažodį';
+                                          }
+                                          if (value.length < 6) {
+                                            return 'Slaptažodis turi būti bent 6 simboliai';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      SizedBox(height: 10),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ForgotPasswordScreen()),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Pamiršai slaptažodį?',
+                                          style: TextStyle(
+                                            color: Colors.deepPurple,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: 20),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            _login(context);
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          minimumSize: Size(300, 50),
+                                          iconColor: const Color(0xFF8093F1),
+                                        ),
+                                        child: const Text(
+                                          'Prisijungti',
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      ElevatedButton(
+                                        onPressed: _resetSelection,
+                                        child: Text('Grįžti prie pasirinkimo'),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    _login(context);
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: Size(300, 50),
-                                  iconColor: const Color(0xFF8093F1),
-                                ),
-                                child: const Text(
-                                  'Prisijungti',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('Neturi paskyros?'),
-                                  SizedBox(width: 10),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                SignupScreen()),
-                                      );
-                                    },
-                                    child: Text(
-                                      'Registruotis',
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Prisijungimas su Google...',
                                       style: TextStyle(
-                                        color: Colors.deepPurple,
+                                        fontSize: 15,
+                                        fontStyle: FontStyle.italic,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    SizedBox(height: 10),
+                                    ElevatedButton(
+                                      onPressed: _resetSelection,
+                                      child: Text('Grįžti prie pasirinkimo'),
+                                    ),
+                                  ],
+                                )),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Neturi paskyros?'),
+                          SizedBox(width: 10),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SignupScreen()),
+                              );
+                            },
+                            child: Text(
+                              'Registruotis',
+                              style: TextStyle(color: Colors.deepPurple),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
