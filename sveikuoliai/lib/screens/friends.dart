@@ -1,20 +1,232 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/friendship_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friend_profile.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
+import 'package:sveikuoliai/services/friendship_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-class FriendsScreen extends StatelessWidget {
+class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Dummy draugų sąrašas
-    final friends = [
-      'Draugas 1',
-      'Draugas 2',
-      'Draugas 3',
-      'Draugas 4',
-    ];
+  _FriendsScreenState createState() => _FriendsScreenState();
+}
 
+class _FriendsScreenState extends State<FriendsScreen> {
+  final AuthService _authService = AuthService();
+  final FriendshipService _friendshipService = FriendshipService();
+  //final UserService _userService = UserService();
+  String userUsername = "";
+  List<FriendshipModel> friends = [];
+  final TextEditingController _searchController = TextEditingController();
+  List<UserModel> searchResults = [];
+  bool isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+    _searchController.addListener(() {
+      setState(() {}); // atnaujina suffixIcon matomumą
+    });
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(
+        () {
+          userUsername = sessionData['username'] ?? "Nežinomas";
+        },
+      );
+      await _fetchUserFriends(userUsername);
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+
+  Future<void> _fetchUserFriends(String username) async {
+    try {
+      List<FriendshipModel> friendsList =
+          await _friendshipService.getUserFriendshipModels(username);
+      setState(() {
+        friends = friendsList;
+      });
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+
+  Future<void> _searchUsers(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        searchResults = [];
+        isSearching = false;
+      });
+      return;
+    }
+
+    // Gauk visus vartotojus ir filtruok (čia galėtum optimizuoti užklausą Firestore, jei didelė duomenų bazė)
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('users').get();
+
+    List<UserModel> allUsers = snapshot.docs
+        .map((doc) =>
+            UserModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
+
+    setState(() {
+      searchResults = allUsers.where((user) {
+        final nameLower = user.name.toLowerCase();
+        final usernameLower = user.username.toLowerCase();
+        final queryLower = query.toLowerCase();
+
+        final isSelf = user.username == userUsername;
+        final isFriend =
+            friends.any((friend) => friend.friend.username == user.username);
+
+        // Rodyti tik tuos, kurie nėra pats naudotojas ir nėra draugų sąraše
+        return !isSelf &&
+            !isFriend &&
+            (nameLower.contains(queryLower) ||
+                usernameLower.contains(queryLower));
+      }).toList();
+
+      isSearching = true;
+    });
+  }
+
+  Future<void> _addFriend(UserModel user) async {
+    try {
+      Friendship friendship = Friendship(
+        id: Friendship.generateFriendshipId(userUsername, user.username),
+        user1: userUsername,
+        user2: user.username,
+        status: "pending",
+        createdAt: DateTime.now(),
+      );
+      await _friendshipService.createFriendship(friendship);
+      showCustomSnackBar(context, "Draugas pridėtas ✅", true);
+      _searchUsers(_searchController.text); // Atnaujina paiešką
+      await _fetchUserFriends(userUsername); // Atnaujina draugų sąrašą
+      // if (mounted) {
+      //   Navigator.pushReplacement(
+      //     context,
+      //     MaterialPageRoute(
+      //       builder: (context) => FriendProfileScreen(
+      //         name: user.name,
+      //         username: user.username,
+      //         friendshipId:
+      //             Friendship.generateFriendshipId(userUsername, user.username),
+      //       ),
+      //     ),
+      //   );
+      // }
+    } catch (e) {
+      showCustomSnackBar(context, "Nepavyko pridėti draugo ❌", false);
+    }
+  }
+
+  void _showAddFriendDialog(UserModel user) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Pridėti draugą "),
+              Text(
+                user.name,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Colors.deepPurple,
+                ),
+              )
+            ],
+          ),
+          content: Text.rich(
+            TextSpan(
+              text:
+                  "Ar tikrai norite pridėti ", // Pirmoji dalis (bendras tekstas)
+              style: TextStyle(
+                fontWeight: FontWeight.normal,
+                color: Colors.black,
+                fontSize: 15,
+              ),
+              children: [
+                TextSpan(
+                  text: "${user.name}", // Vardas
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple, // Kita spalva vardui
+                    fontSize: 15,
+                  ),
+                ),
+                TextSpan(
+                  text: " (${user.username})", // Slapyvardis
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.pink[300], // Kita spalva slapyvardžiui
+                    fontSize: 15,
+                  ),
+                ),
+                TextSpan(
+                  text: " kaip draugą?", // Pabaiga
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.deepPurple.withOpacity(0.2),
+              ),
+              child: Text("Ne"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Uždaryti dialogą
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.deepPurple.withOpacity(0.2),
+              ),
+              child: Text("Taip"),
+              onPressed: () async {
+                Navigator.of(context).pop(); // Uždaryti dialogą
+                await _addFriend(user);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteFriend(FriendshipModel friendship) async {
+    try {
+      await _friendshipService.deleteFriendship(friendship.friendship.id);
+      showCustomSnackBar(context, "Draugas pašalintas ✅", true);
+      await _fetchUserFriends(userUsername); // atnaujinti sąrašą
+    } catch (e) {
+      showCustomSnackBar(context, "Nepavyko pašalinti draugo ❌", false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
@@ -78,15 +290,57 @@ class FriendsScreen extends StatelessWidget {
                     height: 10,
                   ),
                   TextField(
+                    controller: _searchController,
+                    onChanged: _searchUsers,
                     decoration: InputDecoration(
-                      hintText: 'Įveskite draugo vardą',
+                      hintText: 'Įveskite draugo slapyvardį',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.search),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  searchResults = [];
+                                  isSearching = false;
+                                });
+                                FocusScope.of(context).unfocus();
+                              },
+                            )
+                          : null,
                     ),
                   ),
                   SizedBox(
                     height: 20,
                   ),
+                  if (isSearching && searchResults.isNotEmpty)
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: searchResults.length,
+                        itemBuilder: (context, index) {
+                          final user = searchResults[index];
+                          return ListTile(
+                            leading: Icon(Icons.account_circle, size: 40),
+                            title: Text(user.name),
+                            subtitle: Text(
+                              user.username,
+                              style: TextStyle(color: Color(0xFF8093F1)),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.person_add_alt_1,
+                                color: Color(0xFFB388EB),
+                              ),
+                              onPressed: () {
+                                _showAddFriendDialog(user);
+                              },
+                            ),
+                            onTap: () {},
+                          );
+                        },
+                      ),
+                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -113,8 +367,9 @@ class FriendsScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => FriendProfileScreen(
-                                  name: friends[index],
-                                  username: 'USERNAME',
+                                  name: friends[index].friend.name,
+                                  username: friends[index].friend.username,
+                                  friendshipId: friends[index].friendship.id,
                                 ),
                               ),
                             );
@@ -141,11 +396,11 @@ class FriendsScreen extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          friends[index],
+                                          friends[index].friend.name,
                                           style: TextStyle(fontSize: 18),
                                         ),
                                         Text(
-                                          'USERNAME',
+                                          friends[index].friend.username,
                                           style: TextStyle(
                                             fontSize: 10,
                                             color: Color(0xFF8093F1),
@@ -164,7 +419,76 @@ class FriendsScreen extends StatelessWidget {
                                       color: Color(
                                           0xFFB388EB)), // Pašalinimo piktograma
                                   onPressed: () {
-                                    // Veiksmai, kai paspaudžiamas ištrynimo mygtukas
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text.rich(
+                                            TextSpan(
+                                              text:
+                                                  "${friends[index].friend.name}\n",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 22,
+                                                color: Colors.deepPurple,
+                                              ),
+                                              children: [
+                                                TextSpan(
+                                                  text:
+                                                      "Ar tikrai norite pašalinti šį draugą?",
+                                                  style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                    color: Colors.black,
+                                                    fontSize: 18,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          content: Text(
+                                              "Draugo pašalinimas bus negrįžtamas."),
+                                          actions: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(
+                                                        context); // Uždaro dialogą
+                                                  },
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: Colors
+                                                        .deepPurple
+                                                        .withOpacity(0.2),
+                                                  ),
+                                                  child: Text("Ne",
+                                                      style: TextStyle(
+                                                          fontSize: 18)),
+                                                ),
+                                                SizedBox(width: 20),
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.pop(context);
+                                                    await _deleteFriend(
+                                                        friends[index]);
+                                                  },
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: Colors.red
+                                                        .withOpacity(0.2),
+                                                  ),
+                                                  child: Text("Taip",
+                                                      style: TextStyle(
+                                                          color: Colors.red,
+                                                          fontSize: 18)),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
                                   },
                                 ),
                               ],

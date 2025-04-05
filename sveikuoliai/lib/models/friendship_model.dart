@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 
 class Friendship {
   String id; // Unikalus ID (user1_user2)
   String user1; // drauags1
   String user2; // draugas2
   String status; // "pending", "accepted", "declined"
-  DateTime createdAt; 
+  DateTime createdAt;
   Friendship({
     required this.id,
     required this.user1,
@@ -36,7 +37,25 @@ class Friendship {
 
   /// draugystes id is useriu
   static String generateFriendshipId(String user1, String user2) {
-    List<String> sortedUsers = [user1, user2]..sort(); // Surikiuoja abėcėlės tvarka
-    return "${sortedUsers[0]}_${sortedUsers[1]}"; 
+    List<String> sortedUsers = [user1, user2]
+      ..sort(); // Surikiuoja abėcėlės tvarka
+    return "${sortedUsers[0]}_${sortedUsers[1]}";
+  }
 }
+
+class FriendshipModel {
+  Friendship friendship; // Draugystės objektas
+  UserModel friend;
+  FriendshipModel({
+    required this.friendship,
+    required this.friend,
+  });
+
+  /// i objekta
+  factory FriendshipModel.fromJson(Friendship friendship, UserModel friend) {
+    return FriendshipModel(
+      friendship: friendship,
+      friend: friend,
+    );
+  }
 }
