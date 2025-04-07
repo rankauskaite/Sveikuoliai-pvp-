@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/login.dart';
 import 'package:sveikuoliai/screens/signup.dart';
+import 'package:sveikuoliai/screens/version.dart';
 
 class HelloScreen extends StatelessWidget {
   @override
@@ -60,7 +61,8 @@ class HelloScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SignupScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => SignupScreen()),
                 );
               },
               style: OutlinedButton.styleFrom(

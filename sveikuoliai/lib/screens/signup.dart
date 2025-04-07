@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/login.dart';
+import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -39,13 +40,15 @@ class _SignupScreenState extends State<SignupScreen> {
       print("✅ Registracija sėkminga: ${user.email}");
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+            builder: (context) => VersionScreen(
+                  username: username,
+                )),
       );
     } else {
       print("❌ Registracija nepavyko!");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Neteisingi registracijos duomenys")),
-      );
+      String message = '❌ Registracija nepavyko!';
+      showCustomSnackBar(context, message, false);
     }
   }
 
@@ -57,7 +60,10 @@ class _SignupScreenState extends State<SignupScreen> {
       showCustomSnackBar(context, '✅ Prisijungimas sėkmingas!', true);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+            builder: (context) => VersionScreen(
+                  username: username,
+                )),
       );
     } else {
       print("❌ Google registracija nepavyko!");

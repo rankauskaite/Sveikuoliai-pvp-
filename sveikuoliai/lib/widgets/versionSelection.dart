@@ -37,12 +37,16 @@ class _VersionSelectionState extends State<VersionSelection> {
         _buildVersionButton(
             'Nemokama',
             '0€',
-            selectedVersion == 'nemokama' || selectedVersion == 'free',
+            selectedVersion == 'Gija NULIS' || selectedVersion == 'free',
             Color(0xFF72ddf7),
             'free'),
         const SizedBox(width: 10),
-        _buildVersionButton('Premium', '9.99€', selectedVersion == 'premium',
-            Color(0xFFB388EB), 'premium'),
+        _buildVersionButton(
+            'Premium',
+            '9.99€',
+            selectedVersion == 'Gija PREMIUM' || selectedVersion == 'premium',
+            Color(0xFFB388EB),
+            'premium'),
       ],
     );
   }
