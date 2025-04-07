@@ -23,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String userUsername = "";
   String userEmail = "Kraunama...";
   DateTime userJoinDate = DateTime.now();
-  String userVersion = "nemokama";
+  String userVersion = "Gija NULIS";
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         userJoinDate = userData?.createdAt ?? DateTime.now();
         if (userData?.version == "premium") {
-          userVersion = "premium";
+          userVersion = "Gija PREMIUM";
         }
       });
     } catch (e) {
@@ -99,8 +99,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    UpdateProfileScreen(version: userVersion,)),
+                                builder: (context) => UpdateProfileScreen(
+                                      version: userVersion,
+                                    )),
                           );
                         },
                         icon: Icon(
