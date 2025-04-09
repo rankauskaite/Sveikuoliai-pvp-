@@ -134,8 +134,6 @@ class GoalCard extends StatefulWidget {
 }
 
 class _GoalCardState extends State<GoalCard> {
-  String? _goalName;
-  String? _goalDescription;
   String userUsername = "";
   final GoalTypeService _goalTypeService = GoalTypeService();
   final GoalService _goalService = GoalService();

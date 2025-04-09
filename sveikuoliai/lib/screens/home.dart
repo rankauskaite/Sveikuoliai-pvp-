@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/screens/garden.dart';
@@ -21,11 +23,40 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AppNotification> notifications = []; // Pranešimų sąrašas
   String userName = "";
   String userUsername = "";
+  final PageController _adController = PageController();
+  final List<String> _reklamos = [
+    'assets/images/reklamos/drouglas.png',
+    'assets/images/reklamos/ebatelis.png',
+    'assets/images/reklamos/vienaragis.png',
+  ];
+  int _reklamosIndex = 0;
+  Timer? _adTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
+    _adTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (timer) {
+        _reklamosIndex++;
+        if (_reklamosIndex >= _reklamos.length) _reklamosIndex = 0;
+        if (_adController.hasClients) {
+          _adController.animateToPage(
+            _reklamosIndex,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _adTimer?.cancel();
+    _adController.dispose();
+    super.dispose();
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -138,19 +169,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Row(
                           children: [
                             _buildPlantColumn('Orchidėja',
-                                imageUrl: 'assets/images/orchideja/16.png'),
+                                imageUrl:
+                                    'assets/images/augalai/orchideja/16.png'),
                             _buildPlantColumn('Dobilas',
-                                imageUrl: 'assets/images/dobiliukas/4.png'),
+                                imageUrl:
+                                    'assets/images/augalai/dobiliukas/4.png'),
                             _buildPlantColumn('Žibuoklės',
-                                imageUrl: 'assets/images/zibuokle/8.png'),
+                                imageUrl:
+                                    'assets/images/augalai/zibuokle/8.png'),
                             _buildPlantColumn('Ramunė',
-                                imageUrl: 'assets/images/ramuneles/6.png'),
+                                imageUrl:
+                                    'assets/images/augalai/ramuneles/6.png'),
                             _buildPlantColumn('Gervuogė',
-                                imageUrl: 'assets/images/gervuoge/24.png'),
+                                imageUrl:
+                                    'assets/images/augalai/gervuoge/24.png'),
                             _buildPlantColumn('Saulėgrąža',
-                                imageUrl: 'assets/images/saulegraza/12.png'),
+                                imageUrl:
+                                    'assets/images/augalai/saulegraza/12.png'),
                             _buildPlantColumn('Vyšnia',
-                                imageUrl: 'assets/images/vysnia/36.png'),
+                                imageUrl:
+                                    'assets/images/augalai/vysnia/36.png'),
                           ],
                         ),
                       ),
@@ -176,14 +214,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             width: 250,
                             height: 100,
-                            color: const Color(0xFFD9D9D9),
-                            child: const Center(
-                              child: Text(
-                                'Reklamos plotas',
-                                style: TextStyle(
-                                    fontSize: 30, color: Colors.black),
-                                textAlign: TextAlign.center,
-                              ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD9D9D9),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: PageView.builder(
+                              controller: _adController,
+                              itemCount: _reklamos.length,
+                              itemBuilder: (context, index) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.asset(
+                                    _reklamos[index],
+                                    fit: BoxFit.cover,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ],

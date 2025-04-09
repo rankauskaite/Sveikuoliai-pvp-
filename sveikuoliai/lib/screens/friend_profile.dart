@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/models/friendship_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';

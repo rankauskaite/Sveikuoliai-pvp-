@@ -58,7 +58,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         friends = friendsList;
       });
     } catch (e) {
-      String message = 'Klaida gaunant duomenis ❌';
+      String message = 'Klaida gaunant draugų duomenis ❌';
       showCustomSnackBar(context, message, false);
     }
   }

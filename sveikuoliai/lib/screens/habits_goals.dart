@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
+import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/screens/goal.dart';
 import 'package:sveikuoliai/screens/habit.dart';
 import 'package:sveikuoliai/screens/new_goal.dart';
 import 'package:sveikuoliai/screens/new_habit.dart';
+import 'package:sveikuoliai/screens/new_shared_goal.dart';
+import 'package:sveikuoliai/screens/shared_goal.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
+import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
@@ -27,8 +31,10 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   final AuthService _authService = AuthService();
   List<HabitInformation> userHabits = [];
   List<GoalInformation> userGoals = [];
+  List<SharedGoalInformation> userSharedGoals = [];
   final HabitService _habitService = HabitService();
   final GoalService _goalService = GoalService();
+  final SharedGoalService _sharedGoalService = SharedGoalService();
 
   @override
   void initState() {
@@ -47,6 +53,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
       );
       await _fetchUserHabits(userUsername);
       await _fetchUserGoals(userUsername);
+      await _fetchUserSharedGoals(userUsername);
     } catch (e) {
       String message = 'Klaida gaunant duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -79,6 +86,21 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
       });
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslus ❌', false);
+    }
+  }
+
+  Future<void> _fetchUserSharedGoals(String username) async {
+    try {
+      // Gaukime vartotojo įpročius
+      List<SharedGoalInformation> goals =
+          await _sharedGoalService.getSharedUserGoals(username);
+
+      // Atnaujiname būsena su naujais duomenimis
+      setState(() {
+        userSharedGoals = goals;
+      });
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant draugų tikslus ❌', false);
     }
   }
 
@@ -132,6 +154,15 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                                   topLeft: Radius.circular(30),
                                   bottomLeft: Radius.circular(30),
                                 ),
+                                border: selectedIndex == 2
+                                    ? Border(
+                                        right: BorderSide(
+                                          color:
+                                              Colors.grey[400] ?? Colors.grey,
+                                          width: 1,
+                                        ),
+                                      )
+                                    : null,
                               ),
                               child: Center(
                                 child: Text(
@@ -171,7 +202,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                                         left: BorderSide(
                                           color:
                                               Colors.grey[400] ?? Colors.grey,
-                                          width: 2,
+                                          width: 1,
                                         ),
                                       )
                                     : null,
@@ -195,7 +226,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                     ),
                     SizedBox(
                         height:
-                            10), // Tarpas tarp pirmos eilės ir trečio mygtuko
+                            5), // Tarpas tarp pirmos eilės ir trečio mygtuko
                     GestureDetector(
                       onTap: () {
                         setState(() {
@@ -226,14 +257,15 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         ),
                       ),
                     ),
-                    //SizedBox(height: 10),
+                    SizedBox(height: 5),
                     // Turinys pagal pasirinkimą
                     Expanded(
                       child: selectedIndex == 0
                           ? _buildHabits()
                           : selectedIndex == 1
                               ? _buildGoals()
-                              : _buildFriendsGoals(), // Nauja funkcija draugų tikslams
+                              : _buildFriendsGoals(
+                                  userUsername), // Nauja funkcija draugų tikslams
                     ),
                   ],
                 )),
@@ -569,7 +601,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
     );
   }
 
-  Widget _buildFriendsGoals() {
+  Widget _buildFriendsGoals(String username) {
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
@@ -606,7 +638,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const NewGoalScreen()),
+                                  builder: (context) => NewSharedGoalScreen(
+                                        username: username,
+                                      )),
                             );
                           }, // Veiksmas paspaudus
                           child: Icon(
@@ -645,19 +679,19 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             ),
           ],
         ),
-        ...userGoals.map((goal) => _friendsGoalItem(goal)),
+        ...userSharedGoals.map((goal) => _friendsGoalItem(goal)),
       ],
     );
   }
 
-  Widget _friendsGoalItem(GoalInformation goal) {
+  Widget _friendsGoalItem(SharedGoalInformation goal) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) =>
-                GoalScreen(goal: goal), // Pakeisk į tinkamą puslapį
+                SharedGoalScreen(goal: goal), // Pakeisk į tinkamą puslapį
           ),
         );
       },
@@ -688,7 +722,8 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                       borderRadius: BorderRadius.circular(50),
                       child: Image.asset(
                         PlantImageService.getPlantImage(
-                            goal.goalModel.plantId, goal.goalModel.points),
+                            goal.sharedGoalModel.plantId,
+                            goal.sharedGoalModel.points),
                         width: 80,
                         height: 80,
                       ),

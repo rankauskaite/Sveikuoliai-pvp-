@@ -24,7 +24,7 @@ class _GardenScreenState extends State<GardenScreen> {
           left: left,
           top: top,
           child: Image.asset(
-            'assets/images/saulegraza/12.png',
+            'assets/images/augalai/saulegraza/12.png',
             width: 100,
             height: 100,
           ),
@@ -82,7 +82,7 @@ class _GardenScreenState extends State<GardenScreen> {
                       Stack(
                         children: [
                           Image.asset(
-                            'assets/island3.jpg',
+                            'assets/images/salos/sala_tikslu.png',
                             width: 300,
                             height: 220,
                           ),

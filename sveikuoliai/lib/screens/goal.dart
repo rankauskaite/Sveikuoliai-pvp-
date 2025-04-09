@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
@@ -7,9 +6,9 @@ import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
-import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/services/goal_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
+import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -195,20 +194,16 @@ class _GoalPageState extends State<GoalScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      UpdateGoalScreen(goal: widget.goal)),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            size: 30,
+                        if (widget.goal.goalType.type == 'custom')
+                          IconButton(
+                            onPressed: () {
+                              _showCustomGoalDialog(context);
+                            },
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                              size: 30,
+                            ),
                           ),
-                        ),
                         IconButton(
                           onPressed: () {
                             // Rodyti dialogą su klausimu
@@ -534,6 +529,77 @@ class _GoalPageState extends State<GoalScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showCustomGoalDialog(BuildContext context) {
+    TextEditingController titleController =
+        TextEditingController(text: widget.goal.goalType.title);
+    TextEditingController descriptionController =
+        TextEditingController(text: widget.goal.goalType.description);
+    GoalTypeService _goalTypeService = GoalTypeService();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Redaguoti tikslą"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: "Pavadinimas",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: "Aprašymas",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Uždaryti
+              },
+              child: const Text("Atšaukti"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                setState(() {
+                  widget.goal.goalType.title = titleController.text;
+                  widget.goal.goalType.description = descriptionController.text;
+                });
+                try {
+                  await _goalTypeService
+                      .updateGoalTypeEntry(widget.goal.goalType);
+                  showCustomSnackBar(
+                      context, "Tikslas sėkmingai atnaujintas ✅", true);
+                } catch (e) {
+                  showCustomSnackBar(
+                      context, "Klaida atnaujinant tikslą ❌", false);
+                }
+
+                Navigator.pop(context); // Uždaryti po išsaugojimo
+              },
+              child: const Text("Išsaugoti"),
+            ),
+          ],
+        );
+      },
     );
   }
 
