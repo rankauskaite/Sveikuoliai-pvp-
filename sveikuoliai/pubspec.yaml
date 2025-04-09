@@ -86,20 +86,19 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.png
-    - assets/island.png
-    - assets/island2.png
-    - assets/island3.jpg
     - assets/gif/premium.gif
     - assets/rive/meditacija.riv
-    - assets/images/dobiliukas/
-    - assets/images/gervuoge/
-    - assets/images/orchideja/
-    - assets/images/ramuneles/
-    - assets/images/saulegraza/
-    - assets/images/vysnia/
-    - assets/images/zibuokle/
+    - assets/images/augalai/dobiliukas/
+    - assets/images/augalai/gervuoge/
+    - assets/images/augalai/orchideja/
+    - assets/images/augalai/ramuneles/
+    - assets/images/augalai/saulegraza/
+    - assets/images/augalai/vysnia/
+    - assets/images/augalai/zibuokle/
     - assets/images/nuotaikos/
     - assets/images/virsKalendoriaus/
+    - assets/images/reklamos/
+    - assets/images/salos/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

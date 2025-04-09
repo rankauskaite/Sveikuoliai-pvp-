@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/login.dart';
 import 'package:sveikuoliai/screens/signup.dart';
-import 'package:sveikuoliai/screens/version.dart';
 
 class HelloScreen extends StatelessWidget {
   @override

@@ -5,11 +5,10 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
-import 'package:sveikuoliai/screens/habit_progress.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
-import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/services/habit_progress_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
+import 'package:sveikuoliai/services/habit_type_services.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -36,6 +35,10 @@ class _HabitScreenState extends State<HabitScreen> {
       plantUrl: '',
       date: DateTime.now(),
       isCompleted: false);
+  final TextEditingController _progressController = TextEditingController();
+  String? _currentProgressId; // Saugo esamo progreso ID, jei jis egzistuoja
+  int pointss = 0;
+  int streakk = 0;
 
   @override
   void initState() {
@@ -47,6 +50,7 @@ class _HabitScreenState extends State<HabitScreen> {
   Future<void> _loadData() async {
     await _fetchPlantData();
     await _fetchHabitProgress();
+    _loadProgress();
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -69,8 +73,8 @@ class _HabitScreenState extends State<HabitScreen> {
 
   Future<void> _fetchHabitProgress() async {
     try {
-      HabitProgress? fetchedHabitProgress =
-          await _habitProgressService.getLatestHabitProgress(widget.habit.habitModel.id);
+      HabitProgress? fetchedHabitProgress = await _habitProgressService
+          .getLatestHabitProgress(widget.habit.habitModel.id);
 
       if (fetchedHabitProgress != null) {
         setState(() {
@@ -85,15 +89,16 @@ class _HabitScreenState extends State<HabitScreen> {
   }
 
   double _calculateProgress() {
-    if (widget.habit.habitModel.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
+    if (widget.habit.habitModel.endPoints == 0)
+      return 0.0; // Apsauga nuo dalybos iš nulio
     return habitProgress.points / widget.habit.habitModel.endPoints;
   }
 
   Future<void> _deleteHabit() async {
     try {
       final habitService = HabitService();
-      await habitService
-          .deleteHabitEntry(widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
+      await habitService.deleteHabitEntry(
+          widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
@@ -102,6 +107,32 @@ class _HabitScreenState extends State<HabitScreen> {
       showCustomSnackBar(context, "Įprotis sėkmingai ištrintas ✅", true);
     } catch (e) {
       showCustomSnackBar(context, "Klaida trinant įprotį ❌", false);
+    }
+  }
+
+  void _loadProgress() async {
+    final habitProgressService = HabitProgressService();
+    HabitProgress? progress = await habitProgressService
+        .getTodayHabitProgress(widget.habit.habitModel.id);
+    HabitProgress? lastProgress = await habitProgressService
+        .getLatestHabitProgress(widget.habit.habitModel.id);
+
+    if (progress != null) {
+      setState(() {
+        _progressController.text = progress.description;
+        _currentProgressId = progress.id; // Išsaugome ID atnaujinimui
+        pointss = lastProgress!.points;
+        streakk = lastProgress.streak;
+      });
+    } else if (lastProgress != null) {
+      setState(
+        () {
+          pointss = lastProgress.points;
+          if (lastProgress.date.day == DateTime.now().day - 1) {
+            streakk = lastProgress.streak;
+          }
+        },
+      );
     }
   }
 
@@ -147,20 +178,16 @@ class _HabitScreenState extends State<HabitScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      UpdateHabitScreen(habit: widget.habit)),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            size: 30,
+                        if (widget.habit.habitType.type == 'custom')
+                          IconButton(
+                            onPressed: () {
+                              _showCustomGoalDialog(context);
+                            },
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                              size: 30,
+                            ),
                           ),
-                        ),
                         IconButton(
                           onPressed: () {
                             // Rodyti dialogą su klausimu
@@ -266,13 +293,7 @@ class _HabitScreenState extends State<HabitScreen> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => HabitProgressScreen(
-                                    habit: widget.habit,
-                                  )),
-                        );
+                        _showProgressDialog(context);
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
@@ -333,9 +354,12 @@ class _HabitScreenState extends State<HabitScreen> {
                                       ? "1 mėnuo"
                                       : widget.habit.habitModel.endPoints == 45
                                           ? "1,5 mėnesio"
-                                          : widget.habit.habitModel.endPoints == 60
+                                          : widget.habit.habitModel.endPoints ==
+                                                  60
                                               ? "2 mėnesiai"
-                                              : widget.habit.habitModel.endPoints == 90
+                                              : widget.habit.habitModel
+                                                          .endPoints ==
+                                                      90
                                                   ? "3 mėnesiai"
                                                   : "6 mėnesiai",
                           style:
@@ -411,10 +435,187 @@ class _HabitScreenState extends State<HabitScreen> {
     );
   }
 
+  void _showCustomGoalDialog(BuildContext context) {
+    TextEditingController titleController =
+        TextEditingController(text: widget.habit.habitType.title);
+    TextEditingController descriptionController =
+        TextEditingController(text: widget.habit.habitType.description);
+    HabitTypeService _habitTypeService = HabitTypeService();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Redaguoti įprotį"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: "Pavadinimas",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: "Aprašymas",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Uždaryti
+              },
+              child: const Text("Atšaukti"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                setState(() {
+                  widget.habit.habitType.title = titleController.text;
+                  widget.habit.habitType.description =
+                      descriptionController.text;
+                });
+                try {
+                  await _habitTypeService
+                      .updateHabitTypeEntry(widget.habit.habitType);
+                  showCustomSnackBar(
+                      context, "Įprotis sėkmingai atnaujintas ✅", true);
+                } catch (e) {
+                  showCustomSnackBar(
+                      context, "Klaida atnaujinant įprotį ❌", false);
+                }
+
+                Navigator.pop(context); // Uždaryti po išsaugojimo
+              },
+              child: const Text("Išsaugoti"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showProgressDialog(BuildContext context) {
+    String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Atnaujink savo progresą',
+                style: TextStyle(fontSize: 18),
+              ),
+              Text(
+                widget.habit.habitType.title,
+                style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFB388EB)),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Data: $formattedDate',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _progressController,
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    labelText: 'Įveskite informaciją',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.transparent,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Uždaro dialogą
+              },
+              child: Text('Atšaukti'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final habitProgressService = HabitProgressService();
+                final habitService = HabitService();
+
+                HabitProgress newProgress = HabitProgress(
+                  id: _currentProgressId ??
+                      '${widget.habit.habitModel.habitTypeId}${widget.habit.habitModel.userId[0].toUpperCase() + widget.habit.habitModel.userId.substring(1)}${DateTime.now()}',
+                  habitId: widget.habit.habitModel.id,
+                  description: _progressController.text,
+                  points: _currentProgressId != null ? pointss : ++pointss,
+                  streak: _currentProgressId != null ? streakk : ++streakk,
+                  plantUrl: PlantImageService.getPlantImage(
+                      widget.habit.habitModel.plantId,
+                      widget.habit.habitModel.points + 1),
+                  date: DateTime.now(),
+                  isCompleted: true,
+                );
+
+                await habitProgressService
+                    .createHabitProgressEntry(newProgress);
+
+                HabitModel updatedHabit = HabitModel(
+                  id: widget.habit.habitModel.id,
+                  startDate: widget.habit.habitModel.startDate,
+                  endDate: widget.habit.habitModel.endDate,
+                  points: newProgress.points,
+                  category: widget.habit.habitModel.category,
+                  endPoints: widget.habit.habitModel.endPoints,
+                  repetition: widget.habit.habitModel.repetition,
+                  userId: widget.habit.habitModel.userId,
+                  habitTypeId: widget.habit.habitModel.habitTypeId,
+                  plantId: widget.habit.habitModel.plantId,
+                );
+
+                await habitService.updateHabitEntry(updatedHabit);
+
+                if (context.mounted) {
+                  showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
+                  Navigator.pop(context); // Uždaro dialogą
+                }
+              },
+              child: Text('Išsaugoti'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Progreso indikatorius su procentais
   Widget _buildProgressIndicator(double progress) {
-    String plantType =
-        widget.habit.habitModel.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
+    String plantType = widget
+        .habit.habitModel.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
     int userPoints = habitProgress.points;
     String imagePath = PlantImageService.getPlantImage(plantType, userPoints);
     return Stack(

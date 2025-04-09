@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -147,7 +144,7 @@ Bendrauk
           }
           currentHeading = line;
           descriptionWidgets.add(Text(
-            currentHeading!,
+            currentHeading,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ));
         } else {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
