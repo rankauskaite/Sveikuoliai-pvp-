@@ -13,6 +13,13 @@ class VersionScreen extends StatefulWidget {
 class _VersionScreenState extends State<VersionScreen> {
   String? selectedPlan;
   final UserService _userService = UserService();
+  int currentPage = 0;
+
+  final List<double> cardHeights = [
+    400, // Gija NULIS
+    480, // Gija PLIUS
+    350, // Gija KARTU
+  ];
 
   Future<void> saveSelectedPlan(String plan) async {
     try {
@@ -28,6 +35,69 @@ class _VersionScreenState extends State<VersionScreen> {
       showCustomSnackBar(context, message, false);
     }
     print("Pasirinktas planas: $plan"); // Kol kas tiesiog atspausdinsime
+  }
+
+  Widget buildDynamicCard(int index) {
+    switch (index) {
+      case 0:
+        return buildPlanCard(
+          planId: 'free',
+          color: Color(0xFFEEEEEEEE),
+          borderColor: Color(0xFFF7AEF8),
+          title: 'Gija NULIS',
+          price: '0',
+          description: '''
+Stebėk
+  - ? iššūkius
+  - ? įpročius
+Naudokis
+  - Virtualiu dienoraščiu
+  - Meditacijos kampeliu
+        ''',
+          buttonColor: Color(0xFFEF3BF1),
+          fixedHeight: cardHeights[0], // Priskiriame aukštį
+        );
+      case 1:
+        return buildPlanCard(
+          planId: 'premium',
+          color: Color(0xFFF7AEF8),
+          borderColor: Color(0xFFF7AEF8),
+          title: 'Gija PLIUS',
+          price: '5',
+          description: '''
+Stebėk
+  - neribotus iššūkius
+  - neribotus įpročius
+Naudokis
+  - Virtualiu dienoraščiu
+  - Meditacijos kampeliu
+Bendrauk
+  - Kviešk draugus
+  - Kelk bendrus iššūkius
+  - Stebėk draugų sodą
+        ''',
+          buttonColor: Color(0xFFEF3BF1),
+          fixedHeight: cardHeights[1], // Priskiriame aukštį
+        );
+      case 2:
+        return buildPlanCard(
+          planId: 'together',
+          color: Color(0xFFFDA6B8),
+          borderColor: Color(0xFFFDA6B8),
+          title: 'Gija KARTU',
+          price: '30',
+          description: '''
+Stebėk
+  - kaip tau ir tavo 
+    bendruomenei sekasi
+    vykdyti iššūkius
+        ''',
+          buttonColor: Colors.black,
+          fixedHeight: cardHeights[2], // Priskiriame aukštį
+        );
+      default:
+        return SizedBox.shrink();
+    }
   }
 
   @override
@@ -56,58 +126,16 @@ class _VersionScreenState extends State<VersionScreen> {
               ],
             ),
             SizedBox(height: 10),
-            Flexible(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 300,
-                      height: 400,
-                      child: buildPlanCard(
-                        planId: 'free',
-                        color: Color(0xFFEEEEEEEE),
-                        borderColor: Color(0xFFF7AEF8),
-                        title: 'Gija NULIS',
-                        price: '0',
-                        description: '''
-Stebėk
-  - ? iššūkius
-  - ? įpročius
-Naudokis
-  - Virtualiu dienoraščiu
-  - Meditacijos kampeliu
-          ''',
-                        buttonColor: Color(0xFFEF3BF1),
-                      ),
-                    ),
-                    SizedBox(width: 16), // tarpas tarp kortelių
-                    SizedBox(
-                      width: 300,
-                      child: buildPlanCard(
-                        planId: 'premium',
-                        color: Color(0xFFF7AEF8),
-                        borderColor: Color(0xFFF7AEF8),
-                        title: 'Gija PLIUS',
-                        price: '5',
-                        description: '''
-Stebėk
-  - neribotus iššūkius
-  - neribotus įpročius
-Naudokis
-  - Virtualiu dienoraščiu
-  - Meditacijos kampeliu
-Bendrauk
-  - Kviešk draugus
-  - Kelk bendrus iššūkius
-  - Stebėk draugų sodą
-          ''',
-                        buttonColor: Color(0xFFEF3BF1),
-                      ),
-                    ),
-                  ],
-                ),
+            Expanded(
+              child: PageView.builder(
+                controller: PageController(viewportFraction: 0.85),
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return Align(
+                    alignment: Alignment.center,
+                    child: buildDynamicCard(index),
+                  );
+                },
               ),
             ),
             SizedBox(height: 20),
@@ -125,6 +153,7 @@ Bendrauk
     required String price,
     required String description,
     required Color buttonColor,
+    double? fixedHeight, // <-- naujas parametras
   }) {
     // Funkcija, kuri suskaido aprašymą į pavadinimus ir punktus
     List<Widget> buildDescription(String description) {
@@ -161,6 +190,7 @@ Bendrauk
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 10),
       child: Container(
+        height: fixedHeight, // <-- čia priskiriam
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(30),
