@@ -29,6 +29,7 @@ class _GoalPageState extends State<GoalScreen> {
   final GoalTaskService _goalTaskService = GoalTaskService();
   final GoalService _goalService = GoalService();
   List<GoalTask> goalTasks = [];
+  int length = 0;
 
   @override
   void initState() {
@@ -67,6 +68,7 @@ class _GoalPageState extends State<GoalScreen> {
 
       setState(() {
         goalTasks = tasks;
+        length = tasks.length;
       });
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslo užduotis ❌', false);
@@ -149,6 +151,25 @@ class _GoalPageState extends State<GoalScreen> {
       showCustomSnackBar(context, "Tikslas sėkmingai ištrintas ✅", true);
     } catch (e) {
       showCustomSnackBar(context, "Klaida trinant tikslą ❌", false);
+    }
+  }
+
+  Future<void> _deleteTask(String taskId) async {
+    try {
+      final taskService = GoalTaskService();
+      await taskService
+          .deleteGoalTaskEntry(taskId); // Ištrinti įprotį iš serverio
+      //Navigator.pop(context); // Grįžta atgal
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => GoalScreen(
+                  goal: widget.goal,
+                )),
+      );
+      showCustomSnackBar(context, "Tikslo užduotis sėkmingai ištrinta ✅", true);
+    } catch (e) {
+      showCustomSnackBar(context, "Klaida trinant tikslo užduotį ❌", false);
     }
   }
 
@@ -407,7 +428,7 @@ class _GoalPageState extends State<GoalScreen> {
                       children: [
                         ...goalTasks
                             .where((task) => !task.isCompleted)
-                            .map(_buildGoalItemFalse),
+                            .map((task) => _buildGoalItemFalse(task, length)),
                         ...goalTasks
                             .where((task) => task.isCompleted)
                             .map(_buildGoalItemTrue),
@@ -603,6 +624,77 @@ class _GoalPageState extends State<GoalScreen> {
     );
   }
 
+  void _showCustomTaskDialog(BuildContext context, GoalTask task) {
+    TextEditingController titleController =
+        TextEditingController(text: task.title);
+    TextEditingController descriptionController =
+        TextEditingController(text: task.description);
+    GoalTaskService _goalTaskService = GoalTaskService();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Redaguoti užduotį"),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: "Pavadinimas",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: "Aprašymas",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Uždaryti
+              },
+              child: const Text("Atšaukti"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                setState(() {
+                  task.title = titleController.text;
+                  task.description = descriptionController.text;
+                });
+                try {
+                  await _goalTaskService
+                      .updateGoalTaskEntry(task); // Atnaujinti užduotį
+                  showCustomSnackBar(
+                      context, "Tikslo užduotis sėkmingai atnaujintas ✅", true);
+                } catch (e) {
+                  showCustomSnackBar(
+                      context, "Klaida atnaujinant tikslo užduotį ❌", false);
+                }
+
+                Navigator.pop(context); // Uždaryti po išsaugojimo
+              },
+              child: const Text("Išsaugoti"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Progreso indikatorius su procentais
   Widget _buildProgressIndicator(double progress) {
     String plantType = widget
@@ -655,29 +747,38 @@ class _GoalPageState extends State<GoalScreen> {
         color: const Color(0xFF72ddf7).withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: CheckboxListTile(
-        title: Text(
-          task.title,
-          style: TextStyle(color: Colors.grey[300]),
-        ),
-        subtitle: Text(
-          task.description,
-          style: TextStyle(color: Colors.grey[300]),
-        ),
-        value: task.isCompleted,
-        onChanged: (bool? value) {
-          setState(() {
-            task.isCompleted = value ?? false;
-            task.points = 0;
-          });
-        },
-        activeColor: Colors.blue,
+      child: Row(
+        children: [
+          Expanded(
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                task.title,
+                style: TextStyle(color: Colors.grey[300]),
+              ),
+              subtitle: Text(
+                task.description,
+                style: TextStyle(color: Colors.grey[300]),
+              ),
+              leading: Checkbox(
+                value: task.isCompleted,
+                onChanged: (bool? value) {
+                  setState(() {
+                    task.isCompleted = value ?? false;
+                    task.points = _calculatePoints();
+                  });
+                },
+                activeColor: Colors.blue,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   // Tikslų kortelių kūrimo funkcija
-  Widget _buildGoalItemFalse(GoalTask task) {
+  Widget _buildGoalItemFalse(GoalTask task, int length) {
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(bottom: 10),
@@ -685,17 +786,112 @@ class _GoalPageState extends State<GoalScreen> {
         color: const Color(0xFF72ddf7).withOpacity(0.2),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: CheckboxListTile(
-        title: Text(task.title),
-        subtitle: Text(task.description),
-        value: task.isCompleted,
-        onChanged: (bool? value) {
-          setState(() {
-            task.isCompleted = value ?? false;
-            task.points = _calculatePoints();
-          });
-        },
-        activeColor: Colors.blue,
+      child: Row(
+        children: [
+          Expanded(
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(task.title),
+              subtitle: Text(task.description),
+              leading: Checkbox(
+                value: task.isCompleted,
+                onChanged: (bool? value) {
+                  setState(() {
+                    task.isCompleted = value ?? false;
+                    task.points = _calculatePoints();
+                  });
+                },
+                activeColor: Colors.blue,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _showCustomTaskDialog(context, task);
+              });
+            },
+            icon: Icon(Icons.edit_outlined, color: Colors.deepPurple),
+          ),
+          if (length > 1) // Patikriname, ar yra daugiau nei viena užduotis
+            IconButton(
+              onPressed: () {
+                // Rodyti dialogą su klausimu
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text.rich(
+                        TextSpan(
+                          text:
+                              "${task.title}\n", // Pirmoji dalis (pavadinimas)
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 25,
+                              color: Colors.deepPurple), // Pavadinimo stilius
+                          children: [
+                            TextSpan(
+                              text:
+                                  "Ar tikrai norite ištrinti šią užduotį?", // Antra dalis
+                              style: TextStyle(
+                                fontWeight:
+                                    FontWeight.normal, // Normalus svoris
+                                color: Colors.black,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      content:
+                          Text("Šios užduoties ištrynimas bus negrįžtamas."),
+                      actions: [
+                        Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // Centruoja mygtukus
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(
+                                    context); // Uždaro dialogą (Ne pasirinkimas)
+                              },
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.deepPurple
+                                    .withOpacity(0.2), // Neryškus fonas
+                              ),
+                              child: Text(
+                                "Ne",
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                            SizedBox(width: 20), // Tarpas tarp mygtukų
+                            TextButton(
+                              onPressed: () {
+                                _deleteTask(task.id); // Ištrina įprotį
+                                Navigator.pop(context); // Uždarome dialogą
+                              },
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.red
+                                    .withOpacity(0.2), // Neryškus fonas
+                              ),
+                              child: Text(
+                                "Taip",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              icon: Icon(Icons.remove_circle_outline, color: Colors.deepPurple),
+            ),
+        ],
       ),
     );
   }

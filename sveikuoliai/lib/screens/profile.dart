@@ -48,6 +48,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (userData?.version == "premium") {
           userVersion = "Gija PREMIUM";
         }
+        if (userData?.version == "free") {
+          userVersion = "Gija NULIS";
+        }
+        if (userData?.version == "together") {
+          userVersion = "Gija KARTU";
+        }
       });
     } catch (e) {
       setState(() {
