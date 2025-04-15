@@ -5,6 +5,7 @@ import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
+import 'package:sveikuoliai/services/notification_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
+    final now = DateTime.now();
+  final trigger = now.add(const Duration(seconds: 10));
+  NotificationHelper.scheduleDailyNotification(
+    id: 999,
+    title: 'Primename!',
+    body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
+    hour: trigger.hour,
+    minute: trigger.minute,
+  );
+  print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
+
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis

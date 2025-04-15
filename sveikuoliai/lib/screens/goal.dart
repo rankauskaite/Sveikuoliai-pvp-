@@ -14,6 +14,7 @@ import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/widgets/goal_progress_graph.dart';
 
 class GoalScreen extends StatefulWidget {
   final GoalInformation goal;
@@ -524,8 +525,15 @@ class _GoalPageState extends State<GoalScreen> {
                       'Statistika',
                       style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
                     ),
+                    // SizedBox(height: 200, child: _buildChart()),
                     const SizedBox(height: 10),
-                    SizedBox(height: 200, child: _buildChart()),
+                    SizedBox(
+                      height: 200,
+                      child: goalTasks.isEmpty
+                        ? const Text("Nėra progreso duomenų")
+                        : _buildProgressChart(),
+
+                    ),
                   ],
                 ),
               ),
@@ -669,6 +677,12 @@ class _GoalPageState extends State<GoalScreen> {
       ),
     );
   }
+  Widget _buildProgressChart() {
+  return GoalProgressChart(
+    goal: widget.goal.goalModel,
+    goalTasks: goalTasks,
+  );
+}
 }
 
 // CustomPainter klase, kuri piešia procentus

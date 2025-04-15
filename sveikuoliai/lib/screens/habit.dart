@@ -14,6 +14,7 @@ import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/widgets/habit_progress_graph.dart';
 
 class HabitScreen extends StatefulWidget {
   final HabitInformation habit;
@@ -28,6 +29,7 @@ class _HabitScreenState extends State<HabitScreen> {
       id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
   final PlantService _plantService = PlantService();
   final HabitProgressService _habitProgressService = HabitProgressService();
+  List<HabitProgress> progressList = [];
   HabitProgress habitProgress = HabitProgress(
       id: '',
       habitId: '',
@@ -68,21 +70,20 @@ class _HabitScreenState extends State<HabitScreen> {
   }
 
   Future<void> _fetchHabitProgress() async {
-    try {
-      HabitProgress? fetchedHabitProgress =
-          await _habitProgressService.getLatestHabitProgress(widget.habit.habitModel.id);
+  try {
+    List<HabitProgress> all = await _habitProgressService.getAllHabitProgress(widget.habit.habitModel.id);
 
-      if (fetchedHabitProgress != null) {
-        setState(() {
-          habitProgress = fetchedHabitProgress;
-        });
-      } else {
-        //throw Exception("Gautas `null` įpročio progreso objektas");
-      }
-    } catch (e) {
-      showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
+    if (all.isNotEmpty) {
+      setState(() {
+        progressList = all;
+        habitProgress = all.last;
+      });
     }
+  } catch (e) {
+    showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
   }
+}
+
 
   double _calculateProgress() {
     if (widget.habit.habitModel.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
@@ -399,7 +400,16 @@ class _HabitScreenState extends State<HabitScreen> {
                       style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(height: 200, child: _buildChart()),
+                    SizedBox(
+                      height: 200,
+                      child: progressList.isEmpty
+                          ? const Text("Nėra progreso duomenų")
+                          : HabitProgressChart(
+                              habit: widget.habit.habitModel,
+                              progressList: progressList,
+                            ),
+
+                    ),
                   ],
                 ),
               ),
