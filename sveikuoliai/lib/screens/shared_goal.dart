@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
@@ -7,12 +6,13 @@ import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
-import 'package:sveikuoliai/services/goal_type_services.dart';
-import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/widgets/goal_task_card.dart';
+import 'package:sveikuoliai/widgets/progress_indicator.dart';
 
 class SharedGoalScreen extends StatefulWidget {
   final SharedGoalInformation goal;
@@ -29,6 +29,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
   List<GoalTask> goalTasks = [];
+  int length = 0;
 
   @override
   void initState() {
@@ -67,6 +68,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
       setState(() {
         goalTasks = tasks;
+        length = tasks.length;
       });
     } catch (e) {
       showCustomSnackBar(
@@ -118,8 +120,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         widget.goal.sharedGoalModel.endPoints;
   }
 
-  int _calculatePoints() {
-    return (widget.goal.sharedGoalModel.endPoints / goalTasks.length).toInt();
+  int _calculatePoints(bool isCompleted) {
+    if (isCompleted) {
+      return (widget.goal.sharedGoalModel.endPoints / goalTasks.length).toInt();
+    } else {
+      return 0; // Jei užduotis nebaigta, grąžiname 0 taškų
+    }
   }
 
   Future<void> _createTask(GoalTask task) async {
@@ -154,6 +160,25 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       showCustomSnackBar(context, "Draugų tikslas sėkmingai ištrintas ✅", true);
     } catch (e) {
       showCustomSnackBar(context, "Klaida trinant draugų tikslą ❌", false);
+    }
+  }
+
+  Future<void> _deleteTask(String taskId) async {
+    try {
+      final taskService = GoalTaskService();
+      await taskService
+          .deleteGoalTaskEntry(taskId); // Ištrinti įprotį iš serverio
+      //Navigator.pop(context); // Grįžta atgal
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => SharedGoalScreen(
+                  goal: widget.goal,
+                )),
+      );
+      showCustomSnackBar(context, "Tikslo užduotis sėkmingai ištrinta ✅", true);
+    } catch (e) {
+      showCustomSnackBar(context, "Klaida trinant tikslo užduotį ❌", false);
     }
   }
 
@@ -202,7 +227,13 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                         if (widget.goal.goalType.type == 'custom')
                           IconButton(
                             onPressed: () {
-                              _showCustomGoalDialog(context);
+                              CustomDialogs.showEditDialog(
+                                  context: context,
+                                  entityType: EntityType.sharedGoal,
+                                  entity: widget.goal,
+                                  accentColor: Colors.lightGreen[400] ??
+                                      Colors.lightGreen,
+                                  onSave: () {});
                             },
                             icon: const Icon(
                               Icons.edit_outlined,
@@ -211,81 +242,13 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                           ),
                         IconButton(
                           onPressed: () {
-                            // Rodyti dialogą su klausimu
-                            showDialog(
+                            CustomDialogs.showDeleteDialog(
                               context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text.rich(
-                                    TextSpan(
-                                      text:
-                                          "${widget.goal.goalType.title}\n", // Pirmoji dalis (pavadinimas)
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 25,
-                                          color: Colors
-                                              .deepPurple), // Pavadinimo stilius
-                                      children: [
-                                        TextSpan(
-                                          text:
-                                              "Ar tikrai norite ištrinti šį tikslą?", // Antra dalis
-                                          style: TextStyle(
-                                            fontWeight: FontWeight
-                                                .normal, // Normalus svoris
-                                            color: Colors.black,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  content: Text(
-                                      "Šio tikslo ištrynimas bus negrįžtamas."),
-                                  actions: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment
-                                          .center, // Centruoja mygtukus
-                                      children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(
-                                                context); // Uždaro dialogą (Ne pasirinkimas)
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.deepPurple
-                                                .withOpacity(
-                                                    0.2), // Neryškus fonas
-                                          ),
-                                          child: Text(
-                                            "Ne",
-                                            style: TextStyle(fontSize: 18),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                            width: 20), // Tarpas tarp mygtukų
-                                        TextButton(
-                                          onPressed: () {
-                                            _deleteGoal(); // Ištrina įprotį
-                                            Navigator.pop(
-                                                context); // Uždarome dialogą
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.red
-                                                .withOpacity(
-                                                    0.2), // Neryškus fonas
-                                          ),
-                                          child: Text(
-                                            "Taip",
-                                            style: TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
+                              entityType: EntityType.sharedGoal,
+                              entity: widget.goal,
+                              accentColor: Colors.lightGreen,
+                              onDelete: () {
+                                _deleteGoal(); // Ištrinti tikslą
                               },
                             );
                           },
@@ -307,8 +270,10 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
-                    _buildProgressIndicator(
+                    buildProgressIndicator(
                       _calculateProgress(),
+                      widget.goal.sharedGoalModel.plantId,
+                      widget.goal.sharedGoalModel.points,
                     ),
                     const SizedBox(height: 20),
                     const Text(
@@ -415,10 +380,21 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       children: [
                         ...goalTasks
                             .where((task) => !task.isCompleted)
-                            .map(_buildGoalItemFalse),
+                            .map((task) => GoalTaskCard(
+                                  task: task,
+                                  type: 1,
+                                  length: length,
+                                  calculatePoints: _calculatePoints,
+                                  onDelete: _deleteTask,
+                                )),
                         ...goalTasks
                             .where((task) => task.isCompleted)
-                            .map(_buildGoalItemTrue),
+                            .map((task) => GoalTaskCard(
+                                  task: task,
+                                  type: 1,
+                                  length: length,
+                                  calculatePoints: _calculatePoints,
+                                )),
                       ],
                     ),
                     Row(
@@ -455,59 +431,13 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        showDialog(
+                        CustomDialogs.showNewTaskDialog(
                           context: context,
-                          builder: (BuildContext context) {
-                            String taskTitle = '';
-                            String taskDescription = '';
-                            return AlertDialog(
-                              title: const Text('Pridėti užduotį'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    onChanged: (value) {
-                                      taskTitle = value;
-                                    },
-                                    decoration: const InputDecoration(
-                                      labelText: 'Pavadinimas',
-                                    ),
-                                  ),
-                                  TextField(
-                                    onChanged: (value) {
-                                      taskDescription = value;
-                                    },
-                                    decoration: const InputDecoration(
-                                      labelText: 'Aprašymas',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('Atšaukti'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      GoalTask task = GoalTask(
-                                        id: '${widget.goal.sharedGoalModel.goalTypeId}${widget.goal.sharedGoalModel.user1Id[0].toUpperCase() + widget.goal.sharedGoalModel.user1Id.substring(1)}${DateTime.now()}',
-                                        title: taskTitle,
-                                        description: taskDescription,
-                                        goalId: widget.goal.sharedGoalModel.id,
-                                        date: DateTime.now(),
-                                      );
-                                      _createTask(task);
-                                    });
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('Pridėti'),
-                                ),
-                              ],
-                            );
+                          goal: widget.goal,
+                          accentColor:
+                              Colors.lightGreen[400] ?? Colors.lightGreen,
+                          onSave: (GoalTask task) {
+                            _createTask(task);
                           },
                         );
                       },
@@ -537,174 +467,6 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
             const BottomNavigation(),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showCustomGoalDialog(BuildContext context) {
-    TextEditingController titleController =
-        TextEditingController(text: widget.goal.goalType.title);
-    TextEditingController descriptionController =
-        TextEditingController(text: widget.goal.goalType.description);
-    GoalTypeService _goalTypeService = GoalTypeService();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Redaguoti tikslą"),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: "Pavadinimas",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: "Aprašymas",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Uždaryti
-              },
-              child: const Text("Atšaukti"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                setState(() {
-                  widget.goal.goalType.title = titleController.text;
-                  widget.goal.goalType.description = descriptionController.text;
-                });
-                try {
-                  await _goalTypeService
-                      .updateGoalTypeEntry(widget.goal.goalType);
-                  showCustomSnackBar(
-                      context, "Tikslas sėkmingai atnaujintas ✅", true);
-                } catch (e) {
-                  showCustomSnackBar(
-                      context, "Klaida atnaujinant tikslą ❌", false);
-                }
-
-                Navigator.pop(context); // Uždaryti po išsaugojimo
-              },
-              child: const Text("Išsaugoti"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Progreso indikatorius su procentais
-  Widget _buildProgressIndicator(double progress) {
-    String plantType = widget.goal.sharedGoalModel
-        .plantId; // Pavyzdžiui, naudotojas pasirenka augalą
-    int userPoints = widget.goal.sharedGoalModel.points;
-    String imagePath = PlantImageService.getPlantImage(plantType, userPoints);
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        SizedBox(
-          width: 220,
-          height: 220,
-          child: Semantics(
-            label: 'Progreso indikatorius', // Apibūdinimas
-            value:
-                '${(progress * 100).toStringAsFixed(0)}%', // Naudok string su nuliais po kablelio
-            child: CircularProgressIndicator(
-              value: progress, // Progreso reikšmė (0.0 - 1.0)
-              strokeWidth: 10,
-              backgroundColor: Colors.grey[100], // Pilkas fonas
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFFCDE499)), // Violetinė linija
-            ),
-          ),
-        ),
-        CustomPaint(
-          size: Size(220, 220),
-          painter: PercentagePainter(progress),
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              imagePath,
-              width: 170,
-              height: 170,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Tikslų kortelių kūrimo funkcija
-  Widget _buildGoalItemTrue(GoalTask task) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFbcd979).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: CheckboxListTile(
-        title: Text(
-          task.title,
-          style: TextStyle(color: Colors.grey[300]),
-        ),
-        subtitle: Text(
-          task.description,
-          style: TextStyle(color: Colors.grey[300]),
-        ),
-        value: task.isCompleted,
-        onChanged: (bool? value) {
-          setState(() {
-            task.isCompleted = value ?? false;
-            task.points = 0;
-          });
-        },
-        activeColor: Colors.lightGreen,
-      ),
-    );
-  }
-
-  // Tikslų kortelių kūrimo funkcija
-  Widget _buildGoalItemFalse(GoalTask task) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFbcd979).withOpacity(0.2),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: CheckboxListTile(
-        title: Text(task.title),
-        subtitle: Text(task.description),
-        value: task.isCompleted,
-        onChanged: (bool? value) {
-          setState(() {
-            task.isCompleted = value ?? false;
-            task.points = _calculatePoints();
-          });
-        },
-        activeColor: Colors.lightGreen,
       ),
     );
   }
@@ -743,54 +505,5 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         ),
       ),
     );
-  }
-}
-
-// CustomPainter klase, kuri piešia procentus
-class PercentagePainter extends CustomPainter {
-  final double progress;
-
-  PercentagePainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final TextPainter textPainter = TextPainter(
-      text: TextSpan(
-        text: '${(progress * 100).toStringAsFixed(0)}%',
-        style: TextStyle(
-          color: Colors.deepPurple,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    // Kampas pagal progresą (0% = -90° (aukščiausias taškas), 100% = pilnas apskritimas)
-    double angle = -pi / 2 + progress * 2 * pi;
-
-    // Apskaičiuojame tekstą ant apskritimo krašto
-    double radius = size.width / 2; // Pusė apskritimo skersmens
-    double textX = size.width / 2 + radius * cos(angle);
-    double textY = size.height / 2 + radius * sin(angle);
-
-    // Šiek tiek patraukiam procentus nuo krašto, kad jie nesiliestų prie linijos
-    double textOffset = 10;
-    textX += textOffset * cos(angle);
-    textY += textOffset * sin(angle);
-
-    // Nubrėžiame procentus
-    textPainter.paint(
-      canvas,
-      Offset(
-        textX - textPainter.width / 2, // Centruojame tekstą X ašyje
-        textY - textPainter.height / 2, // Centruojame tekstą Y ašyje
-      ),
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return true;
   }
 }
