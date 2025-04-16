@@ -33,7 +33,6 @@ dependencies:
   table_calendar: ^3.0.2
   intl: ^0.19.0 # Įsitikinkite, kad naudojate teisingą versiją
   google_sign_in: ^6.1.5
-  #intl: ^0.19.0 # Įsitikinkite, kad naudojate teisingą versiją
   provider: ^6.0.3
   flutter_launcher_icons: ^0.14.3 # Patikrink naujausią versiją
   rive: ^0.13.1
@@ -45,34 +44,30 @@ dependencies:
   firebase_auth: ^5.5.1
   cloud_firestore: ^5.6.5
   flutter_secure_storage: ^9.2.4
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.0
+  #flutter_native_timezone: ^2.0.0
+  #timezone: ^0.9.4 #^0.10.0
   flutter_localizations:
     sdk: flutter
-flutter_native_splash: ^2.2.16
-
-# flutter_native_splash:
-#   color: "#8093F1" # Tavo spalva
-#   image: assets/logo.png # Paveikslėlis, kurį nori rodyti
-#   android_12:
-#     color: "#8093F1"
-#     image: assets/logo.png
-
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.3
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.2.16
 
-flutter_icons:
-  android: true
+# flutter_icons:
+#   android: true
+#   ios: true
+#   image_path: "assets/logo512.png"  # Nurodykite savo logotipo failo kelią
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image:  "assets/logo512.png"
+  android_gravity: center
   ios: true
-  image_path: "assets/logo512.png"  # Nurodykite savo logotipo failo kelią
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

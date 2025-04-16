@@ -11,9 +11,11 @@ class SharedGoal {
   CategoryType category;
   int endPoints;
   String user1Id;
-  String user2Id; 
+  String user2Id;
   String plantId;
   String goalTypeId;
+  bool tikUser;   
+  bool tikFriends;  
 
   SharedGoal({
     required this.id,
@@ -27,6 +29,9 @@ class SharedGoal {
     required this.user2Id,
     required this.plantId,
     required this.goalTypeId,
+    this.tikUser = true,     // Default reikšmė, kadangi jau yra sukurtu defaultiniu goals,
+    // tai kad nereiktu perkurt
+    this.tikFriends = false, 
   });
 
   /// Konvertavimas į JSON
@@ -39,9 +44,11 @@ class SharedGoal {
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'user1Id': user1Id,
-      'user2Id': user2Id, 
+      'user2Id': user2Id,
       'plantId': plantId,
       'goalTypeId': goalTypeId,
+      'tikUser': tikUser,
+      'tikFriends': tikFriends,
     };
   }
 
@@ -53,12 +60,14 @@ class SharedGoal {
       endDate: (json['endDate'] as Timestamp).toDate(),
       points: json['points'] ?? 0,
       isCountable: json['isCountable'] ?? false,
-      category: CategoryTypeExtension.fromJson(json['category'] ?? ''), // Enum iš string
+      category: CategoryTypeExtension.fromJson(json['category'] ?? ''),
       endPoints: json['endPoints'] ?? 0,
       user1Id: json['user1Id'] ?? '',
-      user2Id: json['user2Id'] ?? '', // Buvo `user2ID`
+      user2Id: json['user2Id'] ?? '',
       plantId: json['plantId'] ?? '',
       goalTypeId: json['goalTypeId'] ?? '',
+      tikUser: json['tikUser'] ?? true, // by default bus true
+      tikFriends: json['tikFriends'] ?? false,
     );
   }
 }

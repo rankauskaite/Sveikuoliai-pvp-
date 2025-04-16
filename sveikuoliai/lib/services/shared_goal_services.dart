@@ -107,4 +107,25 @@ class SharedGoalService {
                 SharedGoal.fromJson(doc.id, doc.data() as Map<String, dynamic>))
             .toList());
   }
+
+
+  // jeigu getSharedGoalsForUser() negrazina nieko, bandyti naudoti sita koda:
+//   Stream<List<SharedGoal>> getSharedGoalsForUser(String userId) async* {
+//   final query1 = sharedGoalCollection.where('user1Id', isEqualTo: userId).snapshots();
+//   final query2 = sharedGoalCollection.where('user2Id', isEqualTo: userId).snapshots();
+
+//   await for (final user1Snap in query1) {
+//     final user2Snap = await query2.first; // arba gali jungti kitaip
+
+//     final allDocs = {
+//       ...user1Snap.docs,
+//       ...user2Snap.docs,
+//     };
+
+//     yield allDocs
+//         .map((doc) => SharedGoal.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+//         .toList();
+//   }
+// }
+
 }
