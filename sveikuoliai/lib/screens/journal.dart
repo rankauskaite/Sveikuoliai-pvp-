@@ -22,6 +22,15 @@ class _JournalScreenState extends State<JournalScreen> {
   JournalService _journalService = JournalService();
   String userUsername = '';
   Set<DateTime> _markedDays = {};
+  int _currentPage = 0; // Puslapio indeksas
+  PageController _pageController = PageController();
+  final List<String> images = [
+    'assets/images/virsKalendoriaus/eziukai.png',
+    'assets/images/virsKalendoriaus/katukas.png',
+    'assets/images/virsKalendoriaus/kiaules.png',
+    'assets/images/virsKalendoriaus/suniuks.png',
+    'assets/images/virsKalendoriaus/zuikuciai.png',
+  ];
 
   @override
   void initState() {
@@ -56,15 +65,6 @@ class _JournalScreenState extends State<JournalScreen> {
       _markedDays = savedDates.toSet();
     });
   }
-
-  // Future<List<DateTime>> getSavedJournalEntries() async {
-  //   // Simuliacija, bet čia turėtum iš DB paimti realias dienas, kai buvo užpildyta
-  //   return [
-  //     DateTime.utc(2025, 03, 28),
-  //     DateTime.utc(2025, 03, 30),
-  //     DateTime.utc(2025, 04, 01),
-  //   ];
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -116,23 +116,11 @@ class _JournalScreenState extends State<JournalScreen> {
                   size: 50,
                 ),
               ),
-              // IconButton(
-              //   onPressed: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(builder: (context) => LoadingScreen()),
-              //     );
-              //   },
-              //   icon: Icon(
-              //     Icons.create,
-              //     size: 30,
-              //   ),
-              // ),
             ],
           ),
           _buildBanner(),
           SizedBox(
-            height: 30,
+            height: 20,
           ),
           _buildCalendar(context),
         ],
@@ -141,20 +129,52 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Widget _buildBanner() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
+        // Karuselė su paveikslėliais
         Container(
-          width: 250,
-          height: 100,
-          color: const Color(0xFFD9D9D9),
-          child: const Center(
-            child: Text(
-              'Vizualas su užrašu dienoraštis (?) Jei ką - papildomas reklamos plotas',
-              style: TextStyle(fontSize: 20, color: Colors.black),
-              textAlign: TextAlign.center,
+          height: 100, // Nustatykite aukštį pagal savo poreikius
+          width: double.infinity, // Pakeista į visą plotį
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: images.length,
+              itemBuilder: (context, index) {
+                return Image.asset(
+                  images[index], // Įkeliamas paveikslėlis
+                  fit: BoxFit.fill,
+                  width: 250, // Nustatykite plotį pagal poreikius
+                );
+              },
+              scrollDirection: Axis.horizontal, // Slinkimas horizontaliai
+              pageSnapping:
+                  true, // Užtikrina, kad slinkimas sustotų tik ties kiekvienu paveikslėliu
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index; // Atnaujina dabartinį puslapį
+                });
+              },
             ),
           ),
+        ),
+        SizedBox(
+          height: 5,
+        ),
+        // Indikatoriai (taškai), kurie rodo, kad galima slinkti
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(images.length, (index) {
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: 4),
+              height: 6,
+              width: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _currentPage == index ? Colors.deepPurple : Colors.grey,
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -228,24 +248,6 @@ class _JournalScreenState extends State<JournalScreen> {
             return SizedBox();
           },
         ),
-        // calendarBuilders: CalendarBuilders(
-        //   markerBuilder: (context, date, events) {
-        //     if (_markedDays.contains(date)) {
-        //       return Positioned(
-        //         bottom: 5,
-        //         child: Container(
-        //           width: 10,
-        //           height: 10,
-        //           decoration: BoxDecoration(
-        //             color: Colors.deepPurple.withOpacity(0.6),
-        //             shape: BoxShape.circle,
-        //           ),
-        //         ),
-        //       );
-        //     }
-        //     return SizedBox();
-        //   },
-        // ),
       ),
     );
   }

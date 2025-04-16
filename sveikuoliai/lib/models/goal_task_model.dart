@@ -8,6 +8,7 @@ class GoalTask {
   String title;
   String description;
   int points;
+  String? userId; // Optional userId field for shared goals
 
   GoalTask({
     required this.id,
@@ -17,6 +18,7 @@ class GoalTask {
     required this.description,
     required this.date,
     this.points = 0,
+    this.userId,
   });
 
   // i json
@@ -29,6 +31,7 @@ class GoalTask {
       'description': description,
       'date': Timestamp.fromDate(date),
       'points': points,
+      'userId': userId, // Optional userId field for shared goals
     };
   }
 
@@ -44,6 +47,7 @@ class GoalTask {
           ? (json['date'] as Timestamp).toDate()
           : DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
       points: json['points'] ?? 0,
+      userId: json['userId'], // Optional userId field for shared goals
     );
   }
 }

@@ -60,7 +60,8 @@ class HelloScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SignupScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => SignupScreen()),
                 );
               },
               style: OutlinedButton.styleFrom(

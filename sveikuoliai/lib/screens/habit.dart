@@ -1,20 +1,18 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
-import 'package:sveikuoliai/screens/habit_progress.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
-import 'package:sveikuoliai/screens/update_habit_goal.dart';
 import 'package:sveikuoliai/services/habit_progress_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
-import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/habit_progress_graph.dart';
+import 'package:sveikuoliai/widgets/progress_indicator.dart';
 
 class HabitScreen extends StatefulWidget {
   final HabitInformation habit;
@@ -38,6 +36,9 @@ class _HabitScreenState extends State<HabitScreen> {
       plantUrl: '',
       date: DateTime.now(),
       isCompleted: false);
+  final TextEditingController _progressController = TextEditingController();
+  int pointss = 0;
+  int streakk = 0;
 
   @override
   void initState() {
@@ -49,6 +50,7 @@ class _HabitScreenState extends State<HabitScreen> {
   Future<void> _loadData() async {
     await _fetchPlantData();
     await _fetchHabitProgress();
+    _loadProgress();
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -86,15 +88,16 @@ class _HabitScreenState extends State<HabitScreen> {
 
 
   double _calculateProgress() {
-    if (widget.habit.habitModel.endPoints == 0) return 0.0; // Apsauga nuo dalybos iš nulio
+    if (widget.habit.habitModel.endPoints == 0)
+      return 0.0; // Apsauga nuo dalybos iš nulio
     return habitProgress.points / widget.habit.habitModel.endPoints;
   }
 
   Future<void> _deleteHabit() async {
     try {
       final habitService = HabitService();
-      await habitService
-          .deleteHabitEntry(widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
+      await habitService.deleteHabitEntry(
+          widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
@@ -103,6 +106,32 @@ class _HabitScreenState extends State<HabitScreen> {
       showCustomSnackBar(context, "Įprotis sėkmingai ištrintas ✅", true);
     } catch (e) {
       showCustomSnackBar(context, "Klaida trinant įprotį ❌", false);
+    }
+  }
+
+  void _loadProgress() async {
+    final habitProgressService = HabitProgressService();
+    HabitProgress? progress = await habitProgressService
+        .getTodayHabitProgress(widget.habit.habitModel.id);
+    HabitProgress? lastProgress = await habitProgressService
+        .getLatestHabitProgress(widget.habit.habitModel.id);
+
+    if (progress != null) {
+      setState(() {
+        _progressController.text = progress.description;
+// Išsaugome ID atnaujinimui
+        pointss = lastProgress!.points;
+        streakk = lastProgress.streak;
+      });
+    } else if (lastProgress != null) {
+      setState(
+        () {
+          pointss = lastProgress.points;
+          if (lastProgress.date.day == DateTime.now().day - 1) {
+            streakk = lastProgress.streak;
+          }
+        },
+      );
     }
   }
 
@@ -148,97 +177,30 @@ class _HabitScreenState extends State<HabitScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      UpdateHabitScreen(habit: widget.habit)),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            size: 30,
+                        if (widget.habit.habitType.type == 'custom')
+                          IconButton(
+                            onPressed: () {
+                              CustomDialogs.showEditDialog(
+                                  context: context,
+                                  entityType: EntityType.habit,
+                                  entity: widget.habit,
+                                  accentColor: Color(0xFFB388EB),
+                                  onSave: () {});
+                            },
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                              size: 30,
+                            ),
                           ),
-                        ),
                         IconButton(
                           onPressed: () {
-                            // Rodyti dialogą su klausimu
-                            showDialog(
+                            CustomDialogs.showDeleteDialog(
                               context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text.rich(
-                                    TextSpan(
-                                      text:
-                                          "${widget.habit.habitType.title}\n", // Pirmoji dalis (pavadinimas)
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 25,
-                                          color: Colors
-                                              .deepPurple), // Pavadinimo stilius
-                                      children: [
-                                        TextSpan(
-                                          text:
-                                              "Ar tikrai norite ištrinti šį įprotį?", // Antra dalis
-                                          style: TextStyle(
-                                            fontWeight: FontWeight
-                                                .normal, // Normalus svoris
-                                            color: Colors.black,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  content: Text(
-                                      "Šio įpročio ištrynimas bus negrįžtamas."),
-                                  actions: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment
-                                          .center, // Centruoja mygtukus
-                                      children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(
-                                                context); // Uždaro dialogą (Ne pasirinkimas)
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.deepPurple
-                                                .withOpacity(
-                                                    0.2), // Neryškus fonas
-                                          ),
-                                          child: Text(
-                                            "Ne",
-                                            style: TextStyle(fontSize: 18),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                            width: 20), // Tarpas tarp mygtukų
-                                        TextButton(
-                                          onPressed: () {
-                                            _deleteHabit(); // Ištrina įprotį
-                                            Navigator.pop(
-                                                context); // Uždarome dialogą
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.red
-                                                .withOpacity(
-                                                    0.2), // Neryškus fonas
-                                          ),
-                                          child: Text(
-                                            "Taip",
-                                            style: TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
+                              entityType: EntityType.habit,
+                              entity: widget.habit,
+                              accentColor: Color(0xFFB388EB),
+                              onDelete: () {
+                                _deleteHabit();
                               },
                             );
                           },
@@ -261,19 +223,23 @@ class _HabitScreenState extends State<HabitScreen> {
                     const SizedBox(height: 20),
 
                     // Progreso indikatorius su procentais
-                    _buildProgressIndicator(
-                        _calculateProgress()), // Pvz., 60% progresas
+                    buildProgressIndicator(
+                      _calculateProgress(),
+                      widget.habit.habitModel.plantId,
+                      widget.habit.habitModel.points,
+                    ),
 
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => HabitProgressScreen(
-                                    habit: widget.habit,
-                                  )),
-                        );
+                        CustomDialogs.showProgressDialog(
+                            context: context,
+                            habit: widget.habit,
+                            accentColor: Color(0xFFB388EB),
+                            onSave: () {},
+                            progressController: _progressController,
+                            points: pointss,
+                            streak: streakk);
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
@@ -334,9 +300,12 @@ class _HabitScreenState extends State<HabitScreen> {
                                       ? "1 mėnuo"
                                       : widget.habit.habitModel.endPoints == 45
                                           ? "1,5 mėnesio"
-                                          : widget.habit.habitModel.endPoints == 60
+                                          : widget.habit.habitModel.endPoints ==
+                                                  60
                                               ? "2 mėnesiai"
-                                              : widget.habit.habitModel.endPoints == 90
+                                              : widget.habit.habitModel
+                                                          .endPoints ==
+                                                      90
                                                   ? "3 mėnesiai"
                                                   : "6 mėnesiai",
                           style:
@@ -418,49 +387,6 @@ class _HabitScreenState extends State<HabitScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  // Progreso indikatorius su procentais
-  Widget _buildProgressIndicator(double progress) {
-    String plantType =
-        widget.habit.habitModel.plantId; // Pavyzdžiui, naudotojas pasirenka augalą
-    int userPoints = habitProgress.points;
-    String imagePath = PlantImageService.getPlantImage(plantType, userPoints);
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        SizedBox(
-          width: 220,
-          height: 220,
-          child: Semantics(
-            label: 'Progreso indikatorius', // Apibūdinimas
-            value:
-                '${(progress * 100).toStringAsFixed(0)}%', // Naudok string su nuliais po kablelio
-            child: CircularProgressIndicator(
-              value: progress, // Progreso reikšmė (0.0 - 1.0)
-              strokeWidth: 10,
-              backgroundColor: Colors.grey[100], // Pilkas fonas
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFFCDE499)), // Violetinė linija
-            ),
-          ),
-        ),
-        CustomPaint(
-          size: Size(220, 220),
-          painter: PercentagePainter(progress),
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              imagePath,
-              width: 170,
-              height: 170,
-            ),
-          ],
-        ),
-      ],
     );
   }
 

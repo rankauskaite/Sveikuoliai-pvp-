@@ -4,7 +4,7 @@ import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'dart:ui';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
-import 'package:sveikuoliai/widgets/versionSelection.dart';
+import 'package:sveikuoliai/widgets/version_selection.dart';
 
 class UpdateProfileScreen extends StatefulWidget {
   final String version;

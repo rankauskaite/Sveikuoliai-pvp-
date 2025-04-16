@@ -1,11 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/screens/friends.dart';
+import 'package:sveikuoliai/services/friendship_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-class FriendProfileScreen extends StatelessWidget {
+class FriendProfileScreen extends StatefulWidget {
   final String name;
   final String username;
+  final String friendshipId;
   const FriendProfileScreen(
-      {super.key, required this.name, required this.username});
+      {super.key,
+      required this.name,
+      required this.username,
+      required this.friendshipId});
+
+  @override
+  _FriendProfileScreenState createState() => _FriendProfileScreenState();
+}
+
+class _FriendProfileScreenState extends State<FriendProfileScreen> {
+  FriendshipService _friendshipService = FriendshipService();
+
+  Future<void> _deleteFriend(String friendshipID) async {
+    try {
+      await _friendshipService.deleteFriendship(friendshipID);
+      showCustomSnackBar(context, "Draugas pašalintas ✅", true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => FriendsScreen()),
+      );
+    } catch (e) {
+      showCustomSnackBar(context, "Nepavyko pašalinti draugo ❌", false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +73,71 @@ class FriendProfileScreen extends StatelessWidget {
                       const Expanded(child: SizedBox()),
                       ElevatedButton(
                         onPressed: () {
-                          // setState(() {
-                          //   journalText = tempText; // Išsaugome tekstą
-                          // });
-                          Navigator.pop(context); // Uždaro modalą
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text.rich(
+                                  TextSpan(
+                                    text: "${widget.name}\n",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                      color: Colors.deepPurple,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text:
+                                            "Ar tikrai norite pašalinti šį draugą?",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.normal,
+                                          color: Colors.black,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                content:
+                                    Text("Draugo pašalinimas bus negrįžtamas."),
+                                actions: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(
+                                              context); // Uždaro dialogą
+                                        },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: Colors.deepPurple
+                                              .withOpacity(0.2),
+                                        ),
+                                        child: Text("Ne",
+                                            style: TextStyle(fontSize: 18)),
+                                      ),
+                                      SizedBox(width: 20),
+                                      TextButton(
+                                        onPressed: () async {
+                                          Navigator.pop(context);
+                                          await _deleteFriend(
+                                              widget.friendshipId);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor:
+                                              Colors.red.withOpacity(0.2),
+                                        ),
+                                        child: Text("Taip",
+                                            style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 18)),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          );
                         },
                         child: Text('Ištrinti'),
                       ),
@@ -71,7 +159,7 @@ class FriendProfileScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      name,
+                      widget.name,
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
@@ -82,7 +170,7 @@ class FriendProfileScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      username,
+                      widget.username,
                       style: TextStyle(
                         fontSize: 18,
                         color: Color(0xFF8093F1),

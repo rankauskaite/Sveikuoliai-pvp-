@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sveikuoliai/models/user_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class UserService {
   final CollectionReference userCollection =
@@ -94,6 +93,16 @@ class UserService {
       return false; // Jeigu nėra ką atnaujinti
     } catch (e) {
       print("Klaida atnaujinant vartotoją: $e");
+      return false;
+    }
+  }
+
+  Future<bool> updateUserVersion(String username, String version) async {
+    try {
+      await userCollection.doc(username).update({'version': version});
+      return true;
+    } catch (e) {
+      print("Klaida atnaujinant versiją: $e");
       return false;
     }
   }

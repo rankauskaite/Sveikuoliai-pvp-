@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
-import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/habit_type_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
-import 'package:sveikuoliai/services/habit_progress_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
 import 'package:sveikuoliai/services/habit_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -132,8 +130,6 @@ class HabitCard extends StatefulWidget {
 }
 
 class _HabitCardState extends State<HabitCard> {
-  String? _habitName;
-  String? _habitDescription;
   String userUsername = "";
   final HabitTypeService _habitTypeService = HabitTypeService();
   final HabitService _habitService = HabitService();
@@ -217,9 +213,7 @@ class _HabitCardState extends State<HabitCard> {
                                     color: Colors.transparent), // Nematoma riba
                               ),
                             ),
-                            onChanged: (String newValue) {
-                              _habitName = newValue;
-                            },
+                            onChanged: (String newValue) {},
                           ),
                           const SizedBox(height: 10),
                           TextFormField(
@@ -237,9 +231,7 @@ class _HabitCardState extends State<HabitCard> {
                             ),
                             maxLines: null, // Leidžia laukui augti pagal turinį
                             minLines: 2,
-                            onChanged: (String newValue) {
-                              _habitDescription = newValue;
-                            },
+                            onChanged: (String newValue) {},
                           ),
                         ],
                       ),
@@ -506,24 +498,6 @@ class _HabitCardState extends State<HabitCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Įvyko klaida!')),
       );
-    }
-
-    void _saveProgress() async {
-      final habitProgressService = HabitProgressService();
-
-      HabitProgress habitProgress = HabitProgress(
-        id: '${habitId.trim()}${userUsername[0].toUpperCase() + userUsername.substring(1)}$_startDate',
-        habitId: habitID,
-        description: '',
-        points: 0,
-        plantUrl: '',
-        date: DateTime.now(),
-        isCompleted: true,
-      );
-
-      try {
-        await habitProgressService.createHabitProgressEntry(habitProgress);
-      } catch (e) {}
     }
 
     // Čia įrašykite kodą, kuris įrašo duomenis į duomenų bazę

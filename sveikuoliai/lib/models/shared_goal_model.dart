@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sveikuoliai/enums/category_enum.dart'; // Enum įtraukimas
+import 'package:sveikuoliai/enums/category_enum.dart';
+import 'package:sveikuoliai/models/goal_type_model.dart'; // Enum įtraukimas
 
 class SharedGoal {
   String id;
@@ -67,6 +68,24 @@ class SharedGoal {
       goalTypeId: json['goalTypeId'] ?? '',
       tikUser: json['tikUser'] ?? true, // by default bus true
       tikFriends: json['tikFriends'] ?? false,
+    );
+  }
+}
+
+class SharedGoalInformation {
+  SharedGoal sharedGoalModel;
+  GoalType goalType;
+
+  SharedGoalInformation({
+    required this.sharedGoalModel,
+    required this.goalType,
+  });
+
+  /// Konvertavimas iš JSON
+  factory SharedGoalInformation.fromJson(SharedGoal goalModel, GoalType goalType) {
+    return SharedGoalInformation(
+      sharedGoalModel: goalModel,
+      goalType: goalType,
     );
   }
 }
