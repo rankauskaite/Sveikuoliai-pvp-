@@ -11,6 +11,7 @@ import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/widgets/habit_progress_graph.dart';
 import 'package:sveikuoliai/widgets/progress_indicator.dart';
 
 class HabitScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _HabitScreenState extends State<HabitScreen> {
       id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
   final PlantService _plantService = PlantService();
   final HabitProgressService _habitProgressService = HabitProgressService();
+  List<HabitProgress> progressList = [];
   HabitProgress habitProgress = HabitProgress(
       id: '',
       habitId: '',
@@ -70,21 +72,20 @@ class _HabitScreenState extends State<HabitScreen> {
   }
 
   Future<void> _fetchHabitProgress() async {
-    try {
-      HabitProgress? fetchedHabitProgress = await _habitProgressService
-          .getLatestHabitProgress(widget.habit.habitModel.id);
+  try {
+    List<HabitProgress> all = await _habitProgressService.getAllHabitProgress(widget.habit.habitModel.id);
 
-      if (fetchedHabitProgress != null) {
-        setState(() {
-          habitProgress = fetchedHabitProgress;
-        });
-      } else {
-        //throw Exception("Gautas `null` įpročio progreso objektas");
-      }
-    } catch (e) {
-      showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
+    if (all.isNotEmpty) {
+      setState(() {
+        progressList = all;
+        habitProgress = all.last;
+      });
     }
+  } catch (e) {
+    showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
   }
+}
+
 
   double _calculateProgress() {
     if (widget.habit.habitModel.endPoints == 0)
@@ -368,7 +369,16 @@ class _HabitScreenState extends State<HabitScreen> {
                       style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(height: 200, child: _buildChart()),
+                    SizedBox(
+                      height: 200,
+                      child: progressList.isEmpty
+                          ? const Text("Nėra progreso duomenų")
+                          : HabitProgressChart(
+                              habit: widget.habit.habitModel,
+                              progressList: progressList,
+                            ),
+
+                    ),
                   ],
                 ),
               ),
@@ -415,5 +425,54 @@ class _HabitScreenState extends State<HabitScreen> {
         ),
       ),
     );
+  }
+}
+
+// CustomPainter klase, kuri piešia procentus
+class PercentagePainter extends CustomPainter {
+  final double progress;
+
+  PercentagePainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: '${(progress * 100).toStringAsFixed(0)}%',
+        style: TextStyle(
+          color: Colors.deepPurple,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    // Kampas pagal progresą (0% = -90° (aukščiausias taškas), 100% = pilnas apskritimas)
+    double angle = -pi / 2 + progress * 2 * pi;
+
+    // Apskaičiuojame tekstą ant apskritimo krašto
+    double radius = size.width / 2; // Pusė apskritimo skersmens
+    double textX = size.width / 2 + radius * cos(angle);
+    double textY = size.height / 2 + radius * sin(angle);
+
+    // Šiek tiek patraukiam procentus nuo krašto, kad jie nesiliestų prie linijos
+    double textOffset = 10;
+    textX += textOffset * cos(angle);
+    textY += textOffset * sin(angle);
+
+    // Nubrėžiame procentus
+    textPainter.paint(
+      canvas,
+      Offset(
+        textX - textPainter.width / 2, // Centruojame tekstą X ašyje
+        textY - textPainter.height / 2, // Centruojame tekstą Y ašyje
+      ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
   }
 }
