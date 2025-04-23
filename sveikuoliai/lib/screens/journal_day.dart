@@ -296,13 +296,11 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             Container(
                               width: 200,
                               height: 100,
-                              color: const Color(0xFFD9D9D9),
-                              child: Center(
-                                child: Text(
-                                  'Vizualas',
-                                  style: TextStyle(
-                                      fontSize: 37, color: Colors.black),
-                                  textAlign: TextAlign.center,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.asset(
+                                  'assets/images/dienorascio_vizualas.png',
+                                  fit: BoxFit.fill,
                                 ),
                               ),
                             ),

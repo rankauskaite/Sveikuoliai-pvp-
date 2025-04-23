@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/screens/garden.dart';
+import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -38,15 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
     final now = DateTime.now();
-  final trigger = now.add(const Duration(seconds: 10));
-  NotificationHelper.scheduleDailyNotification(
-    id: 999,
-    title: 'Primename!',
-    body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
-    hour: trigger.hour,
-    minute: trigger.minute,
-  );
-  print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
+    final trigger = now.add(const Duration(seconds: 10));
+    NotificationHelper.scheduleDailyNotification(
+      id: 999,
+      title: 'Primename!',
+      body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
+      hour: trigger.hour,
+      minute: trigger.minute,
+    );
+    print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
 
     _adTimer = Timer.periodic(
       const Duration(seconds: 3),
@@ -152,11 +153,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          GestureDetector(
+                          InkWell(
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -164,57 +165,71 @@ class _HomeScreenState extends State<HomeScreen> {
                                     builder: (context) => GardenScreen()),
                               );
                             },
-                            child: Text(
-                              'Mano augalai',
-                              style: TextStyle(
-                                fontSize: 17,
-                                color: Colors.blue, // Paryškinti kaip nuorodą
-                                decoration: TextDecoration
-                                    .underline, // Pabraukta kaip tikra nuoroda
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 250,
+                              height: 130,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.green.shade700, width: 3),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  'assets/images/mano_sodas.png',
+                                  fit: BoxFit.fill,
+                                ),
                               ),
                             ),
-                          )
+                          ),
                         ],
                       ),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildPlantColumn('Orchidėja',
-                                imageUrl:
-                                    'assets/images/augalai/orchideja/16.png'),
-                            _buildPlantColumn('Dobilas',
-                                imageUrl:
-                                    'assets/images/augalai/dobiliukas/4.png'),
-                            _buildPlantColumn('Žibuoklės',
-                                imageUrl:
-                                    'assets/images/augalai/zibuokle/8.png'),
-                            _buildPlantColumn('Ramunė',
-                                imageUrl:
-                                    'assets/images/augalai/ramuneles/6.png'),
-                            _buildPlantColumn('Gervuogė',
-                                imageUrl:
-                                    'assets/images/augalai/gervuoge/24.png'),
-                            _buildPlantColumn('Saulėgrąža',
-                                imageUrl:
-                                    'assets/images/augalai/saulegraza/12.png'),
-                            _buildPlantColumn('Vyšnia',
-                                imageUrl:
-                                    'assets/images/augalai/vysnia/36.png'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 250,
-                            height: 150,
-                            color: const Color(0xFFB388EB),
-                            child: Image.asset(
-                              'assets/gif/premium.gif',
-                              fit: BoxFit.cover, // Kad užpildytų visą plotą
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => VersionScreen(
+                                          username: userUsername,
+                                        )),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 250,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.deepPurple.shade700,
+                                    width: 3),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(9),
+                                child: Image.asset(
+                                  'assets/gif/premium.gif',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                           ),
                         ],
