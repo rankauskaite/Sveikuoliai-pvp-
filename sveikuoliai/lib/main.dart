@@ -4,35 +4,14 @@ import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:sveikuoliai/services/notification_helper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  
-  // await pushTestSharedGoal(); 
+  await NotificationHelper.init(); // <- Privaloma prieš bet ką kitą
   runApp(const MyApp());
 }
-
-// Future<void> pushTestSharedGoal() async {
-//   final sharedGoalService = SharedGoalService();
-
-//   final goal = SharedGoal(
-//     id: '',
-//     startDate: DateTime.now(),
-//     endDate: DateTime.now().add(const Duration(days: 21)),
-//     points: 0,
-//     isCountable: true,
-//     category: CategoryType.sveikata,
-//     endPoints: 21,
-//     user1Id: 'test2',
-//     user2Id: 'test3',
-//     plantId: 'zibuokle',
-//     goalTypeId: 'meditate_30_days',
-//   );
-
-//   await sharedGoalService.createSharedGoalEntry(goal);
-//   print('✅ SharedGoal sėkmingai išsiųstas į Firestore');
-// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

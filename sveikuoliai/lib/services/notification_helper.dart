@@ -1,6 +1,11 @@
+import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzData;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationHelper {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -10,7 +15,8 @@ class NotificationHelper {
     tzData.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Europe/Vilnius'));
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -24,9 +30,35 @@ class NotificationHelper {
 
     await _notificationsPlugin.initialize(settings);
 
-    // Android 13+ reikia leidimo atskirai
-    final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
     await androidImplementation?.requestNotificationsPermission();
+
+    await _requestExactAlarmsPermission();
+  }
+
+  static Future<void> _requestExactAlarmsPermission() async {
+    if (!Platform.isAndroid) return;
+
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    if (androidInfo.version.sdkInt < 33) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final alreadyRequested =
+        prefs.getBool('exact_alarm_permission_requested') ?? false;
+
+    if (!alreadyRequested) {
+      final intent = AndroidIntent(
+        action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+        flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+      );
+      await intent.launch();
+
+      // Įrašom, kad jau prašėm leidimo
+      await prefs.setBool('exact_alarm_permission_requested', true);
+    }
   }
 
   static Future<void> scheduleDailyNotification({
@@ -37,7 +69,8 @@ class NotificationHelper {
     required int minute,
   }) async {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
 
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
@@ -57,14 +90,13 @@ class NotificationHelper {
         ),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      // uiLocalNotificationDateInterpretation:
-      //     UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
   static Future<void> testNotificationNow() async {
-    final scheduled = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+    final scheduled =
+        tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
 
     await _notificationsPlugin.zonedSchedule(
       999,
@@ -80,8 +112,6 @@ class NotificationHelper {
         ),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      // uiLocalNotificationDateInterpretation:
-      //     UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
@@ -107,7 +137,7 @@ class NotificationHelper {
       title: "Vakarinė motyvacija",
       body: messages[1],
       hour: 20,
-      minute: 0,
+      minute: 00,
     );
   }
 }

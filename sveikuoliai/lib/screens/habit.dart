@@ -72,20 +72,20 @@ class _HabitScreenState extends State<HabitScreen> {
   }
 
   Future<void> _fetchHabitProgress() async {
-  try {
-    List<HabitProgress> all = await _habitProgressService.getAllHabitProgress(widget.habit.habitModel.id);
+    try {
+      List<HabitProgress> all = await _habitProgressService
+          .getAllHabitProgress(widget.habit.habitModel.id);
 
-    if (all.isNotEmpty) {
-      setState(() {
-        progressList = all;
-        habitProgress = all.last;
-      });
+      if (all.isNotEmpty) {
+        setState(() {
+          progressList = all;
+          habitProgress = all.last;
+        });
+      }
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
     }
-  } catch (e) {
-    showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
   }
-}
-
 
   double _calculateProgress() {
     if (widget.habit.habitModel.endPoints == 0)
@@ -377,7 +377,6 @@ class _HabitScreenState extends State<HabitScreen> {
                               habit: widget.habit.habitModel,
                               progressList: progressList,
                             ),
-
                     ),
                   ],
                 ),
@@ -388,91 +387,5 @@ class _HabitScreenState extends State<HabitScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildChart() {
-    return Container(
-      padding: const EdgeInsets.all(10), // Tarpo aplink grafiką
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0), // Šviesiai pilkas fonas
-        borderRadius: BorderRadius.circular(15), // Užapvalinti kampai
-      ),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                FlSpot(0, 1),
-                FlSpot(1, 3),
-                FlSpot(2, 2),
-                FlSpot(3, 5),
-                FlSpot(4, 4),
-                FlSpot(5, 6),
-              ],
-              isCurved: true,
-              color: const Color(0xFFB388EB), // Violetinė linija
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: const Color(0xFFB388EB)
-                    .withOpacity(0.2), // Pusiau permatomas fonas po linija
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// CustomPainter klase, kuri piešia procentus
-class PercentagePainter extends CustomPainter {
-  final double progress;
-
-  PercentagePainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final TextPainter textPainter = TextPainter(
-      text: TextSpan(
-        text: '${(progress * 100).toStringAsFixed(0)}%',
-        style: TextStyle(
-          color: Colors.deepPurple,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    // Kampas pagal progresą (0% = -90° (aukščiausias taškas), 100% = pilnas apskritimas)
-    double angle = -pi / 2 + progress * 2 * pi;
-
-    // Apskaičiuojame tekstą ant apskritimo krašto
-    double radius = size.width / 2; // Pusė apskritimo skersmens
-    double textX = size.width / 2 + radius * cos(angle);
-    double textY = size.height / 2 + radius * sin(angle);
-
-    // Šiek tiek patraukiam procentus nuo krašto, kad jie nesiliestų prie linijos
-    double textOffset = 10;
-    textX += textOffset * cos(angle);
-    textY += textOffset * sin(angle);
-
-    // Nubrėžiame procentus
-    textPainter.paint(
-      canvas,
-      Offset(
-        textX - textPainter.width / 2, // Centruojame tekstą X ašyje
-        textY - textPainter.height / 2, // Centruojame tekstą Y ašyje
-      ),
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return true;
   }
 }
