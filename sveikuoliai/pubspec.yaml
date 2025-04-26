@@ -28,6 +28,11 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  googleapis: ^11.1.0
+  google_sign_in: ^6.1.4
+  googleapis_auth: ^1.4.0
+  http: ^0.13.5
+  image_picker: ^1.0.4
   flutter:
     sdk: flutter
   table_calendar: ^3.0.2
