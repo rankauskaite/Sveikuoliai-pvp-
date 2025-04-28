@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
-import 'package:sveikuoliai/models/goal_progress_model.dart';
 
 class GoalProgressChart extends StatelessWidget {
   final GoalModel goal;

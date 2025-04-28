@@ -14,7 +14,6 @@ import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/goal_progress_graph.dart';
 import 'package:sveikuoliai/widgets/goal_task_card.dart';
 import 'package:sveikuoliai/widgets/progress_indicator.dart';
-import 'package:sveikuoliai/widgets/goal_progress_graph.dart'
 
 class GoalScreen extends StatefulWidget {
   final GoalInformation goal;
@@ -451,12 +450,9 @@ class _GoalPageState extends State<GoalScreen> {
                     const SizedBox(height: 10),
                     SizedBox(
                       height: 200,
-                      child: progressList.isEmpty
-                          ? const Text("Nėra progreso duomenų")
-                          : GoalProgressChart(
-                              goal: widget.goal.goalModel,
-                              progressList: progressList,
-                            ),
+                      child: goalTasks.isEmpty
+                        ? const Text("Nėra progreso duomenų")
+                        : _buildProgressChart(),
 
                     ),
                   ],
