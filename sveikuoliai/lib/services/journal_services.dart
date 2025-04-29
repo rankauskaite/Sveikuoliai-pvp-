@@ -56,4 +56,18 @@ class JournalService {
   Future<void> deleteJournalEntry(String id) async {
     await journalCollection.doc(id).delete();
   }
+
+// show all photos from journal for a specific day
+  Future<List<JournalModel>> getJournalEntriesByDay(String userId, DateTime selectedDate) async {
+  QuerySnapshot snapshot = await journalCollection
+      .where('userId', isEqualTo: userId)
+      .where('date', isGreaterThanOrEqualTo: DateTime(selectedDate.year, selectedDate.month, selectedDate.day))
+      .where('date', isLessThan: DateTime(selectedDate.year, selectedDate.month, selectedDate.day + 1))
+      .get();
+
+  return snapshot.docs.map((doc) {
+    return JournalModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+  }).toList();
+  }
+  
 }
