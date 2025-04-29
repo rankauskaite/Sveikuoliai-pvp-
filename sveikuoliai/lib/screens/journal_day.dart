@@ -9,7 +9,9 @@ import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
-
+import 'package:sveikuoliai/services/journal_upload_service.dart';
+import 'package:sveikuoliai/services/drive_services.dart';
+import 'package:sveikuoliai/services/firebase_storage_service.dart';
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
 
@@ -388,19 +390,48 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             SizedBox(
                               height: 5,
                             ),
-                            Container(
-                              width: 200,
-                              height: 150,
-                              color: const Color(0xFFD9D9D9),
-                              child: Center(
-                                child: Text(
-                                  'Įkelti nuotrauką',
-                                  style: TextStyle(
-                                      fontSize: 37, color: Colors.black),
-                                  textAlign: TextAlign.center,
+                            // Container(
+                            //   width: 200,
+                            //   height: 150,
+                            //   color: const Color(0xFFD9D9D9),
+                            //   child: Center(
+                            //     child: Text(
+                            //       'Įkelti nuotrauką',
+                            //       style: TextStyle(
+                            //           fontSize: 37, color: Colors.black),
+                            //       textAlign: TextAlign.center,
+                            //     ),
+                            //   ),
+                            // ),
+                            GestureDetector(
+                                onTap: () async {
+                                  // Čia iškviečiame tavo upload funkciją!
+                                  await uploadJournalEntry(
+                                    date: selectedDay,
+                                    note: journalText,
+                                    mood: selectedMood,
+                                  );
+
+                                  // Galima parodyti pranešimą, kad sėkmingai įkelta
+                                  if (mounted) {
+                                    showCustomSnackBar(context, 'Nuotrauka įkelta sėkmingai! 📸', true);
+                                  }
+                                },
+                                child: Container(
+                                  width: 200,
+                                  height: 150,
+                                  color: const Color(0xFFD9D9D9),
+                                  child: Center(
+                                    child: Text(
+                                      'Įkelti nuotrauką',
+                                      style: TextStyle(
+                                          fontSize: 37, color: Colors.black),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+
                             SizedBox(height: 5),
                             GestureDetector(
                               onTap: () => _selectDate(context),
