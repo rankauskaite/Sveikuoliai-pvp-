@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:io';  // reikalinga file klasei
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
@@ -12,6 +13,8 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/services/journal_upload_service.dart';
 import 'package:sveikuoliai/services/drive_services.dart';
 import 'package:sveikuoliai/services/firebase_storage_service.dart';
+import 'package:image_picker/image_picker.dart';
+
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
 
@@ -30,6 +33,8 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   DateTime? menstruationStart;
   late DateTime selectedTempDay = selectedDay; // Laikinas pasirinkimas
   String userUsername = "";
+  File? _selectedImage; // Įkeltas nuotraukos failas
+
 
   @override
   void initState() {
@@ -55,52 +60,120 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     }
   }
 
+  // Future<void> _fetchJournalEntry(DateTime date) async {
+  //   try {
+  //     JournalModel? entry =
+  //         await _journalService.getJournalEntryByDay(userUsername, date);
+  //     if (entry != null) {
+  //       setState(() {
+  //         journalText = entry.note;
+  //         selectedMood = entry.mood;
+  //       });
+  //     } else {
+  //       setState(() {
+  //         journalText = '';
+  //         selectedMood = MoodType.neutrali;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+  //   }
+  // }
+
   Future<void> _fetchJournalEntry(DateTime date) async {
-    try {
-      JournalModel? entry =
-          await _journalService.getJournalEntryByDay(userUsername, date);
-      if (entry != null) {
-        setState(() {
-          journalText = entry.note;
-          selectedMood = entry.mood;
-        });
-      } else {
-        setState(() {
-          journalText = '';
-          selectedMood = MoodType.neutrali;
-        });
-      }
-    } catch (e) {
-      showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
-    }
-  }
+  try {
+    JournalModel? entry = await _journalService.getJournalEntryByDay(userUsername, date);
 
-  Future<void> _saveJournalEntry() async {
-    if (journalText.isNotEmpty) {
-      JournalModel journalModel = JournalModel(
-        id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
-        userId: userUsername,
-        note: journalText,
-        photoUrl: "",
-        mood: selectedMood,
-        date: selectedDay,
-      );
-
-      await _journalService.createJournalEntry(journalModel);
-
-      // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
-      if (mounted) {
-        String message = 'Įrašas išsaugotas! 🎉';
-        showCustomSnackBar(context, message, true);
-      }
+    if (entry != null) {
+      setState(() {
+        journalText = entry.note ?? '';  // Užrašytas tekstas
+        selectedMood = entry.mood ?? MoodType.neutrali; // Nuotaika
+        _selectedImage = entry.photoUrl?.isNotEmpty == true
+            ? File(entry.photoUrl!) // Jei nuotrauka buvo įkelta, priskiriame ją
+            : null;
+      });
     } else {
-      // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
-      if (mounted) {
-        String message = 'Užpildyk visus laukus!';
-        showCustomSnackBar(context, message, false);
-      }
+      setState(() {
+        journalText = '';
+        selectedMood = MoodType.neutrali;
+        _selectedImage = null; // Jei nėra įrašo, nustatome nulinę nuotrauką
+      });
+    }
+  } catch (e) {
+    showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+  }
+}
+
+
+  // Future<void> _saveJournalEntry() async {
+  //   if (journalText.isNotEmpty) {
+  //     JournalModel journalModel = JournalModel(
+  //       id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
+  //       userId: userUsername,
+  //       note: journalText,
+  //       photoUrl: "",
+  //       mood: selectedMood,
+  //       date: selectedDay,
+  //     );
+
+  //     await _journalService.createJournalEntry(journalModel);
+
+  //     // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
+  //     if (mounted) {
+  //       String message = 'Įrašas išsaugotas! 🎉';
+  //       showCustomSnackBar(context, message, true);
+  //     }
+  //   } else {
+  //     // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
+  //     if (mounted) {
+  //       String message = 'Užpildyk visus laukus!';
+  //       showCustomSnackBar(context, message, false);
+  //     }
+  //   }
+  // }
+
+Future<void> _saveJournalEntry() async {
+  String photoUrl = "";  // Nuotraukos URL
+
+  // Jei nuotrauka pasirinkta, įkeliam ją į Drive
+  if (_selectedImage != null) {
+    final fileId = await DriveService().uploadImageAndGetFileId();
+    if (fileId != null) {
+      photoUrl = 'https://drive.google.com/uc?export=view&id=$fileId';  // Nuotraukos URL
+      print("Nuotrauka įkelta su ID: $fileId");
+    } else {
+      print('Nepavyko įkelti nuotraukos');
     }
   }
+
+  // Jei bent viena reikšmė yra užpildyta, išsaugome įrašą
+  if (journalText.isNotEmpty || selectedMood != MoodType.neutrali || _selectedImage != null) {
+    JournalModel journalModel = JournalModel(
+      id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
+      userId: userUsername,
+      note: journalText,    // Užrašytas tekstas
+      photoUrl: photoUrl,   // Nuotrauka (jei buvo pasirinkta)
+      mood: selectedMood,   // Nuotaika (nebūtina, naudojama pagal nutylėjimą)
+      date: selectedDay,    // Susiejame su pasirinkta diena
+    );
+
+    await _journalService.createJournalEntry(journalModel);
+
+    // Pranešimas apie įrašą
+    if (mounted) {
+      String message = 'Įrašas išsaugotas! 🎉';
+      showCustomSnackBar(context, message, true);
+    }
+  } else {
+    // Jei nėra teksto, nuotraukos ar nuotaikos, rodyti klaidą
+    if (mounted) {
+      String message = 'Užpildyk bent vieną lauką!';
+      showCustomSnackBar(context, message, false);
+    }
+  }
+}
+
+
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showModalBottomSheet(
@@ -331,22 +404,19 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             TextField(
-                                              maxLines: null,
-                                              autofocus: true,
-                                              onChanged: (value) {
-                                                tempText =
-                                                    value; // Atnaujiname laikinojo kintamojo reikšmę
-                                              },
-                                              decoration: InputDecoration(
-                                                hintText: 'Rašykite čia...',
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                filled: true,
-                                                fillColor: Colors.white,
-                                              ),
+                                            onChanged: (value) {
+                                              setState(() {
+                                                journalText = value;  // Tekstas, kurį įvedė vartotojas
+                                              });
+                                              _saveJournalEntry();  // Automatiškai išsaugoti, kai įvedamas tekstas
+                                            },
+                                            decoration: InputDecoration(
+                                              hintText: 'Rašykite čia...',
+                                              border: OutlineInputBorder(),
+                                              filled: true,
+                                              fillColor: Colors.white,
                                             ),
+                                          ),
                                             SizedBox(height: 10),
                                             ElevatedButton(
                                               onPressed: () {
@@ -404,34 +474,42 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             //   ),
                             // ),
                             GestureDetector(
-                                onTap: () async {
-                                  // Čia iškviečiame tavo upload funkciją!
-                                  await uploadJournalEntry(
-                                    date: selectedDay,
-                                    note: journalText,
-                                    mood: selectedMood,
-                                  );
+                            onTap: () async {
+                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
-                                  // Galima parodyti pranešimą, kad sėkmingai įkelta
-                                  if (mounted) {
-                                    showCustomSnackBar(context, 'Nuotrauka įkelta sėkmingai! 📸', true);
-                                  }
-                                },
-                                child: Container(
-                                  width: 200,
-                                  height: 150,
-                                  color: const Color(0xFFD9D9D9),
-                                  child: Center(
-                                    child: Text(
-                                      'Įkelti nuotrauką',
-                                      style: TextStyle(
-                                          fontSize: 37, color: Colors.black),
-                                      textAlign: TextAlign.center,
+                              if (pickedFile != null) {
+                                setState(() {
+                                  _selectedImage = File(pickedFile.path);  // Laikyti pasirinktą nuotrauką
+                                });
+
+                                // Jei reikia, galite įkelti nuotrauką į Firebase arba Drive
+                                final fileId = await DriveService().uploadImageAndGetFileId();
+                                if (fileId != null) {
+                                  // Galite saugoti fileId į Firestore arba naudoti toliau
+                                  print('Nuotrauka įkelta su ID: $fileId');
+                                }
+                              }
+                            },
+                            child: _selectedImage == null  // Jei nuotrauka nepasirinkta
+                                ? Container(
+                                    width: 200,
+                                    height: 150,
+                                    color: const Color(0xFFD9D9D9),
+                                    child: Center(
+                                      child: Text(
+                                        'Įkelti nuotrauką',
+                                        style: TextStyle(fontSize: 37, color: Colors.black),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
+                                  )
+                                : Image.file(
+                                    _selectedImage!,  // Rodyti įkeltą nuotrauką
+                                    fit: BoxFit.cover,
+                                    width: 200,
+                                    height: 150,
                                   ),
-                                ),
-                              ),
-
+                          ),
                             SizedBox(height: 5),
                             GestureDetector(
                               onTap: () => _selectDate(context),
@@ -504,26 +582,51 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     return day.toString().padLeft(2, '0');
   }
 
+  // Widget _buildMoodCircle(MoodType mood, String imageUrl) {
+  //   bool isSelected = selectedMood == mood;
+  //   return GestureDetector(
+  //     onTap: () {
+  //       setState(() {
+  //         selectedMood = mood;
+  //       });
+  //     },
+  //     child: Column(
+  //       children: [
+  //         CircleAvatar(
+  //           radius: 37,
+  //           backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
+  //           child: Image.asset(imageUrl, width: 70, height: 70),
+  //         ),
+  //         Text(mood.toDisplayName(),
+  //             style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
+  //         SizedBox(height: 10),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildMoodCircle(MoodType mood, String imageUrl) {
-    bool isSelected = selectedMood == mood;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedMood = mood;
-        });
-      },
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 37,
-            backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
-            child: Image.asset(imageUrl, width: 70, height: 70),
-          ),
-          Text(mood.toDisplayName(),
-              style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
-          SizedBox(height: 10),
-        ],
-      ),
-    );
-  }
+  bool isSelected = selectedMood == mood;
+
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        selectedMood = mood;  // Pasirinkta nuotaika
+      });
+      _saveJournalEntry();  // Išsaugome nuotaiką iš karto
+    },
+    child: Column(
+      children: [
+        CircleAvatar(
+          radius: 37,
+          backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
+          child: Image.asset(imageUrl, width: 70, height: 70),
+        ),
+        Text(mood.toDisplayName(), style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
+        SizedBox(height: 10),
+      ],
+    ),
+  );
+}
+
 }
