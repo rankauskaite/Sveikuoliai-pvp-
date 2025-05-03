@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sveikuoliai/data/default_tasks.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 
 class GoalTaskService {
@@ -8,6 +9,25 @@ class GoalTaskService {
   // create
   Future<void> createGoalTaskEntry(GoalTask goalTask) async {
     await goalTaskCollection.doc(goalTask.id).set(goalTask.toJson());
+  }
+
+  // create default tasks for goal
+  Future<void> createDefaultTasksForGoal({
+    required String goalId,
+    required String goalType,
+    required String username,
+    String? isFriend,
+  }) async {
+    List<GoalTask> defaultTasks = generateDefaultTasksForGoal(
+      goalId: goalId,
+      goalType: goalType,
+      username: username,
+      isFriend: isFriend,
+    );
+
+    for (var task in defaultTasks) {
+      await createGoalTaskEntry(task);
+    }
   }
 
   // read
@@ -21,6 +41,20 @@ class GoalTaskService {
   Future<List<GoalTask>> getGoalTasks(String goalId) async {
     QuerySnapshot snapshot =
         await goalTaskCollection.where('goalId', isEqualTo: goalId).get();
+
+    return snapshot.docs
+        .map((doc) =>
+            GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
+  // read all goal's tasks
+  Future<List<GoalTask>> getGoalTasksForUser(String goalId, String username) async {
+    QuerySnapshot snapshot =
+        await goalTaskCollection
+            .where('goalId', isEqualTo: goalId)
+            .where('userId', isEqualTo: username)
+            .get();
 
     return snapshot.docs
         .map((doc) =>

@@ -14,8 +14,7 @@ class SharedGoal {
   String user2Id;
   String plantId;
   String goalTypeId;
-  bool tikUser;   
-  bool tikFriends;  
+  bool isApproved = false; // Pridėta nauja savybė
 
   SharedGoal({
     required this.id,
@@ -29,9 +28,7 @@ class SharedGoal {
     required this.user2Id,
     required this.plantId,
     required this.goalTypeId,
-    this.tikUser = true,     // Default reikšmė, kadangi jau yra sukurtu defaultiniu goals,
-    // tai kad nereiktu perkurt
-    this.tikFriends = false, 
+    required this.isApproved,
   });
 
   /// Konvertavimas į JSON
@@ -47,8 +44,7 @@ class SharedGoal {
       'user2Id': user2Id,
       'plantId': plantId,
       'goalTypeId': goalTypeId,
-      'tikUser': tikUser,
-      'tikFriends': tikFriends,
+      'isApproved': isApproved, // Pridėta nauja savybė
     };
   }
 
@@ -66,8 +62,7 @@ class SharedGoal {
       user2Id: json['user2Id'] ?? '',
       plantId: json['plantId'] ?? '',
       goalTypeId: json['goalTypeId'] ?? '',
-      tikUser: json['tikUser'] ?? true, // by default bus true
-      tikFriends: json['tikFriends'] ?? false,
+      isApproved: json['isApproved'] ?? false, // Pridėta nauja savybė
     );
   }
 }
@@ -82,7 +77,8 @@ class SharedGoalInformation {
   });
 
   /// Konvertavimas iš JSON
-  factory SharedGoalInformation.fromJson(SharedGoal goalModel, GoalType goalType) {
+  factory SharedGoalInformation.fromJson(
+      SharedGoal goalModel, GoalType goalType) {
     return SharedGoalInformation(
       sharedGoalModel: goalModel,
       goalType: goalType,

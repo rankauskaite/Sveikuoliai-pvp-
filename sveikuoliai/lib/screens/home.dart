@@ -369,18 +369,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPlantColumn(String plantName, {String? imageUrl}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        imageUrl != null && imageUrl.isNotEmpty
-            ? Image.asset(imageUrl, width: 90, height: 90)
-            : const Icon(Icons.circle, size: 90, color: Color(0xFFD9D9D9)),
-        Text(plantName, style: const TextStyle(fontSize: 16)),
-      ],
-    );
-  }
-
   void _showMessageDialog(String message) {
     showDialog(
       context: context,
