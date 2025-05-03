@@ -81,8 +81,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
             UserModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
         .toList();
 
+    List<UserModel> premiumUsers =
+        allUsers.where((user) => user.version == 'premium').toList();
+
     setState(() {
-      searchResults = allUsers.where((user) {
+      searchResults = premiumUsers.where((user) {
         final nameLower = user.name.toLowerCase();
         final usernameLower = user.username.toLowerCase();
         final queryLower = query.toLowerCase();
@@ -355,6 +358,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   SizedBox(
                     height: 10,
                   ),
+                  if (friends.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Draugų sąrašas tuščias",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
                   // Draugų sąrašas su pilkais stačiakampiais ir piktogramomis
                   Expanded(
                     child: ListView.builder(
