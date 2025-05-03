@@ -7,10 +7,10 @@ class GoalTaskCard extends StatefulWidget {
   final int length;
   final int doneLength;
   final int type;
-  final int Function(bool isCompleted)
-      calculatePoints; // Grąžina int, priima bool
-  final void Function(String taskId)? onDelete; // Priima task.id
-  final VoidCallback? onUpdate; // Papildomas callback būsenos atnaujinimui
+  final bool isMyTask; // <-- naujas laukas
+  final int Function(bool isCompleted) calculatePoints;
+  final void Function(String taskId)? onDelete;
+  final VoidCallback? onUpdate;
 
   const GoalTaskCard({
     Key? key,
@@ -19,6 +19,7 @@ class GoalTaskCard extends StatefulWidget {
     required this.length,
     required this.doneLength,
     required this.calculatePoints,
+    required this.isMyTask, // <-- reikalingas konstruktoriuje
     this.onDelete,
     this.onUpdate,
   }) : super(key: key);
@@ -28,6 +29,13 @@ class GoalTaskCard extends StatefulWidget {
 }
 
 class _GoalTaskCardState extends State<GoalTaskCard> {
+  bool isChecked = false; // Checkbox būsena
+  @override
+  void initState() {
+    super.initState();
+    isChecked = widget.task.isCompleted;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Pasirenkame, kurį metodą naudoti pagal task.isCompleted
@@ -36,8 +44,14 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
         : buildGoalItemFalse(widget.task, widget.length, widget.doneLength);
   }
 
-  // Tikslų kortelių kūrimo funkcija užbaigtoms užduotims
   Widget buildGoalItemTrue(GoalTask task) {
+    // Pasirenkame spalvą pagal tipo reikšmę
+    final checkboxColor = widget.type == 0
+        ? Colors.blue
+        : widget.type == 1
+            ? Colors.lightGreen
+            : const Color(0xFF72ddf7);
+
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(bottom: 10),
@@ -62,21 +76,25 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
                 task.description,
                 style: TextStyle(color: Colors.grey[300]),
               ),
-              leading: Checkbox(
-                value: task.isCompleted,
-                onChanged: (bool? value) {
-                  // setState(() {
-                  //   final newValue = value ?? false;
-                  //   task.isCompleted = newValue;
-                  //   task.points = widget.calculatePoints(newValue);
-                  //   widget.onUpdate?.call();
-                  // });
-                },
-                activeColor: widget.type == 0
-                    ? Colors.blue
-                    : widget.type == 1
-                        ? Colors.lightGreen
-                        : const Color(0xFF72ddf7),
+              leading: Theme(
+                data: Theme.of(context).copyWith(
+                  unselectedWidgetColor:
+                      checkboxColor, // <-- pakeičia pilką į mėlyną/žalią
+                ),
+                child: Checkbox(
+                  value: task.isCompleted,
+                  onChanged: widget.isMyTask && isChecked == false
+                      ? (bool? value) {
+                          setState(() {
+                            final newValue = value ?? false;
+                            task.isCompleted = newValue;
+                            task.points = widget.calculatePoints(newValue);
+                            widget.onUpdate?.call();
+                          });
+                        }
+                      : (bool? value) {}, // disabled jei ne tavo
+                  activeColor: checkboxColor,
+                ),
               ),
             ),
           ),
@@ -107,14 +125,16 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
               subtitle: Text(task.description),
               leading: Checkbox(
                 value: task.isCompleted,
-                onChanged: (bool? value) {
-                  setState(() {
-                    final newValue = value ?? false;
-                    task.isCompleted = newValue;
-                    task.points = widget.calculatePoints(newValue);
-                    widget.onUpdate?.call();
-                  });
-                },
+                onChanged: widget.isMyTask
+                    ? (bool? value) {
+                        setState(() {
+                          final newValue = value ?? false;
+                          task.isCompleted = newValue;
+                          task.points = widget.calculatePoints(newValue);
+                          widget.onUpdate?.call();
+                        });
+                      }
+                    : null,
                 activeColor: widget.type == 0
                     ? Colors.blue
                     : widget.type == 1
@@ -123,31 +143,32 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
               ),
             ),
           ),
-          IconButton(
-            onPressed: () {
-              CustomDialogs.showEditDialog(
-                context: context,
-                entityType: EntityType.task,
-                entity: task,
-                accentColor: widget.type == 0
-                    ? Colors.lightBlueAccent
-                    : widget.type == 1
-                        ? (Colors.lightGreen[400] ?? Colors.lightGreen)
-                        : const Color(0xFF72ddf7),
-                onSave: () {
-                  setState(() {});
-                  widget.onUpdate?.call();
-                },
-              );
-            },
-            icon: Icon(Icons.edit_outlined,
-                color: widget.type == 0
-                    ? Colors.blue[600]
-                    : widget.type == 1
-                        ? Colors.lightGreen[600]
-                        : const Color(0xFF72ddf7)),
-          ),
-          if (length > 1 && length - doneLength > 1)
+          if (widget.isMyTask)
+            IconButton(
+              onPressed: () {
+                CustomDialogs.showEditDialog(
+                  context: context,
+                  entityType: EntityType.task,
+                  entity: task,
+                  accentColor: widget.type == 0
+                      ? Colors.lightBlueAccent
+                      : widget.type == 1
+                          ? (Colors.lightGreen[400] ?? Colors.lightGreen)
+                          : const Color(0xFF72ddf7),
+                  onSave: () {
+                    setState(() {});
+                    widget.onUpdate?.call();
+                  },
+                );
+              },
+              icon: Icon(Icons.edit_outlined,
+                  color: widget.type == 0
+                      ? Colors.blue[600]
+                      : widget.type == 1
+                          ? Colors.lightGreen[600]
+                          : const Color(0xFF72ddf7)),
+            ),
+          if (widget.isMyTask && length > 1 && length - doneLength > 1)
             IconButton(
               onPressed: () {
                 CustomDialogs.showDeleteDialog(

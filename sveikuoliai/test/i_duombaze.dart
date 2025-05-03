@@ -23,6 +23,7 @@ Future<void> main() async {
     user2Id: 'test3',
     plantId: 'plant_rose',
     goalTypeId: 'focus21',
+    isApproved: false, // Pridėta nauja savybė
   );
 
   await sharedGoalService.createSharedGoalEntry(goal);

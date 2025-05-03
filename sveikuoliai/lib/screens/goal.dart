@@ -133,6 +133,14 @@ class _GoalPageState extends State<GoalScreen> {
         if (mounted) {
           showCustomSnackBar(
               context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GoalScreen(
+                goal: widget.goal,
+              ),
+            ),
+          );
         }
       }
     } catch (e) {
@@ -343,6 +351,7 @@ class _GoalPageState extends State<GoalScreen> {
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF72ddf7),
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
                     buildProgressIndicator(
@@ -360,6 +369,7 @@ class _GoalPageState extends State<GoalScreen> {
                       style: const TextStyle(fontSize: 18),
                       softWrap: true, // Leisti tekstui kelti į kitą eilutę
                       overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -456,6 +466,7 @@ class _GoalPageState extends State<GoalScreen> {
                             .map((task) => GoalTaskCard(
                                   task: task,
                                   type: 0,
+                                  isMyTask: true,
                                   length: length,
                                   doneLength: doneLength,
                                   calculatePoints: (isCompleted) =>
@@ -466,6 +477,7 @@ class _GoalPageState extends State<GoalScreen> {
                             (task) => GoalTaskCard(
                                 type: 0,
                                 task: task,
+                                isMyTask: true,
                                 length: length,
                                 doneLength: doneLength,
                                 calculatePoints: (isCompleted) =>

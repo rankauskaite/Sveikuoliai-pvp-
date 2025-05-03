@@ -48,6 +48,20 @@ class GoalTaskService {
         .toList();
   }
 
+  // read all goal's tasks
+  Future<List<GoalTask>> getGoalTasksForUser(String goalId, String username) async {
+    QuerySnapshot snapshot =
+        await goalTaskCollection
+            .where('goalId', isEqualTo: goalId)
+            .where('userId', isEqualTo: username)
+            .get();
+
+    return snapshot.docs
+        .map((doc) =>
+            GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
   // update
   Future<void> updateGoalTaskEntry(GoalTask goalTask) async {
     Map<String, dynamic> data = goalTask.toJson();
