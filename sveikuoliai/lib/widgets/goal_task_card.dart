@@ -5,6 +5,7 @@ import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 class GoalTaskCard extends StatefulWidget {
   final GoalTask task;
   final int length;
+  final int doneLength;
   final int type;
   final int Function(bool isCompleted)
       calculatePoints; // Grąžina int, priima bool
@@ -16,6 +17,7 @@ class GoalTaskCard extends StatefulWidget {
     required this.task,
     required this.type,
     required this.length,
+    required this.doneLength,
     required this.calculatePoints,
     this.onDelete,
     this.onUpdate,
@@ -31,7 +33,7 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
     // Pasirenkame, kurį metodą naudoti pagal task.isCompleted
     return widget.task.isCompleted
         ? buildGoalItemTrue(widget.task)
-        : buildGoalItemFalse(widget.task, widget.length);
+        : buildGoalItemFalse(widget.task, widget.length, widget.doneLength);
   }
 
   // Tikslų kortelių kūrimo funkcija užbaigtoms užduotims
@@ -63,12 +65,12 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
               leading: Checkbox(
                 value: task.isCompleted,
                 onChanged: (bool? value) {
-                  setState(() {
-                    final newValue = value ?? false;
-                    task.isCompleted = newValue;
-                    task.points = widget.calculatePoints(newValue);
-                    widget.onUpdate?.call();
-                  });
+                  // setState(() {
+                  //   final newValue = value ?? false;
+                  //   task.isCompleted = newValue;
+                  //   task.points = widget.calculatePoints(newValue);
+                  //   widget.onUpdate?.call();
+                  // });
                 },
                 activeColor: widget.type == 0
                     ? Colors.blue
@@ -84,7 +86,7 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
   }
 
   // Tikslų kortelių kūrimo funkcija neužbaigtoms užduotims
-  Widget buildGoalItemFalse(GoalTask task, int length) {
+  Widget buildGoalItemFalse(GoalTask task, int length, int doneLength) {
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(bottom: 10),
@@ -138,13 +140,14 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
                 },
               );
             },
-            icon: Icon(Icons.edit_outlined, color: widget.type == 0
-                ? Colors.blue[600]
-                : widget.type == 1
-                    ? Colors.lightGreen[600]
-                    : const Color(0xFF72ddf7)),
+            icon: Icon(Icons.edit_outlined,
+                color: widget.type == 0
+                    ? Colors.blue[600]
+                    : widget.type == 1
+                        ? Colors.lightGreen[600]
+                        : const Color(0xFF72ddf7)),
           ),
-          if (length > 1)
+          if (length > 1 && length - doneLength > 1)
             IconButton(
               onPressed: () {
                 CustomDialogs.showDeleteDialog(
@@ -161,11 +164,12 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
                   },
                 );
               },
-              icon: Icon(Icons.remove_circle_outline, color: widget.type == 0
-                ? Colors.blue[600]
-                : widget.type == 1
-                    ? Colors.lightGreen[600]
-                    : const Color(0xFF72ddf7)),
+              icon: Icon(Icons.remove_circle_outline,
+                  color: widget.type == 0
+                      ? Colors.blue[600]
+                      : widget.type == 1
+                          ? Colors.lightGreen[600]
+                          : const Color(0xFF72ddf7)),
             ),
         ],
       ),

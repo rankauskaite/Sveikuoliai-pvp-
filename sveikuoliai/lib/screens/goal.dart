@@ -31,6 +31,7 @@ class _GoalPageState extends State<GoalScreen> {
   final GoalService _goalService = GoalService();
   List<GoalTask> goalTasks = [];
   int length = 0;
+  int doneLength = 0;
 
   @override
   void initState() {
@@ -70,6 +71,7 @@ class _GoalPageState extends State<GoalScreen> {
       setState(() {
         goalTasks = tasks;
         length = tasks.length;
+        doneLength = tasks.where((task) => task.isCompleted).length;
       });
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslo užduotis ❌', false);
@@ -92,9 +94,46 @@ class _GoalPageState extends State<GoalScreen> {
         widget.goal.goalModel.points = _userPoints();
       });
 
-      if (mounted) {
-        showCustomSnackBar(
-            context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+      // ✅ Patikriname, ar visos užduotys įvykdytos
+      final allCompleted = goalTasks.every((task) => task.isCompleted);
+      if (allCompleted) {
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Sveikiname! 🎉"),
+              content: const Text(
+                  "Įvykdėte visas užduotis. Ką norėtumėte daryti toliau?"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    //_deleteGoal(); // arba galima padaryti "užbaigti tikslą" kitaip
+                  },
+                  child: const Text("Užbaigti tikslą"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    CustomDialogs.showNewFirstTaskDialog(
+                      context: context,
+                      type: 1,
+                      onSave: (newTask) => _createTask(newTask),
+                      goal: widget.goal,
+                      accentColor: Colors.lightBlueAccent,
+                    );
+                  },
+                  child: const Text("Pridėti užduotį"),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          showCustomSnackBar(
+              context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -118,7 +157,7 @@ class _GoalPageState extends State<GoalScreen> {
     return widget.goal.goalModel.points / widget.goal.goalModel.endPoints;
   }
 
-  int _calculatePoints(bool isCompleted) {
+  int _calculatePoints(bool isCompleted, List<GoalTask> goalTasks) {
     if (isCompleted) {
       return (widget.goal.goalModel.endPoints / goalTasks.length).toInt();
     } else {
@@ -126,9 +165,50 @@ class _GoalPageState extends State<GoalScreen> {
     }
   }
 
+  Future<void> _recalculateGoalTaskPoints() async {
+    try {
+      // Perkraunam užduotis
+      List<GoalTask> updatedTasks =
+          await _goalTaskService.getGoalTasks(widget.goal.goalModel.id);
+      print('kiek užduočių: ${updatedTasks.length}');
+
+      for (var task in updatedTasks) {
+        int points = _calculatePoints(task.isCompleted, updatedTasks);
+        await _goalTaskService.updateGoalTaskState(
+          task.id,
+          task.isCompleted,
+          points,
+        );
+      }
+      updatedTasks =
+          await _goalTaskService.getGoalTasks(widget.goal.goalModel.id);
+
+      setState(() {
+        goalTasks = updatedTasks;
+        length = updatedTasks.length;
+        doneLength = updatedTasks.where((task) => task.isCompleted).length;
+      });
+
+      int totalPoints = _userPoints();
+      print("Total points: $totalPoints");
+
+      await _goalService.updateGoalPoints(
+          widget.goal.goalModel.id, totalPoints);
+
+      setState(() {
+        widget.goal.goalModel.points = totalPoints;
+      });
+    } catch (e) {
+      if (mounted) {
+        showCustomSnackBar(context, "Klaida perskaičiuojant taškus ❌", false);
+      }
+    }
+  }
+
   Future<void> _createTask(GoalTask task) async {
     try {
       await _goalTaskService.createGoalTaskEntry(task);
+      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
       showCustomSnackBar(context, "Tikslo užduotis sėkmingai pridėta ✅", true);
       Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
@@ -164,6 +244,7 @@ class _GoalPageState extends State<GoalScreen> {
       final taskService = GoalTaskService();
       await taskService
           .deleteGoalTaskEntry(taskId); // Ištrinti įprotį iš serverio
+      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
       //Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
         context,
@@ -376,7 +457,9 @@ class _GoalPageState extends State<GoalScreen> {
                                   task: task,
                                   type: 0,
                                   length: length,
-                                  calculatePoints: _calculatePoints,
+                                  doneLength: doneLength,
+                                  calculatePoints: (isCompleted) =>
+                                      _calculatePoints(isCompleted, goalTasks),
                                   onDelete: _deleteTask,
                                 )),
                         ...goalTasks.where((task) => task.isCompleted).map(
@@ -384,7 +467,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 type: 0,
                                 task: task,
                                 length: length,
-                                calculatePoints: _calculatePoints)),
+                                doneLength: doneLength,
+                                calculatePoints: (isCompleted) =>
+                                    _calculatePoints(isCompleted, goalTasks))),
                       ],
                     ),
                     Row(
@@ -451,9 +536,8 @@ class _GoalPageState extends State<GoalScreen> {
                     SizedBox(
                       height: 200,
                       child: goalTasks.isEmpty
-                        ? const Text("Nėra progreso duomenų")
-                        : _buildProgressChart(),
-
+                          ? const Text("Nėra progreso duomenų")
+                          : _buildProgressChart(),
                     ),
                   ],
                 ),
@@ -501,10 +585,11 @@ class _GoalPageState extends State<GoalScreen> {
       ),
     );
   }
+
   Widget _buildProgressChart() {
-  return GoalProgressChart(
-    goal: widget.goal.goalModel,
-    goalTasks: goalTasks,
-  );
-}
+    return GoalProgressChart(
+      goal: widget.goal.goalModel,
+      goalTasks: goalTasks,
+    );
+  }
 }

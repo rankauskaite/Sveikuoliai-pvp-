@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/friendship_model.dart';
+import 'package:sveikuoliai/models/goal_model.dart';
+import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
+import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class NewSharedGoalScreen extends StatelessWidget {
@@ -78,7 +82,9 @@ class NewSharedGoalScreen extends StatelessWidget {
                       controller: PageController(
                           viewportFraction: 0.9), // Pagerins sklandumą
                       children: [
-                        ...defaultGoalTypes.map((goal) {
+                        ...defaultGoalTypes
+                            .where((goal) => goal.tikFriends == true)
+                            .map((goal) {
                           return GoalCard(
                             goalId: goal.id,
                             goalName: goal.title,
@@ -145,6 +151,7 @@ class GoalCard extends StatefulWidget {
 class _GoalCardState extends State<GoalCard> {
   late String userUsername;
   final GoalTypeService _goalTypeService = GoalTypeService();
+  final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
   final FriendshipService _friendshipService = FriendshipService();
   List<FriendshipModel> friends = [];
@@ -180,7 +187,11 @@ class _GoalCardState extends State<GoalCard> {
     } catch (e) {
       if (mounted) {
         String message = 'Klaida gaunant duomenis ❌';
-        showCustomSnackBar(context, message, false);
+        if (mounted) {
+          if (mounted) {
+            showCustomSnackBar(context, message, false);
+          }
+        }
       }
     }
   }
@@ -196,7 +207,9 @@ class _GoalCardState extends State<GoalCard> {
       print("Draugai: $friends");
     } catch (e) {
       String message = 'Klaida gaunant draugų duomenis ❌';
-      showCustomSnackBar(context, message, false);
+      if (mounted) {
+        showCustomSnackBar(context, message, false);
+      }
     }
   }
 
@@ -379,6 +392,36 @@ class _GoalCardState extends State<GoalCard> {
                       },
                       child: const Text('Išsaugoti'),
                     ),
+                    // ElevatedButton(
+                    //   onPressed: () async {
+                    //     SharedGoal? result = await _submitGoal();
+                    //     _dateController.text =
+                    //         _startDate.toString().substring(0, 10);
+
+                    //     if (!widget.isCountable && result != null) {
+                    //       // Jei tikslas ne countable, paprašome įvesti užduotį
+                    //       CustomDialogs.showNewFirstTaskDialog(
+                    //         context: context,
+                    //         goal: result,
+                    //         type: 2,
+                    //         accentColor:
+                    //             Colors.lightGreen[400] ?? Colors.lightGreen,
+                    //         onSave: (GoalTask task) {
+                    //           // Išsaugoti užduotį ir grįžti atgal
+                    //           createTask(task);
+                    //         },
+                    //       );
+                    //     } else {
+                    //       // Jei tikslas countable – iš karto eiti į kitą ekraną
+                    //       Navigator.pushReplacement(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //             builder: (context) => HabitsGoalsScreen()),
+                    //       );
+                    //     }
+                    //   },
+                    //   child: const Text('Išsaugoti'),
+                    // ),
                   ],
                 ),
               ),
@@ -420,8 +463,39 @@ class _GoalCardState extends State<GoalCard> {
     );
   }
 
+  Future<void> createTask(GoalTask task) async {
+    try {
+      task.userId = userUsername;
+      task.id = '${task.id.splitMapJoin(
+        RegExp(r'[A-Z]'),
+        onMatch: (match) => '',
+        onNonMatch: (nonMatch) => nonMatch,
+      )}${userUsername[0].toUpperCase() + userUsername.substring(1)}${DateTime.now()}';
+      await _goalTaskService.createGoalTaskEntry(task);
+      task.userId = _selectedFriend;
+      task.id = '${task.title.splitMapJoin(
+        RegExp(r'[A-Z]'),
+        onMatch: (match) => '',
+        onNonMatch: (nonMatch) => nonMatch,
+      )}${_selectedFriend[0].toUpperCase() + _selectedFriend.substring(1)}${DateTime.now()}';
+      await _goalTaskService.createGoalTaskEntry(task);
+      showCustomSnackBar(context, "Tikslo užduotis sėkmingai pridėta ✅", true);
+      Navigator.pop(context); // Grįžta atgal
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+      );
+    } catch (e) {
+      showCustomSnackBar(context, "Klaida pridedant tikslo užduotį ❌", false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+      );
+    }
+  }
+
   // Funkcija įrašyti duomenis į duomenų bazę
-  Future<void> _submitGoal() async {
+  Future<SharedGoal?> _submitGoal() async {
     String goalId = widget.isCustom
         ? _goalNameController.text
             .toLowerCase()
@@ -490,7 +564,7 @@ class _GoalCardState extends State<GoalCard> {
         title: _goalNameController.text,
         description: _goalDescriptionController.text,
         type: "custom", // Jei tai yra vartotojo sukurtas įprotis
-        isCountable: true,
+        isCountable: false,
       );
 
       try {
@@ -555,17 +629,28 @@ class _GoalCardState extends State<GoalCard> {
                               ? 'gervuoge'
                               : 'vysnia',
       isCountable: widget.isCountable,
+      isApproved: false,
     );
 
     try {
       await _sharedGoalService.createSharedGoalEntry(goalModel);
+      if (goalModel.isCountable) {
+        await _goalTaskService.createDefaultTasksForGoal(
+          goalId: goalID,
+          goalType: goalId,
+          username: userUsername,
+          isFriend: goalModel.user2Id,
+        );
+      }
       String message = 'Bendras tikslas pridėtas! 🎉';
       showCustomSnackBar(context, message, true); // Naudokite funkciją
+      return goalModel; // Grąžinkite sukurtą tikslą
     } catch (e) {
       print("Klaida pridedant tikslą: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Įvyko klaida!')),
       );
+      return null; // Grąžinkite null, jei įvyko klaida
     }
 
     // Čia įrašykite kodą, kuris įrašo duomenis į duomenų bazę

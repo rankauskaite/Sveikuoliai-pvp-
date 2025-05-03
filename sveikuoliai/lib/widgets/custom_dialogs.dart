@@ -374,88 +374,179 @@ class CustomDialogs {
   }
 
   // Naujas metodas naujos užduoties dialogui
-static void showNewTaskDialog({
-  required BuildContext context,
-  required dynamic goal, // Priima GoalInformation arba SharedGoalInformation
-  required Color accentColor,
-  required Function(GoalTask) onSave, // Callback naujai užduočiai išsaugoti
-}) {
-  final titleController = TextEditingController();
-  final descriptionController = TextEditingController();
+  static void showNewTaskDialog({
+    required BuildContext context,
+    required dynamic goal, // Priima GoalInformation arba SharedGoalInformation
+    required Color accentColor,
+    required Function(GoalTask) onSave, // Callback naujai užduočiai išsaugoti
+  }) {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Pridėti užduotį', style: TextStyle(color: accentColor)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Pavadinimas',
-                  border: OutlineInputBorder(),
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Pridėti užduotį', style: TextStyle(color: accentColor)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pavadinimas',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Aprašymas',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Atšaukti', style: TextStyle(color: accentColor)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (titleController.text.isNotEmpty) {
+                  // Sukuriame naują užduotį
+                  final task = GoalTask(
+                    id: '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}',
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    goalId: goal.goalModel.id,
+                    date: DateTime.now(),
+                  );
+
+                  try {
+                    final goalTaskService = GoalTaskService();
+                    await goalTaskService.createGoalTaskEntry(task);
+                    onSave(task); // Išsaugome naują užduotį
+                    showCustomSnackBar(
+                        context, 'Užduotis sėkmingai pridėta ✅', true);
+                  } catch (e) {
+                    showCustomSnackBar(
+                        context, 'Klaida pridedant užduotį ❌', false);
+                  }
+
+                  Navigator.pop(context);
+                } else {
+                  showCustomSnackBar(
+                      context, 'Pavadinimas negali būti tuščias ❌', false);
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: accentColor),
+              child: const Text(
+                'Pridėti',
+                style: TextStyle(color: Colors.white),
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Aprašymas',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+// Naujas metodas naujos užduoties dialogui
+  static void showNewFirstTaskDialog({
+    required BuildContext context,
+    required dynamic goal, // Priima GoalInformation arba SharedGoalInformation
+    required int type,
+    required Color accentColor,
+    required Function(GoalTask) onSave, // Callback naujai užduočiai išsaugoti
+  }) {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Neleidžia uždaryti paspaudus šalia
+      builder: (BuildContext context) {
+        return WillPopScope(
+          onWillPop: () async => false, // Neleidžia uždaryti „back“ mygtuku
+          child: AlertDialog(
+            title:
+                Text('Pridėti užduotį', style: TextStyle(color: accentColor)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Pavadinimas',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Aprašymas',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () async {
+                  if (titleController.text.isNotEmpty) {
+                    final task = GoalTask(
+                      id: type == 1
+                          ? '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}'
+                          : type == 2
+                              ? '${goal.goalTypeId}${goal.user1Id[0].toUpperCase() + goal.user1Id.substring(1)}${DateTime.now()}'
+                              : '${goal.goalTypeId}${goal.userId[0].toUpperCase() + goal.userId.substring(1)}${DateTime.now()}',
+                      title: titleController.text,
+                      description: descriptionController.text,
+                      goalId: type == 1 ? goal.goalModel.id : goal.id,
+                      date: DateTime.now(),
+                    );
+
+                    try {
+                      final goalTaskService = GoalTaskService();
+                      if (type != 2) {
+                        await goalTaskService.createGoalTaskEntry(task);
+                      }
+                      onSave(task);
+                      showCustomSnackBar(
+                          context, 'Užduotis sėkmingai pridėta ✅', true);
+                      Navigator.pop(
+                          context); // Leidžiam uždaryti tik po išsaugojimo
+                    } catch (e) {
+                      showCustomSnackBar(
+                          context, 'Klaida pridedant užduotį ❌', false);
+                    }
+                  } else {
+                    showCustomSnackBar(
+                        context, 'Pavadinimas negali būti tuščias ❌', false);
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: accentColor),
+                child: const Text('Pridėti',
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Atšaukti', style: TextStyle(color: accentColor)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleController.text.isNotEmpty) {
-                // Sukuriame naują užduotį
-                final task = GoalTask(
-                  id:
-                      '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}',
-                  title: titleController.text,
-                  description: descriptionController.text,
-                  goalId: goal.goalModel.id,
-                  date: DateTime.now(),
-                );
-
-                try {
-                  final goalTaskService = GoalTaskService();
-                  await goalTaskService.createGoalTaskEntry(task);
-                  onSave(task); // Išsaugome naują užduotį
-                  showCustomSnackBar(
-                      context, 'Užduotis sėkmingai pridėta ✅', true);
-                } catch (e) {
-                  showCustomSnackBar(
-                      context, 'Klaida pridedant užduotį ❌', false);
-                }
-
-                Navigator.pop(context);
-              } else {
-                showCustomSnackBar(
-                    context, 'Pavadinimas negali būti tuščias ❌', false);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: accentColor),
-            child: const Text(
-              'Pridėti',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 }

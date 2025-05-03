@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sveikuoliai/data/default_tasks.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 
 class GoalTaskService {
@@ -8,6 +9,25 @@ class GoalTaskService {
   // create
   Future<void> createGoalTaskEntry(GoalTask goalTask) async {
     await goalTaskCollection.doc(goalTask.id).set(goalTask.toJson());
+  }
+
+  // create default tasks for goal
+  Future<void> createDefaultTasksForGoal({
+    required String goalId,
+    required String goalType,
+    required String username,
+    String? isFriend,
+  }) async {
+    List<GoalTask> defaultTasks = generateDefaultTasksForGoal(
+      goalId: goalId,
+      goalType: goalType,
+      username: username,
+      isFriend: isFriend,
+    );
+
+    for (var task in defaultTasks) {
+      await createGoalTaskEntry(task);
+    }
   }
 
   // read

@@ -685,16 +685,19 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   }
 
   Widget _friendsGoalItem(SharedGoalInformation goal) {
+    bool isApproved = goal.sharedGoalModel.isApproved; // Tavo tikrinama reikšmė
+
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                SharedGoalScreen(goal: goal), // Pakeisk į tinkamą puslapį
-          ),
-        );
-      },
+      onTap: isApproved
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SharedGoalScreen(goal: goal),
+                ),
+              );
+            }
+          : null, // Jeigu isApproved false, negalima spustelėti
       child: Column(
         children: [
           Padding(
@@ -713,21 +716,24 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                       child: Icon(
                         Icons.circle,
                         size: 80, // Ikonos dydis
-                        color: Color(0xFFECFFC5), // Ikonos spalva
+                        color: isApproved
+                            ? Color(0xFFECFFC5) // Jei patvirtinta, spalva kita
+                            : Colors
+                                .grey[300], // Jei nepatvirtinta, pilka spalva
                       ),
                     ),
-
                     // Augalo paveiksliukas ant viršaus
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: Image.asset(
-                        PlantImageService.getPlantImage(
-                            goal.sharedGoalModel.plantId,
-                            goal.sharedGoalModel.points),
-                        width: 80,
-                        height: 80,
+                    if (isApproved)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: Image.asset(
+                          PlantImageService.getPlantImage(
+                              goal.sharedGoalModel.plantId,
+                              goal.sharedGoalModel.points),
+                          width: 80,
+                          height: 80,
+                        ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(width: 10),
@@ -738,9 +744,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                     children: [
                       Text(
                         goal.goalType.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
-                          color: Color(0xFFbcd979),
+                          color: isApproved
+                              ? Color(
+                                  0xFFbcd979) // Jei patvirtinta, spalva kita
+                              : Colors.grey, // Jei nepatvirtinta, pilka spalva
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -748,8 +757,20 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                       Text(
                         goal.goalType.description,
                         style: TextStyle(
-                            fontStyle: FontStyle.italic, color: Colors.black54),
+                          fontStyle: FontStyle.italic,
+                          color: isApproved
+                              ? Colors.black54
+                              : Colors.grey, // Jei nepatvirtinta, pilka spalva
+                        ),
                       ),
+                      if (!isApproved)
+                        Text(
+                          'Draugas dar nepatvirtino',
+                          style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
+                        ),
                     ],
                   ),
                 ),

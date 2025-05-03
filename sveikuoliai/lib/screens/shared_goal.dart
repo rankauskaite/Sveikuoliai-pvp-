@@ -30,6 +30,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   final SharedGoalService _sharedGoalService = SharedGoalService();
   List<GoalTask> goalTasks = [];
   int length = 0;
+  int doneLength = 0; // Užbaigtų užduočių skaičius
 
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       setState(() {
         goalTasks = tasks;
         length = tasks.length;
+        doneLength = tasks.where((task) => task.isCompleted).length;
       });
     } catch (e) {
       showCustomSnackBar(
@@ -384,6 +386,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   task: task,
                                   type: 1,
                                   length: length,
+                                  doneLength: doneLength,
                                   calculatePoints: _calculatePoints,
                                   onDelete: _deleteTask,
                                 )),
@@ -393,6 +396,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   task: task,
                                   type: 1,
                                   length: length,
+                                  doneLength: doneLength,
                                   calculatePoints: _calculatePoints,
                                 )),
                       ],
