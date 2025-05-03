@@ -18,7 +18,6 @@ class _VersionScreenState extends State<VersionScreen> {
   final List<double> cardHeights = [
     400, // Gija NULIS
     480, // Gija PLIUS
-    350, // Gija KARTU
   ];
 
   Future<void> saveSelectedPlan(String plan) async {
@@ -48,8 +47,8 @@ class _VersionScreenState extends State<VersionScreen> {
           price: '0',
           description: '''
 Stebėk
-  - ? iššūkius
-  - ? įpročius
+  - 3 iššūkius
+  - 3 įpročius
 Naudokis
   - Virtualiu dienoraščiu
   - Meditacijos kampeliu
@@ -72,28 +71,12 @@ Naudokis
   - Virtualiu dienoraščiu
   - Meditacijos kampeliu
 Bendrauk
-  - Kviešk draugus
+  - Kviesk draugus
   - Kelk bendrus iššūkius
   - Stebėk draugų sodą
         ''',
           buttonColor: Color(0xFFEF3BF1),
           fixedHeight: cardHeights[1], // Priskiriame aukštį
-        );
-      case 2:
-        return buildPlanCard(
-          planId: 'together',
-          color: Color(0xFFFDA6B8),
-          borderColor: Color(0xFFFDA6B8),
-          title: 'Gija KARTU',
-          price: '30',
-          description: '''
-Stebėk
-  - kaip tau ir tavo 
-    bendruomenei sekasi
-    vykdyti iššūkius
-        ''',
-          buttonColor: Colors.black,
-          fixedHeight: cardHeights[2], // Priskiriame aukštį
         );
       default:
         return SizedBox.shrink();
@@ -129,7 +112,7 @@ Stebėk
             Expanded(
               child: PageView.builder(
                 controller: PageController(viewportFraction: 0.85),
-                itemCount: 3,
+                itemCount: 2,
                 itemBuilder: (context, index) {
                   return Align(
                     alignment: Alignment.center,
