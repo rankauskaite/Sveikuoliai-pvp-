@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+//import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
@@ -562,41 +562,41 @@ class _GoalPageState extends State<GoalScreen> {
     );
   }
 
-  Widget _buildChart() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                FlSpot(0, 1),
-                FlSpot(1, 3),
-                FlSpot(2, 2),
-                FlSpot(3, 5),
-                FlSpot(4, 4),
-                FlSpot(5, 6),
-              ],
-              isCurved: true,
-              color: const Color(0xFF72ddf7),
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: const Color(0xFF72ddf7).withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildChart() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(10),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFFF0F0F0),
+  //       borderRadius: BorderRadius.circular(15),
+  //     ),
+  //     child: LineChart(
+  //       LineChartData(
+  //         gridData: FlGridData(show: false),
+  //         titlesData: FlTitlesData(show: false),
+  //         borderData: FlBorderData(show: false),
+  //         lineBarsData: [
+  //           LineChartBarData(
+  //             spots: [
+  //               FlSpot(0, 1),
+  //               FlSpot(1, 3),
+  //               FlSpot(2, 2),
+  //               FlSpot(3, 5),
+  //               FlSpot(4, 4),
+  //               FlSpot(5, 6),
+  //             ],
+  //             isCurved: true,
+  //             color: const Color(0xFF72ddf7),
+  //             dotData: FlDotData(show: true),
+  //             belowBarData: BarAreaData(
+  //               show: true,
+  //               color: const Color(0xFF72ddf7).withOpacity(0.2),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildProgressChart() {
     return GoalProgressChart(

@@ -5,7 +5,7 @@ import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/models/journal_model.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
 import 'package:sveikuoliai/services/drive_services.dart';
-import 'package:sveikuoliai/services/firebase_storage_service.dart';
+//import 'package:sveikuoliai/services/firebase_storage_service.dart';
 
 // Future<void> uploadJournalEntry() async {
 //   final user = FirebaseAuth.instance.currentUser;

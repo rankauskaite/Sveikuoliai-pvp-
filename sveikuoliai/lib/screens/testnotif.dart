@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../services/notification_helper.dart';
 
 class TestNotificationsScreen extends StatelessWidget {
@@ -16,7 +15,8 @@ class TestNotificationsScreen extends StatelessWidget {
             await NotificationHelper.scheduleDailyNotification(
               id: 999,
               title: 'Testas 🧪',
-              body: 'Notifikacija veikia! Laikas: ${now.hour}:${now.minute + 1}',
+              body:
+                  'Notifikacija veikia! Laikas: ${now.hour}:${now.minute + 1}',
               hour: now.hour,
               minute: now.minute + 1,
             );

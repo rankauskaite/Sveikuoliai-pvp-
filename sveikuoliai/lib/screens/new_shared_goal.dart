@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/friendship_model.dart';
-import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
@@ -12,7 +11,6 @@ import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
-import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class NewSharedGoalScreen extends StatelessWidget {
