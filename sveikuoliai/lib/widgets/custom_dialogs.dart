@@ -352,7 +352,7 @@ class CustomDialogs {
                   points: newProgress.points,
                   category: habit.habitModel.category,
                   endPoints: habit.habitModel.endPoints,
-                  repetition: habit.habitModel.repetition,
+                  isCompleted: habit.habitModel.isCompleted,
                   userId: habit.habitModel.userId,
                   habitTypeId: habit.habitModel.habitTypeId,
                   plantId: habit.habitModel.plantId,

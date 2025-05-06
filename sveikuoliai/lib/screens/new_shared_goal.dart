@@ -626,13 +626,14 @@ class _GoalCardState extends State<GoalCard> {
                           : _selectedDuration == '3 mėnesiai'
                               ? 'gervuoge'
                               : 'vysnia',
-      isCountable: widget.isCountable,
+      isCompletedUser1: false,
+      isCompletedUser2: false,
       isApproved: false,
     );
 
     try {
       await _sharedGoalService.createSharedGoalEntry(goalModel);
-      if (goalModel.isCountable) {
+      if (widget.isCountable) {
         await _goalTaskService.createDefaultTasksForGoal(
           goalId: goalID,
           goalType: goalId,

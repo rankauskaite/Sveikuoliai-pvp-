@@ -151,7 +151,18 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    //_deleteGoal(); // arba galima padaryti "užbaigti tikslą" kitaip
+                    username == widget.goal.sharedGoalModel.user1Id
+                        ? widget.goal.sharedGoalModel.isCompletedUser1 = true
+                        : widget.goal.sharedGoalModel.isCompletedUser2 = true;
+                    _sharedGoalService
+                        .updateSharedGoalEntry(widget.goal.sharedGoalModel);
+                    setState(() {
+                      username == widget.goal.sharedGoalModel.user1Id
+                          ? widget.goal.sharedGoalModel.isCompletedUser1 = true
+                          : widget.goal.sharedGoalModel.isCompletedUser2 = true;
+                    });
+                    showCustomSnackBar(
+                        context, "Tikslas sėkmingai užbaigtas ✅", true);
                   },
                   child: const Text("Užbaigti tikslą"),
                 ),
@@ -358,7 +369,9 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        if (widget.goal.goalType.type == 'custom')
+                        if (widget.goal.goalType.type == 'custom' &&
+                            !widget.goal.sharedGoalModel.isCompletedUser1 &&
+                            !widget.goal.sharedGoalModel.isCompletedUser2)
                           IconButton(
                             onPressed: () {
                               CustomDialogs.showEditDialog(
@@ -520,6 +533,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   task: task,
                                   type: 1,
                                   length: lengthMine,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser1
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser2,
                                   isMyTask: true,
                                   doneLength: doneLengthMine,
                                   calculatePoints: (isCompleted) =>
@@ -535,6 +554,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   task: task,
                                   type: 1,
                                   isMyTask: true,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser1
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser2,
                                   length: lengthMine,
                                   doneLength: doneLengthMine,
                                   calculatePoints: (isCompleted) =>
@@ -555,6 +580,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   task: task,
                                   type: 1,
                                   isMyTask: false,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser2
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser1,
                                   length: lengthFriend,
                                   doneLength: doneLengthFriend,
                                   calculatePoints: (isCompleted) =>
@@ -571,6 +602,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   task: task,
                                   isMyTask: false,
                                   type: 1,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser2
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser1,
                                   length: lengthFriend,
                                   doneLength: doneLengthFriend,
                                   calculatePoints: (isCompleted) =>
@@ -582,64 +619,83 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       )
                     else // Bendras progresas
                       const SizedBox.shrink(),
+                    if (_currentPage == 2 &&
+                        widget.goal.sharedGoalModel.isCompletedUser1 &&
+                        widget.goal.sharedGoalModel.isCompletedUser2) ...[
+                      const Text(
+                        'Įvykdėte bendrą tikslą!',
+                        style:
+                            TextStyle(fontSize: 25, color: Colors.lightGreen),
+                      ),
+                    ],
                     if (_currentPage == 0) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          if (goalTasksMine
-                              .isNotEmpty) // Patikriname, ar yra užduočių
-                            ElevatedButton(
-                              onPressed: () async {
-                                await _saveGoalStates(); // Pirma išsaugome duomenis
-                                if (mounted) {
-                                  setState(() {}); // Tada atnaujiname ekraną
-                                }
-                              },
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    return const Color(0xFFECFFC5);
-                                  },
+                      if (username == widget.goal.sharedGoalModel.user1Id
+                          ? !widget.goal.sharedGoalModel.isCompletedUser1
+                          : !widget.goal.sharedGoalModel.isCompletedUser2) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (goalTasksMine
+                                .isNotEmpty) // Patikriname, ar yra užduočių
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await _saveGoalStates(); // Pirma išsaugome duomenis
+                                  if (mounted) {
+                                    setState(() {}); // Tada atnaujiname ekraną
+                                  }
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.resolveWith<Color>(
+                                    (Set<MaterialState> states) {
+                                      return const Color(0xFFECFFC5);
+                                    },
+                                  ),
+                                  foregroundColor: MaterialStateProperty.all(
+                                      Colors.lightGreen),
                                 ),
-                                foregroundColor: MaterialStateProperty.all(
-                                    Colors.lightGreen),
+                                child: const Text(
+                                  'Išsaugoti',
+                                  style: TextStyle(fontSize: 15),
+                                ),
                               ),
-                              child: const Text(
-                                'Išsaugoti',
-                                style: TextStyle(fontSize: 15),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          CustomDialogs.showNewTaskDialog(
-                            context: context,
-                            goal: widget.goal,
-                            accentColor:
-                                Colors.lightGreen[400] ?? Colors.lightGreen,
-                            onSave: (GoalTask task) {
-                              _createTask(task);
-                            },
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          backgroundColor:
-                              const Color(0xFFE4F7B4), // Šviesi mėlyna spalva
-                          foregroundColor:
-                              Colors.lightGreen, // Teksto ir ikonos spalva
+                          ],
                         ),
-                        child: const Text(
-                          'Pridėti užduotį',
-                          style: TextStyle(fontSize: 20),
+                        const SizedBox(
+                          height: 10,
                         ),
-                      ),
-                      const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed:
+                              !widget.goal.sharedGoalModel.isCompletedUser1
+                                  ? null
+                                  : () {
+                                      CustomDialogs.showNewTaskDialog(
+                                        context: context,
+                                        goal: widget.goal,
+                                        accentColor: Colors.lightGreen[400] ??
+                                            Colors.lightGreen,
+                                        onSave: (GoalTask task) {
+                                          _createTask(task);
+                                        },
+                                      );
+                                    },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            backgroundColor:
+                                const Color(0xFFE4F7B4), // Šviesi mėlyna spalva
+                            foregroundColor:
+                                Colors.lightGreen, // Teksto ir ikonos spalva
+                          ),
+                          child: Text(
+                            widget.goal.sharedGoalModel.isCompletedUser1
+                                ? 'Pridėti užduotį'
+                                : 'Tikslas įvykdytas',
+                            style: TextStyle(
+                                fontSize: 20, color: Colors.lightGreen),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ],
                     const Text(
                       'Statistika',

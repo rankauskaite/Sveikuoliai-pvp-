@@ -9,7 +9,7 @@ class HabitModel {
   int points;
   CategoryType category;
   int endPoints;
-  String repetition;
+  bool isCompleted = false;
   String userId;
   String habitTypeId;
   String plantId;
@@ -21,7 +21,7 @@ class HabitModel {
     required this.points,
     required this.category,
     required this.endPoints,
-    required this.repetition,
+    required this.isCompleted,
     required this.userId,
     required this.habitTypeId,
     required this.plantId,
@@ -36,7 +36,7 @@ class HabitModel {
       'points': points,
       'category': category.toJson(), // enum į string
       'endPoints': endPoints,
-      'repetition': repetition,
+      'isCompleted': isCompleted,
       'userId': userId,
       'habitTypeId': habitTypeId,
       'plantId': plantId,
@@ -58,7 +58,7 @@ class HabitModel {
           ? CategoryTypeExtension.fromJson(json['category'])
           : CategoryType.bekategorijos, //
       endPoints: json['endPoints'] ?? 0,
-      repetition: json['repetition'] ?? '',
+      isCompleted: json['isCompleted'] ?? '',
       userId: json['userId'] ?? '',
       plantId: json['plantId'] ?? '',
       habitTypeId: json['habitTypeId'] ?? '',
