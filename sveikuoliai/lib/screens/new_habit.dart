@@ -471,7 +471,7 @@ class _HabitCardState extends State<HabitCard> {
                           : _selectedDuration == '3 mėnesiai'
                               ? 90
                               : 180,
-      repetition: '',
+      isCompleted: false,
       userId: userUsername,
       habitTypeId: habitId.trim(),
       plantId: _selectedDuration == '1 savaitė'

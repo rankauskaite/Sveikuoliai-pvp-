@@ -7,7 +7,8 @@ class SharedGoal {
   DateTime startDate;
   DateTime endDate;
   int points;
-  bool isCountable;
+  bool isCompletedUser1;
+  bool isCompletedUser2;
   CategoryType category;
   int endPoints;
   String user1Id;
@@ -21,7 +22,8 @@ class SharedGoal {
     required this.startDate,
     required this.endDate,
     required this.points,
-    required this.isCountable,
+    required this.isCompletedUser1,
+    required this.isCompletedUser2,
     required this.category,
     required this.endPoints,
     required this.user1Id,
@@ -37,7 +39,8 @@ class SharedGoal {
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'points': points,
-      'isCountable': isCountable,
+      'isCompletedUser1': isCompletedUser1,
+      'isCompletedUser2': isCompletedUser2,
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'user1Id': user1Id,
@@ -55,7 +58,8 @@ class SharedGoal {
       startDate: (json['startDate'] as Timestamp).toDate(),
       endDate: (json['endDate'] as Timestamp).toDate(),
       points: json['points'] ?? 0,
-      isCountable: json['isCountable'] ?? false,
+      isCompletedUser1: json['isCompletedUser1'] ?? false,
+      isCompletedUser2: json['isCompletedUser2'] ?? false,
       category: CategoryTypeExtension.fromJson(json['category'] ?? ''),
       endPoints: json['endPoints'] ?? 0,
       user1Id: json['user1Id'] ?? '',

@@ -176,7 +176,8 @@ class _HabitScreenState extends State<HabitScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        if (widget.habit.habitType.type == 'custom')
+                        if (widget.habit.habitType.type == 'custom' &&
+                            widget.habit.habitModel.isCompleted == false)
                           IconButton(
                             onPressed: () {
                               CustomDialogs.showEditDialog(
@@ -230,23 +231,32 @@ class _HabitScreenState extends State<HabitScreen> {
 
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        CustomDialogs.showProgressDialog(
-                            context: context,
-                            habit: widget.habit,
-                            accentColor: Color(0xFFB388EB),
-                            onSave: () {},
-                            progressController: _progressController,
-                            points: pointss,
-                            streak: streakk);
-                      },
+                      onPressed: widget.habit.habitModel.isCompleted
+                          ? null
+                          : () {
+                              CustomDialogs.showProgressDialog(
+                                  context: context,
+                                  habit: widget.habit,
+                                  accentColor: Color(0xFFB388EB),
+                                  onSave: () {},
+                                  progressController: _progressController,
+                                  points: pointss,
+                                  streak: streakk);
+                            },
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
                         iconColor: const Color(0xFFB388EB), // Violetinė spalva
+                        backgroundColor: widget.habit.habitModel.isCompleted
+                            ? Colors.grey
+                            : null,
+                        //: Color(0xFFB388EB),
                       ),
-                      child: const Text(
-                        'Žymėti progresą',
-                        style: TextStyle(fontSize: 20),
+                      child: Text(
+                        widget.habit.habitModel.isCompleted
+                            ? 'Įprotis baigtas'
+                            : 'Žymėti progresą',
+                        style: const TextStyle(
+                            fontSize: 20, color: Colors.deepPurple),
                       ),
                     ),
                     Row(

@@ -108,7 +108,13 @@ class _GoalPageState extends State<GoalScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    //_deleteGoal(); // arba galima padaryti "užbaigti tikslą" kitaip
+                    widget.goal.goalModel.isCompleted = true;
+                    _goalService.updateGoalEntry(widget.goal.goalModel);
+                    setState(() {
+                      widget.goal.goalModel.isCompleted = true;
+                    });
+                    showCustomSnackBar(
+                        context, "Tikslas sėkmingai užbaigtas ✅", true);
                   },
                   child: const Text("Užbaigti tikslą"),
                 ),
@@ -309,7 +315,8 @@ class _GoalPageState extends State<GoalScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        if (widget.goal.goalType.type == 'custom')
+                        if (widget.goal.goalType.type == 'custom' &&
+                            widget.goal.goalModel.isCompleted == false)
                           IconButton(
                             onPressed: () {
                               CustomDialogs.showEditDialog(
@@ -466,6 +473,7 @@ class _GoalPageState extends State<GoalScreen> {
                             .map((task) => GoalTaskCard(
                                   task: task,
                                   type: 0,
+                                  isDoneGoal: widget.goal.goalModel.isCompleted,
                                   isMyTask: true,
                                   length: length,
                                   doneLength: doneLength,
@@ -477,6 +485,7 @@ class _GoalPageState extends State<GoalScreen> {
                             (task) => GoalTaskCard(
                                 type: 0,
                                 task: task,
+                                isDoneGoal: widget.goal.goalModel.isCompleted,
                                 isMyTask: true,
                                 length: length,
                                 doneLength: doneLength,
@@ -484,58 +493,68 @@ class _GoalPageState extends State<GoalScreen> {
                                     _calculatePoints(isCompleted, goalTasks))),
                       ],
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (goalTasks
-                            .isNotEmpty) // Patikriname, ar yra užduočių
-                          ElevatedButton(
-                            onPressed: () async {
-                              await _saveGoalStates(); // Pirma išsaugome duomenis
-                              if (mounted) {
-                                setState(() {}); // Tada atnaujiname ekraną
-                              }
-                            },
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.resolveWith<Color>(
-                                (Set<MaterialState> states) {
-                                  return const Color(0xFFCFF4FC);
-                                },
-                              ),
-                              foregroundColor:
-                                  MaterialStateProperty.all(Colors.blue),
-                            ),
-                            child: const Text(
-                              'Išsaugoti',
-                              style: TextStyle(fontSize: 15),
-                            ),
+                    if (widget.goal.goalModel.isCompleted == false)
+                      Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (goalTasks
+                                  .isNotEmpty) // Patikriname, ar yra užduočių
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await _saveGoalStates(); // Pirma išsaugome duomenis
+                                    if (mounted) {
+                                      setState(
+                                          () {}); // Tada atnaujiname ekraną
+                                    }
+                                  },
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty
+                                        .resolveWith<Color>(
+                                      (Set<MaterialState> states) {
+                                        return const Color(0xFFCFF4FC);
+                                      },
+                                    ),
+                                    foregroundColor:
+                                        MaterialStateProperty.all(Colors.blue),
+                                  ),
+                                  child: const Text(
+                                    'Išsaugoti',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
+                        ],
+                      ),
                     const SizedBox(
                       height: 10,
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        CustomDialogs.showNewTaskDialog(
-                          context: context,
-                          goal: widget.goal,
-                          accentColor: Colors.lightBlueAccent,
-                          onSave: (GoalTask task) {
-                            _createTask(task);
-                          },
-                        );
-                      },
+                      onPressed: widget.goal.goalModel.isCompleted
+                          ? null
+                          : () {
+                              CustomDialogs.showNewTaskDialog(
+                                context: context,
+                                goal: widget.goal,
+                                accentColor: Colors.lightBlueAccent,
+                                onSave: (GoalTask task) {
+                                  _createTask(task);
+                                },
+                              );
+                            },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
                         backgroundColor:
                             const Color(0xFFA5E9F9), // Šviesi mėlyna spalva
                         foregroundColor: Colors.blue, // Teksto ir ikonos spalva
                       ),
-                      child: const Text(
-                        'Pridėti užduotį',
-                        style: TextStyle(fontSize: 20),
+                      child: Text(
+                        widget.goal.goalModel.isCompleted
+                            ? 'Tiklas įvykdytas'
+                            : 'Pridėti užduotį',
+                        style: TextStyle(fontSize: 20, color: Colors.blue),
                       ),
                     ),
                     const SizedBox(height: 20),

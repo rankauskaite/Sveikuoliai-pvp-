@@ -531,12 +531,12 @@ class _GoalCardState extends State<GoalCard> {
                           : _selectedDuration == '3 mėnesiai'
                               ? 'gervuoge'
                               : 'vysnia',
-      isCountable: widget.isCountable,
+      isCompleted: false,
     );
 
     try {
       await _goalService.createGoalEntry(goalModel);
-      if (goalModel.isCountable) {
+      if (widget.isCountable) {
         await _goalTaskService.createDefaultTasksForGoal(
           goalId: goalID,
           goalType: goalId,

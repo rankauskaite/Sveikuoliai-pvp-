@@ -15,7 +15,7 @@ Future<void> main() async {
     startDate: DateTime.now(),
     endDate: DateTime.now().add(const Duration(days: 21)),
     points: 0,
-    isCountable: true,
+    isCompleted: false,
     category: CategoryType.bekategorijos, // naudok tinkamą enum reikšmę
     endPoints: 21,
     user1Id: 'test2',

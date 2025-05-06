@@ -7,6 +7,7 @@ class GoalTaskCard extends StatefulWidget {
   final int length;
   final int doneLength;
   final int type;
+  final bool isDoneGoal;
   final bool isMyTask; // <-- naujas laukas
   final int Function(bool isCompleted) calculatePoints;
   final void Function(String taskId)? onDelete;
@@ -16,6 +17,7 @@ class GoalTaskCard extends StatefulWidget {
     Key? key,
     required this.task,
     required this.type,
+    required this.isDoneGoal,
     required this.length,
     required this.doneLength,
     required this.calculatePoints,
@@ -83,7 +85,9 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
                 ),
                 child: Checkbox(
                   value: task.isCompleted,
-                  onChanged: widget.isMyTask && isChecked == false
+                  onChanged: widget.isMyTask &&
+                          isChecked == false &&
+                          widget.isDoneGoal == false
                       ? (bool? value) {
                           setState(() {
                             final newValue = value ?? false;
@@ -125,7 +129,7 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
               subtitle: Text(task.description),
               leading: Checkbox(
                 value: task.isCompleted,
-                onChanged: widget.isMyTask
+                onChanged: widget.isMyTask && widget.isDoneGoal == false
                     ? (bool? value) {
                         setState(() {
                           final newValue = value ?? false;
@@ -143,7 +147,7 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
               ),
             ),
           ),
-          if (widget.isMyTask)
+          if (widget.isMyTask && widget.isDoneGoal == false)
             IconButton(
               onPressed: () {
                 CustomDialogs.showEditDialog(
@@ -168,7 +172,10 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
                           ? Colors.lightGreen[600]
                           : const Color(0xFF72ddf7)),
             ),
-          if (widget.isMyTask && length > 1 && length - doneLength > 1)
+          if (widget.isMyTask &&
+              length > 1 &&
+              length - doneLength > 1 &&
+              widget.isDoneGoal == false)
             IconButton(
               onPressed: () {
                 CustomDialogs.showDeleteDialog(
