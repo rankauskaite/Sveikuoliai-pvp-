@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/screens/profile.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -61,14 +62,21 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       String newVersion = userVersion;
 
       // Atnaujiname vartotojo duomenis paslaugos pagalba
-      await _userService.updateUserData(userUsername, newName, newEmail, newVersion);
+      await _userService.updateUserData(
+          userUsername, newName, newEmail, newVersion);
+      _authService.updateUserSession('name', newName);
+      _authService.updateUserSession('email', newEmail);
+      _authService.updateUserSession('version', newVersion);
 
       // Atvaizduojame sėkmės pranešimą
       String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
       showCustomSnackBar(context, successMessage, true);
 
       // Uždarome ekraną po sėkmingo atnaujinimo
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ProfileScreen()),
+      );
     } catch (e) {
       // Rodo klaidos pranešimą
       String errorMessage = 'Klaida išsaugant duomenis ❌';
@@ -219,6 +227,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   SizedBox(
                     height: 5,
                   ),
+                  // Image.asset(
+                  //   'assets/gif/premium.gif',
+                  //   height: 100,
+                  //   width: 250,
+                  //   fit: BoxFit.contain,
+                  // ),
                   VersionSelection(
                     currentVersion: widget.version,
                     onVersionChanged: (newVersion) {

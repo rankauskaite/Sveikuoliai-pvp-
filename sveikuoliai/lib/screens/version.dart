@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/home.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -13,6 +14,7 @@ class VersionScreen extends StatefulWidget {
 class _VersionScreenState extends State<VersionScreen> {
   String? selectedPlan;
   final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
   int currentPage = 0;
 
   final List<double> cardHeights = [
@@ -22,7 +24,8 @@ class _VersionScreenState extends State<VersionScreen> {
 
   Future<void> saveSelectedPlan(String plan) async {
     try {
-      await _userService.updateUserVersion(widget.username, selectedPlan!);
+      await _userService.updateUserVersion(widget.username, plan);
+      _authService.updateUserSession('version', plan);
       String message = '✅ Registracija sėkminga!';
       showCustomSnackBar(context, message, true);
       Navigator.pushReplacement(

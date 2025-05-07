@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AppNotification> notifications = []; // Pranešimų sąrašas
   String userName = "";
   String userUsername = "";
+  String userVersion = "";
   final PageController _adController = PageController();
   final List<String> _reklamos = [
     'assets/images/reklamos/drouglas.png',
@@ -81,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           userName = sessionData['name'] ?? "Nežinomas";
           userUsername = sessionData['username'] ?? "Nežinomas";
+          userVersion = sessionData['version'] ?? "Nežinoma";
         });
         _fetchUserNotifications(userUsername);
       } catch (e) {
@@ -193,74 +195,76 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => VersionScreen(
-                                          username: userUsername,
-                                        )),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 250,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.deepPurple.shade700,
-                                    width: 3),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 8,
-                                    offset: Offset(0, 5),
+                      if (userVersion == "free") ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => VersionScreen(
+                                            username: userUsername,
+                                          )),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: 250,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.deepPurple.shade700,
+                                      width: 3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 8,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(9),
+                                  child: Image.asset(
+                                    'assets/gif/premium.gif',
+                                    fit: BoxFit.cover,
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(9),
-                                child: Image.asset(
-                                  'assets/gif/premium.gif',
-                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 250,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9D9D9),
-                              borderRadius: BorderRadius.circular(10),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 250,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD9D9D9),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: PageView.builder(
+                                controller: _adController,
+                                itemCount: _reklamos.length,
+                                itemBuilder: (context, index) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.asset(
+                                      _reklamos[index],
+                                      fit: BoxFit.cover,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                            child: PageView.builder(
-                              controller: _adController,
-                              itemCount: _reklamos.length,
-                              itemBuilder: (context, index) {
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.asset(
-                                    _reklamos[index],
-                                    fit: BoxFit.cover,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ]
                     ],
                   ),
                 ),

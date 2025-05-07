@@ -35,15 +35,15 @@ class _VersionSelectionState extends State<VersionSelection> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildVersionButton(
-            'Nemokama',
-            '0€',
+            'Gija NULIS',
+            '0€ /mėn',
             selectedVersion == 'Gija NULIS' || selectedVersion == 'free',
             Color(0xFF72ddf7),
             'free'),
         const SizedBox(width: 10),
         _buildVersionButton(
-            'Premium',
-            '9.99€',
+            'Gija PREMIUM',
+            '5€ /mėn',
             selectedVersion == 'Gija PREMIUM' || selectedVersion == 'premium',
             Color(0xFFB388EB),
             'premium'),
@@ -81,7 +81,7 @@ class _VersionSelectionState extends State<VersionSelection> {
                 Text(
                   price,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: isSelected ? Colors.black : color,
                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/hello.dart';
+import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/screens/update_profile.dart';
 import 'package:sveikuoliai/services/user_services.dart';
@@ -51,9 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (userData?.version == "free") {
           userVersion = "Gija NULIS";
         }
-        if (userData?.version == "together") {
-          userVersion = "Gija KARTU";
-        }
       });
     } catch (e) {
       setState(() {
@@ -92,7 +90,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       IconButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    HomeScreen()), // Pakeiskite į jūsų prisijungimo ekraną
+                          );
                         },
                         icon: Icon(
                           Icons.arrow_back_ios,
@@ -240,23 +243,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const FriendsScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50),
-                      iconColor: const Color(0xFF8093F1), // Violetinė spalva
+                  if (userVersion == 'Gija PREMIUM') ...[
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const FriendsScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                        iconColor: const Color(0xFF8093F1), // Violetinė spalva
+                      ),
+                      child: const Text(
+                        'Draugai',
+                        style: TextStyle(fontSize: 20),
+                      ),
                     ),
-                    child: const Text(
-                      'Draugai',
-                      style: TextStyle(fontSize: 20),
+                  ] else ...[
+                    ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 50),
+                        iconColor: const Color(0xFF8093F1), // Violetinė spalva
+                      ),
+                      child: const Text(
+                        'Draugų funkcija - Gija PREMIUM',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
-                  ),
+                  ]
                 ],
               ),
             ),
