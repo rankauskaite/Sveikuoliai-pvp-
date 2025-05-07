@@ -177,13 +177,13 @@ class CustomDialogs {
     String dialogText = () {
       switch (entityType) {
         case EntityType.habit:
-          return 'įprotį';
+          return 'šį įprotį';
         case EntityType.task:
-          return 'užduotį';
+          return 'šą užduotį';
         case EntityType.goal:
-          return 'tikslą';
+          return 'šį tikslą';
         case EntityType.sharedGoal:
-          return 'bendrą tikslą';
+          return 'šį bendrą tikslą';
       }
     }();
 
@@ -214,7 +214,7 @@ class CustomDialogs {
               ),
               children: [
                 TextSpan(
-                  text: "Ar tikrai norite ištrinti šį $dialogText?",
+                  text: "Ar tikrai norite ištrinti $dialogText?",
                   style: const TextStyle(
                     fontWeight: FontWeight.normal,
                     color: Colors.black,

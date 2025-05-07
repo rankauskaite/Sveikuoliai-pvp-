@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
+import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -20,6 +23,33 @@ class FriendProfileScreen extends StatefulWidget {
 
 class _FriendProfileScreenState extends State<FriendProfileScreen> {
   FriendshipService _friendshipService = FriendshipService();
+  UserService _userService = UserService();
+  UserModel userModel = UserModel(
+      username: "",
+      name: "",
+      password: "",
+      role: "user",
+      notifications: true,
+      darkMode: false,
+      menstrualLength: 7,
+      email: "",
+      createdAt: DateTime.now(),
+      version: "free");
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUser();
+  }
+
+  Future<void> _fetchUser() async {
+    try {
+      UserModel? model = await _userService.getUserEntry(widget.username);
+      setState(() {
+        userModel = model!;
+      });
+    } catch (e) {}
+  }
 
   Future<void> _deleteFriend(String friendshipID) async {
     try {
@@ -193,11 +223,23 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     scrollDirection: Axis.horizontal, // Horizontali slinktis
                     child: Row(
                       children: [
-                        _buildPlantColumn('Orchidėja'),
-                        _buildPlantColumn('Dobilas'),
-                        _buildPlantColumn('Žibuoklės'),
-                        _buildPlantColumn(
-                            'Ramunė'), // Galite pridėti daugiau augalų
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      GardenScreen(user: userModel)),
+                            );
+                          },
+                          child: Text(
+                            "sodas",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -208,23 +250,6 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPlantColumn(String plantName) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.circle,
-          size: 90,
-          color: Color(0xFFD9D9D9),
-        ),
-        Text(
-          plantName,
-          style: TextStyle(fontSize: 16),
-        ),
-      ],
     );
   }
 }

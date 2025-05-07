@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:sveikuoliai/services/notification_helper.dart';
@@ -26,6 +28,18 @@ class _HomeScreenState extends State<HomeScreen> {
   String userName = "";
   String userUsername = "";
   String userVersion = "";
+  final UserService _userService = UserService();
+  UserModel userModel = UserModel(
+      username: "",
+      name: "",
+      password: "",
+      role: "user",
+      notifications: true,
+      darkMode: false,
+      menstrualLength: 7,
+      email: "",
+      createdAt: DateTime.now(),
+      version: "free");
   final PageController _adController = PageController();
   final List<String> _reklamos = [
     'assets/images/reklamos/drouglas.png',
@@ -83,6 +97,10 @@ class _HomeScreenState extends State<HomeScreen> {
           userName = sessionData['name'] ?? "Nežinomas";
           userUsername = sessionData['username'] ?? "Nežinomas";
           userVersion = sessionData['version'] ?? "Nežinoma";
+        });
+        UserModel? model = await _userService.getUserEntry(userUsername);
+        setState(() {
+          userModel = model!;
         });
         _fetchUserNotifications(userUsername);
       } catch (e) {
@@ -164,7 +182,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => GardenScreen()),
+                                    builder: (context) =>
+                                        GardenScreen(user: userModel)),
                               );
                             },
                             borderRadius: BorderRadius.circular(12),
