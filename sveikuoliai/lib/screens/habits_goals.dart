@@ -28,6 +28,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   int selectedIndex =
       0; // 0 - Mano įpročiai, 1 - Mano tikslai, 2 - Draugu tikslai
   String userUsername = "";
+  String userVersion = "";
   String date = DateTime.now().toIso8601String().split('T').first;
   final AuthService _authService = AuthService();
   List<HabitInformation> userHabits = [];
@@ -50,13 +51,16 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
       setState(
         () {
           userUsername = sessionData['username'] ?? "Nežinomas";
+          userVersion = sessionData['version'] ?? "Nežinoma";
           date = sessionData['date'] ??
               DateTime.now().toIso8601String().split('T').first;
         },
       );
       await _fetchUserHabits(userUsername);
       await _fetchUserGoals(userUsername);
-      await _fetchUserSharedGoals(userUsername);
+      if (userVersion == 'premium') {
+        await _fetchUserSharedGoals(userUsername);
+      }
       setState(() {
         _authService.updateUserSession(
             "date", DateTime.now().toIso8601String().split('T').first);
@@ -261,39 +265,41 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(
-                        height:
-                            5), // Tarpas tarp pirmos eilės ir trečio mygtuko
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedIndex = 2;
-                        });
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        margin: EdgeInsets.symmetric(horizontal: 20),
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: selectedIndex == 2
-                              ? Color(0xFFbcd979)
-                              : Color(0xFFD9D9D9),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Mano tikslai su draugais',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: selectedIndex == 2
-                                  ? Colors.white
-                                  : Colors.black,
-                              fontWeight: FontWeight.bold,
+                    if (userVersion == 'premium') ...[
+                      SizedBox(
+                          height:
+                              5), // Tarpas tarp pirmos eilės ir trečio mygtuko
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = 2;
+                          });
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          margin: EdgeInsets.symmetric(horizontal: 20),
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: selectedIndex == 2
+                                ? Color(0xFFbcd979)
+                                : Color(0xFFD9D9D9),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Mano tikslai su draugais',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: selectedIndex == 2
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                     SizedBox(height: 5),
                     // Turinys pagal pasirinkimą
                     Expanded(
@@ -337,7 +343,10 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(50),
                         child: Container(
-                          color: Color(0xFFB388EB),
+                          color:
+                              userVersion == 'free' && activeHabits.length >= 3
+                                  ? Colors.grey[600]
+                                  : Color(0xFFB388EB),
                           height: 60,
                           width: 60,
                         ),
@@ -347,36 +356,69 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         shape: CircleBorder(),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(50),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const NewHabitScreen(),
-                              ),
-                            );
-                          },
+                          onTap:
+                              userVersion == 'free' && activeHabits.length >= 3
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const NewHabitScreen(),
+                                        ),
+                                      );
+                                    },
                           child: Icon(Icons.add_circle,
-                              size: 80, color: Color(0xFFEEE2FB)),
+                              size: 80,
+                              color: userVersion == 'free' &&
+                                      activeHabits.length >= 3
+                                  ? Colors.grey[300]
+                                  : Color(0xFFEEE2FB)),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pridėti naują',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Color(0xFFB388EB),
-                            fontWeight: FontWeight.bold,
+                  if (userVersion == 'free' && activeHabits.length >= 3) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pasiektas įpročių limitas',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Text(
+                            'Nori neribotų įpročių? Užsisakyk Gija PREMIUM!',
+                            style: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.black54),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pridėti naują',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Color(0xFFB388EB),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]
                 ],
               ),
             ),
@@ -516,7 +558,10 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         borderRadius:
                             BorderRadius.circular(50), // Mažesni apvalūs kampai
                         child: Container(
-                          color: Color(0xFF72ddf7), // Pasirinkta spalva
+                          color:
+                              userVersion == 'free' && activeGoals.length >= 3
+                                  ? Colors.grey[600]
+                                  : Color(0xFF72ddf7), // Pasirinkta spalva
                           height: 60, // Fono aukštis
                           width: 60, // Fono plotis
                         ),
@@ -529,17 +574,25 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         child: InkWell(
                           borderRadius:
                               BorderRadius.circular(50), // Apvalūs kampai
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const NewGoalScreen()),
-                            );
-                          }, // Veiksmas paspaudus
+                          onTap:
+                              userVersion == 'free' && activeGoals.length >= 3
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const NewGoalScreen(),
+                                        ),
+                                      );
+                                    },
                           child: Icon(
                             Icons.add_circle,
-                            size: 80, // Ikonos dydis
-                            color: Color(0xFFD5F8FD), // Ikonos spalva
+                            size: 80,
+                            color:
+                                userVersion == 'free' && activeGoals.length >= 3
+                                    ? Colors.grey[300]
+                                    : Color(0xFFD5F8FD), // Ikonos spalva
                           ),
                         ),
                       ),
@@ -547,21 +600,46 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                   ),
                   const SizedBox(width: 10),
                   // Teksto dalis
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pridėti naują',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Color(0xFF72ddf7),
-                            fontWeight: FontWeight.bold,
+                  if (userVersion == 'free' && activeGoals.length >= 3) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pasiektas tikslų limitas',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Text(
+                            'Nori neribotų tikslų? Užsisakyk Gija PREMIUM!',
+                            style: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.black54),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pridėti naują',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Color(0xFF72ddf7),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]
                 ],
               ),
             ),

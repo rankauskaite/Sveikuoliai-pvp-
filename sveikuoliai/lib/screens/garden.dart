@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
@@ -12,7 +13,8 @@ import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class GardenScreen extends StatefulWidget {
-  const GardenScreen({super.key});
+  final UserModel user;
+  const GardenScreen({Key? key, required this.user}) : super(key: key);
 
   @override
   _GardenScreenState createState() => _GardenScreenState();
@@ -20,6 +22,7 @@ class GardenScreen extends StatefulWidget {
 
 class _GardenScreenState extends State<GardenScreen> {
   final AuthService _authService = AuthService();
+  bool friendFlag = false;
   List<Map<String, dynamic>> userHabits = [];
   List<Map<String, dynamic>> userGoals = [];
   List<Map<String, dynamic>> userSharedGoals = [];
@@ -28,14 +31,13 @@ class _GardenScreenState extends State<GardenScreen> {
   final SharedGoalService _sharedGoalService = SharedGoalService();
   final PageController _pageController = PageController();
   final Random _random = Random();
-  String userUsername = '';
   int _currentPage = 0;
   final int plantCount = 5;
   List<String> count = ['0', '0', '0'];
 
   final List<String> titlesTop = ['Įpročių', 'Tikslų', 'Draugų'];
   final List<String> titlesBottom = ['sodas', 'sodas', 'sodas'];
-  final List<String> subtitles = [
+  List<String> subtitles = [
     'Šiuo metu bandai\nišsiugdyti\nįpročius',
     'Šiuo metu vykdai\ntikslus',
     'Šiuo metu su draugais\nvykdai tikslus'
@@ -99,33 +101,37 @@ class _GardenScreenState extends State<GardenScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _fetchItems();
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
-  Future<void> _fetchUserData() async {
+  Future<void> _fetchItems() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(
-        () {
-          userUsername = sessionData['username'] ?? "Nežinomas";
-        },
-      );
-      await _fetchUserHabits(userUsername);
-      await _fetchUserGoals(userUsername);
-      await _fetchUserSharedGoals(userUsername);
-      // Atnaujinti count kai visi duomenys jau gauti
+      bool flag = false;
+      if (sessionData['username'] != widget.user.username) {
+        flag = true;
+      }
+      await _fetchUserHabits(widget.user.username);
+      await _fetchUserGoals(widget.user.username);
+      if (widget.user.version == 'premium') {
+        await _fetchUserSharedGoals(widget.user.username);
+      }
       setState(() {
+        friendFlag = flag;
+        if (flag) {
+          subtitles = [
+            'Šiuo metu draugas ${widget.user.name}\nbando išsiugdyti\nįpročius',
+            'Šiuo metu draugas ${widget.user.name}\nvykdo tikslus',
+            'Šiuo metu ${widget.user.name} su draugais\nvykdo tikslus'
+          ];
+        }
         count = [
           userHabits.length.toString(),
           userGoals.length.toString(),
           userSharedGoals.length.toString(),
         ];
       });
-    } catch (e) {
-      String message = 'Klaida gaunant duomenis ❌';
-      showCustomSnackBar(context, message, false);
-    }
+    } catch (e) {}
   }
 
   Future<void> _fetchUserHabits(String username) async {
@@ -238,7 +244,7 @@ class _GardenScreenState extends State<GardenScreen> {
                               TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: titlesTop[_currentPage] + '\n',
+                                    text: '${titlesTop[_currentPage]}\n',
                                     style: TextStyle(
                                       fontSize: 45,
                                       fontWeight: FontWeight.bold,
@@ -309,8 +315,11 @@ class _GardenScreenState extends State<GardenScreen> {
                               height: 250, // page view aukštis
                               child: PageView.builder(
                                 controller: _pageController,
-                                itemCount: 3,
+                                itemCount:
+                                    widget.user.version == 'premium' ? 3 : 2,
                                 onPageChanged: (index) {
+                                  if (widget.user.version == 'free' &&
+                                      index == 2) return; // ignoruok
                                   setState(() {
                                     _currentPage = index;
                                   });
@@ -321,8 +330,10 @@ class _GardenScreenState extends State<GardenScreen> {
                                     currentData = userHabits;
                                   } else if (index == 1) {
                                     currentData = userGoals;
-                                  } else {
+                                  } else if (widget.user.version == 'premium') {
                                     currentData = userSharedGoals;
+                                  } else {
+                                    return const SizedBox(); // tuščias widget, jei free bando pasiekti 2 puslapį
                                   }
 
                                   return Stack(
@@ -346,7 +357,8 @@ class _GardenScreenState extends State<GardenScreen> {
                       //const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(3, (index) {
+                        children: List.generate(
+                            widget.user.version == 'premium' ? 3 : 2, (index) {
                           final isActive = _currentPage == index;
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
