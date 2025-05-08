@@ -64,8 +64,8 @@ class UserService {
     }
   }
 
-  Future<bool> updateUserData(
-      String username, String name, String email, String version) async {
+  Future<bool> updateUserData(String username, String name, String email,
+      String version, String icon) async {
     try {
       Map<String, dynamic> dataToUpdate = {};
 
@@ -83,6 +83,8 @@ class UserService {
       if (version.isNotEmpty) {
         dataToUpdate['version'] = version;
       }
+
+      dataToUpdate['iconUrl'] = icon;
 
       // Jei yra ką atnaujinti
       if (dataToUpdate.isNotEmpty) {

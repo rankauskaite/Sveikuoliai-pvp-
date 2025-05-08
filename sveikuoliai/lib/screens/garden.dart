@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
@@ -353,28 +354,15 @@ class _GardenScreenState extends State<GardenScreen> {
                           ),
                         ],
                       ),
-
-                      //const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                            widget.user.version == 'premium' ? 3 : 2, (index) {
-                          final isActive = _currentPage == index;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Icon(
-                              isActive
-                                  ? Icons.circle
-                                  : Icons.circle, // Naudoti tą patį ikoną
-                              size: 12,
-                              color: isActive
-                                  ? Color(0xFF8093F1)
-                                  : Colors
-                                      .grey[400], // Pilka spalva neaktyviems
-                              semanticLabel: 'Neaktyvus', // Pagal poreikį
-                            ),
-                          );
-                        }),
+                      SmoothPageIndicator(
+                        controller: _pageController,
+                        count: widget.user.version == 'premium' ? 3 : 2,
+                        effect: const WormEffect(
+                          dotColor: Colors.grey,
+                          activeDotColor: Colors.deepPurple,
+                          dotHeight: 10,
+                          dotWidth: 10,
+                        ),
                       ),
                       const SizedBox(height: 10),
                     ],

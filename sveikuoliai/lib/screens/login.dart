@@ -5,6 +5,7 @@ import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/signup.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -114,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text('Prisijungti su el. paštu'),
                                 ),
                                 SizedBox(height: 10),
-                                ElevatedButton(
+                                ElevatedButton.icon(
                                   onPressed: () {
                                     setState(() {
                                       _showButtons = false;
@@ -122,7 +123,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _signInWithGoogle(context);
                                     });
                                   },
-                                  child: Text('Prisijungti su Google'),
+                                  icon: SvgPicture.asset(
+                                    'assets/icons/google_logo.svg',
+                                    height: 22,
+                                    width: 22,
+                                  ),
+                                  label: Text('Prisijungti su Google'),
                                 ),
                               ],
                             ),
@@ -222,6 +228,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 padding: const EdgeInsets.all(20.0),
                                 child: Column(
                                   children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/google_logo.svg',
+                                      height: 25,
+                                      width: 25,
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
                                     Text(
                                       'Prisijungimas su Google...',
                                       style: TextStyle(

@@ -12,6 +12,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/services/journal_upload_service.dart';
 import 'package:sveikuoliai/services/drive_services.dart';
 import 'package:sveikuoliai/services/firebase_storage_service.dart';
+
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
 
@@ -404,44 +405,82 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                             //   ),
                             // ),
                             GestureDetector(
-                                onTap: () async {
-                                  // Čia iškviečiame tavo upload funkciją!
-                                  await uploadJournalEntry(
-                                    date: selectedDay,
-                                    note: journalText,
-                                    mood: selectedMood,
-                                  );
+                              onTap: () async {
+                                await uploadJournalEntry(
+                                  date: selectedDay,
+                                  note: journalText,
+                                  mood: selectedMood,
+                                );
 
-                                  // Galima parodyti pranešimą, kad sėkmingai įkelta
-                                  if (mounted) {
-                                    showCustomSnackBar(context, 'Nuotrauka įkelta sėkmingai! 📸', true);
-                                  }
-                                },
-                                child: Container(
-                                  width: 200,
-                                  height: 150,
-                                  color: const Color(0xFFD9D9D9),
-                                  child: Center(
-                                    child: Text(
+                                if (mounted) {
+                                  showCustomSnackBar(context,
+                                      'Nuotrauka įkelta sėkmingai! 📸', true);
+                                }
+                              },
+                              child: Container(
+                                width: 200,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: Colors.deepPurple[200] ??
+                                          Colors.deepPurple,
+                                      style: BorderStyle.solid),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      spreadRadius: 2,
+                                      blurRadius: 8,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo,
+                                        size: 50,
+                                        color: Colors.deepPurple[300]),
+                                    SizedBox(height: 10),
+                                    Text(
                                       'Įkelti nuotrauką',
                                       style: TextStyle(
-                                          fontSize: 37, color: Colors.black),
-                                      textAlign: TextAlign.center,
+                                          fontSize: 18,
+                                          color: Colors.deepPurple[300]),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
-
+                            ),
                             SizedBox(height: 5),
                             GestureDetector(
                               onTap: () => _selectDate(context),
-                              child: Text(
-                                'Pažymėti mėnesines',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                    decoration: TextDecoration.underline),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: Colors.deepPurple.shade200),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(Icons.calendar_today,
+                                        color: Colors.deepPurple, size: 16),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Pažymėti mėnesines',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             if (menstruationStart != null &&

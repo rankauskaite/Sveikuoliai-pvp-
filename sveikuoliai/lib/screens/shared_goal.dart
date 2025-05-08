@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
@@ -775,21 +776,15 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         ),
         SizedBox(height: 10),
         // Indikatoriai (taškai)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(progressWidgets.length, (index) {
-            return Container(
-              margin: EdgeInsets.symmetric(horizontal: 4),
-              height: 8,
-              width: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _currentPage == index
-                    ? Colors.lightGreen[600]
-                    : Colors.grey[400],
-              ),
-            );
-          }),
+        SmoothPageIndicator(
+          controller: _pageController,
+          count: progressWidgets.length,
+          effect: WormEffect(
+            dotColor: Colors.grey.shade400,
+            activeDotColor: Colors.lightGreen.shade600,
+            dotHeight: 8,
+            dotWidth: 8,
+          ),
         ),
       ],
     );

@@ -89,7 +89,8 @@ class _HabitScreenState extends State<HabitScreen> {
   double _calculateProgress() {
     if (widget.habit.habitModel.endPoints == 0)
       return 0.0; // Apsauga nuo dalybos iš nulio
-    return habitProgress.points / widget.habit.habitModel.endPoints;
+    //print(habi)
+    return widget.habit.habitModel.points / widget.habit.habitModel.endPoints;
   }
 
   Future<void> _deleteHabit() async {

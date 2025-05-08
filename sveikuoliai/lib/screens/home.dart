@@ -157,7 +157,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 50,
                             alignment: Alignment.bottomLeft,
                             child: Text(
-                              userName, // Čia bus rodoma naudotojo vardas
+                              userName.length > 15
+                                  ? '${userName.substring(0, 15)}...'
+                                  : userName, // Čia bus rodoma naudotojo vardas
                               style: const TextStyle(fontSize: 20),
                             ),
                           ),

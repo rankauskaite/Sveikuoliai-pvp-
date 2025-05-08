@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:sveikuoliai/screens/login.dart';
 import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
@@ -128,14 +129,19 @@ class _SignupScreenState extends State<SignupScreen> {
                                   child: Text('Registruotis su el. paštu'),
                                 ),
                                 SizedBox(height: 10),
-                                ElevatedButton(
+                                ElevatedButton.icon(
                                   onPressed: () {
                                     setState(() {
                                       _showButtons = false;
                                       _isEmailSignup = false;
                                     });
                                   },
-                                  child: Text('Registruotis su Google'),
+                                  icon: SvgPicture.asset(
+                                    'assets/icons/google_logo.svg',
+                                    height: 22,
+                                    width: 22,
+                                  ),
+                                  label: Text('Registruotis su Google'),
                                 ),
                               ],
                             ),
@@ -261,7 +267,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                         },
                                       ),
                                       SizedBox(height: 10),
-                                      ElevatedButton(
+                                      ElevatedButton.icon(
                                         onPressed: () {
                                           if (_formKey.currentState!
                                               .validate()) {
@@ -272,9 +278,14 @@ class _SignupScreenState extends State<SignupScreen> {
                                           minimumSize: Size(300, 50),
                                           iconColor: const Color(0xFF8093F1),
                                         ),
-                                        child: const Text(
+                                        label: const Text(
                                           'Registruotis',
                                           style: TextStyle(fontSize: 20),
+                                        ),
+                                        icon: SvgPicture.asset(
+                                          'assets/icons/google_logo.svg',
+                                          height: 25,
+                                          width: 25,
                                         ),
                                       ),
                                       SizedBox(height: 10),

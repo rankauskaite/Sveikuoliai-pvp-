@@ -25,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String userEmail = "Kraunama...";
   DateTime userJoinDate = DateTime.now();
   String userVersion = "Gija NULIS";
+  String userIcon = 'account_circle';
 
   @override
   void initState() {
@@ -45,11 +46,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       UserModel? userData = await _userService.getUserEntry(userUsername);
       setState(() {
-        userJoinDate = userData?.createdAt ?? DateTime.now();
-        if (userData?.version == "premium") {
-          userVersion = "Gija PREMIUM";
+        //userIcon = userData!.iconUrl!;
+        userJoinDate = userData!.createdAt;
+        if (userData.version == "premium") {
+          userVersion = "Gija PLIUS";
         }
-        if (userData?.version == "free") {
+        if (userData.version == "free") {
           userVersion = "Gija NULIS";
         }
       });
@@ -243,7 +245,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  if (userVersion == 'Gija PREMIUM') ...[
+                  if (userVersion == 'Gija PLIUS') ...[
                     ElevatedButton(
                       onPressed: () {
                         Navigator.push(
@@ -269,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         iconColor: const Color(0xFF8093F1), // Violetinė spalva
                       ),
                       child: const Text(
-                        'Draugų funkcija - Gija PREMIUM',
+                        'Draugų funkcija - Gija PLIUS',
                         style: TextStyle(fontSize: 16),
                       ),
                     ),
