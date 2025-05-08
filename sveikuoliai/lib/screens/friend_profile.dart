@@ -208,40 +208,46 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 50),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Draugo augalai',
-                        style: TextStyle(fontSize: 17),
-                      ),
-                    ],
-                  ),
+                  const SizedBox(height: 40),
                   // Karuselės efektas draugo augalams
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // Horizontali slinktis
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      GardenScreen(user: userModel)),
-                            );
-                          },
-                          child: Text(
-                            "sodas",
-                            style: TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    GardenScreen(user: userModel)),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 270,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                color: Colors.green.shade700, width: 3),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 8,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/images/draugo_sodas.png',
+                              fit: BoxFit.fill,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),

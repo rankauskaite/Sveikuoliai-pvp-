@@ -394,7 +394,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Nori neribotų įpročių? Užsisakyk Gija PREMIUM!',
+                            'Nori neribotų įpročių? Užsisakyk Gija PLIUS!',
                             style: const TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.black54),
@@ -615,7 +615,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Nori neribotų tikslų? Užsisakyk Gija PREMIUM!',
+                            'Nori neribotų tikslų? Užsisakyk Gija PLIUS!',
                             style: const TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.black54),

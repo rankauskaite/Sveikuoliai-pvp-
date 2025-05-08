@@ -44,7 +44,7 @@ class _VersionSelectionState extends State<VersionSelection> {
         _buildVersionButton(
             'Gija PREMIUM',
             '5€ /mėn',
-            selectedVersion == 'Gija PREMIUM' || selectedVersion == 'premium',
+            selectedVersion == 'Gija PLIUS' || selectedVersion == 'premium',
             Color(0xFFB388EB),
             'premium'),
       ],
