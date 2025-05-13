@@ -36,18 +36,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    // super.initState();
+    // _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
+    // final now = DateTime.now();
+    // final trigger = now.add(const Duration(seconds: 10));
+    // NotificationHelper.scheduleDailyNotification(
+    //   id: 999,
+    //   title: 'Primename!',
+    //   body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
+    //   hour: trigger.hour,
+    //   minute: trigger.minute,
+    // );
+    // print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
+
+    // _adTimer = Timer.periodic(
+    //   const Duration(seconds: 3),
+    //   (timer) {
+    //     _reklamosIndex++;
+    //     if (_reklamosIndex >= _reklamos.length) _reklamosIndex = 0;
+    //     if (_adController.hasClients) {
+    //       _adController.animateToPage(
+    //         _reklamosIndex,
+    //         duration: const Duration(milliseconds: 500),
+    //         curve: Curves.easeInOut,
+    //       );
+    //     }
+    //   },
+    // );
     super.initState();
-    _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
-    final now = DateTime.now();
-    final trigger = now.add(const Duration(seconds: 10));
-    NotificationHelper.scheduleDailyNotification(
-      id: 999,
-      title: 'Primename!',
-      body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
-      hour: trigger.hour,
-      minute: trigger.minute,
-    );
-    print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
+    _fetchSessionUser();
+    _setupDailyNotifications(); // 🆕 Planuojam 2 pranešimus per dieną
 
     _adTimer = Timer.periodic(
       const Duration(seconds: 3),
@@ -70,6 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _adTimer?.cancel();
     _adController.dispose();
     super.dispose();
+  }
+
+  Future<void> _setupDailyNotifications() async {
+    // Tik testavimui – gali ištrinti šią eilutę vėliau
+    //await FlutterLocalNotificationsPlugin().cancelAll();
+
+    await NotificationHelper.scheduleTwoMotivationsPerDay();
+    print("📅 Du pranešimai suplanuoti kasdien 7:00 ir 21:00");
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis

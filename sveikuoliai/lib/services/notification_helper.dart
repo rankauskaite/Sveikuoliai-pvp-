@@ -72,7 +72,9 @@ class NotificationHelper {
     required String body,
     required int hour,
     required int minute,
-  }) async {
+  }) 
+  
+  async {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
 
@@ -129,13 +131,30 @@ class NotificationHelper {
       'Kiekviena diena – nauja pradžia!',
       'Niekas tavęs nesustabdys!',
       'Net mažas žingsnis pirmyn yra progresas!',
+      "Puikus darbas! Kiekviena diena priartina tave prie tikslo 🌱",
+      "Net mažas žingsnis yra progresas 🚶‍♀️",
+      "Dideli pokyčiai prasideda nuo mažų įpročių ✨",
+      "Nepamiršk: augalas auga tik jei jį laistai – kaip ir tavo įpročiai 🌿",
+      "Kiekvienas užpildytas įprotis yra pergalė 🏆",
+      "Maži žingsneliai – dideli tikslai! 🎯",
+      "Tau puikiai sekasi! Nesustok dabar 🌈",
+      "Tavo pastangos matomos – nesustok! 🌟",
+      "Mažais žingsniais į didelius tikslus 💫",
+      "Jei vakar nepavyko – šiandien nauja diena! ☀️",
+      "Progresas svarbiau už tobulumą 🌱",
+      "Dideli dalykai prasideda nuo mažų sprendimų 💚",
+      "Tu gali daugiau nei galvoji. Pasitikėk savimi! 🔒✨",
+      "Prisimink, dėl ko pradėjai. Tai verta! 💪",
+      "Šiandien – puiki diena padaryti kažką dėl savęs 💖",
+      "Kiekviena diena – nauja galimybė žydėti 🌸",
+      "Tu verta visko, apie ką svajoji – tik nepamiršk žingsniuoti 💞",
     ]..shuffle();
 
     await scheduleDailyNotification(
       id: 1,
       title: "Rytinė motyvacija",
       body: messages[0],
-      hour: 9,
+      hour: 7,
       minute: 0,
     );
 
@@ -143,7 +162,7 @@ class NotificationHelper {
       id: 2,
       title: "Vakarinė motyvacija",
       body: messages[1],
-      hour: 20,
+      hour: 21,
       minute: 0,
     );
   }

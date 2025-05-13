@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter_stripe: ^9.4.0
   googleapis: ^11.1.0
   google_sign_in: ^6.1.4
   googleapis_auth: ^1.4.0

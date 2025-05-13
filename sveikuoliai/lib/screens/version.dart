@@ -3,6 +3,10 @@ import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 class VersionScreen extends StatefulWidget {
   final String username;
   const VersionScreen({Key? key, required this.username}) : super(key: key);
@@ -36,6 +40,43 @@ class _VersionScreenState extends State<VersionScreen> {
     }
     print("Pasirinktas planas: $plan"); // Kol kas tiesiog atspausdinsime
   }
+
+  Future<void> payWithStripe(String planId) async {
+  try {
+    final response = await http.post(
+      Uri.parse('https://stripe-server-thr2.onrender.com:10000/create-payment-intent'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    
+    print('SERVERIO ATSAKYMAS: ${response.body}');
+    print('STATUSAS: ${response.statusCode}');
+
+    final jsonResponse = json.decode(response.body);
+    final clientSecret = jsonResponse['clientSecret'];
+
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'Sveikuoliai App',
+        style: ThemeMode.light,
+        //testEnv: true,
+      ),
+    );
+
+    await Stripe.instance.presentPaymentSheet();
+
+    // Jei sėkminga — išsaugom planą
+    setState(() {
+      selectedPlan = planId;
+    });
+    await saveSelectedPlan(planId);
+
+  } catch (e) {
+    print('KLAIDA: $e');
+    showCustomSnackBar(context, '❌ Mokėjimas nepavyko: $e', false);
+  }
+}
+
 
   Widget buildDynamicCard(int index) {
     switch (index) {
@@ -303,13 +344,23 @@ Stebėk
                         shape: StadiumBorder(),
                         elevation: 3,
                       ),
+                      // onPressed: () async {
+                      //   setState(() {
+                      //     selectedPlan = planId;
+                      //   });
+                      //   await saveSelectedPlan(planId);
+                      //   // Gali naviguoti į kitą ekraną arba rodyti pranešimą
+                      // },
                       onPressed: () async {
-                        setState(() {
-                          selectedPlan = planId;
-                        });
-                        await saveSelectedPlan(planId);
-                        // Gali naviguoti į kitą ekraną arba rodyti pranešimą
-                      },
+                          if (planId == 'free') {
+                            setState(() {
+                              selectedPlan = planId;
+                            });
+                            await saveSelectedPlan(planId);
+                          } else {
+                            await payWithStripe(planId); // Stripe mokėjimas
+                          }
+                        },
                       child: Text("Gauti",
                           style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
