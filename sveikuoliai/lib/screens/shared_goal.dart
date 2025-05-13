@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -28,8 +32,19 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   final PlantService _plantService = PlantService();
   final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
-  List<GoalTask> goalTasks = [];
-  int length = 0;
+  final AuthService _authService = AuthService(); // Pridėta AuthService
+  final UserService _userService = UserService(); // Pridėta UserService
+  List<GoalTask> goalTasksMine = [];
+  List<GoalTask> goalTasksFriend = []; // Užduočių sąrašas
+  int _currentPage = 0; // Puslapio indeksas
+  PageController _pageController = PageController();
+  int lengthMine = 0;
+  int doneLengthMine = 0; // Užbaigtų užduočių skaičius
+  int lengthFriend = 0;
+  int doneLengthFriend = 0; // Užbaigtų užduočių skaičius
+  String friendUsername = ''; // Draugo vartotojo vardas
+  String friendName = ''; // Draugo vardas
+  String username = ''; // Vartotojo vardas
 
   @override
   void initState() {
@@ -39,8 +54,33 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
   // Funkcija duomenims užkrauti
   Future<void> _loadData() async {
+    await _fetchSessionUser(); // Gauti prisijungusio vartotojo duomenis
     await _fetchPlantData();
     await _fetchGoalTask();
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchSessionUser() async {
+    // Patikrinti, ar sesijoje jau yra duomenų
+    if (username.isEmpty) {
+      try {
+        Map<String, String?> sessionData = await _authService.getSessionUser();
+        String userId =
+            widget.goal.sharedGoalModel.user1Id == sessionData['username']
+                ? widget.goal.sharedGoalModel.user2Id
+                : widget.goal.sharedGoalModel.user1Id;
+        UserModel? name = await _userService.getUserEntry(userId);
+        setState(() {
+          username = sessionData['username'] ?? "Nežinomas";
+          friendUsername = userId;
+          friendName = name?.name ?? "Nežinomas";
+        });
+      } catch (e) {
+        setState(() {
+          username = "Klaida gaunant duomenis";
+        });
+      }
+    }
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -63,12 +103,18 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
   Future<void> _fetchGoalTask() async {
     try {
-      List<GoalTask> tasks =
-          await _goalTaskService.getGoalTasks(widget.goal.sharedGoalModel.id);
+      List<GoalTask> tasksMine = await _goalTaskService.getGoalTasksForUser(
+          widget.goal.sharedGoalModel.id, username);
+      List<GoalTask> tasksFriend = await _goalTaskService.getGoalTasksForUser(
+          widget.goal.sharedGoalModel.id, friendUsername);
 
       setState(() {
-        goalTasks = tasks;
-        length = tasks.length;
+        goalTasksMine = tasksMine;
+        goalTasksFriend = tasksFriend;
+        lengthMine = tasksMine.length;
+        lengthFriend = tasksFriend.length;
+        doneLengthMine = tasksMine.where((task) => task.isCompleted).length;
+        doneLengthFriend = tasksFriend.where((task) => task.isCompleted).length;
       });
     } catch (e) {
       showCustomSnackBar(
@@ -78,7 +124,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
   Future<void> _saveGoalStates() async {
     try {
-      for (var task in goalTasks) {
+      for (var task in goalTasksMine) {
         await _goalTaskService.updateGoalTaskState(
           task.id,
           task.isCompleted,
@@ -86,25 +132,83 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         );
       }
       await _sharedGoalService.updateGoalPoints(
-          widget.goal.sharedGoalModel.id, _userPoints());
+          widget.goal.sharedGoalModel.id, _userPoints(goalTasksMine));
 
       setState(() {
-        widget.goal.sharedGoalModel.points = _userPoints();
+        widget.goal.sharedGoalModel.points = _allPoints();
       });
 
-      if (mounted) {
-        showCustomSnackBar(
-            context, "Bendro tikslo būsena sėkmingai išsaugota ✅", true);
+      // ✅ Patikriname, ar visos užduotys įvykdytos
+      final allCompleted = goalTasksMine.every((task) => task.isCompleted);
+      if (allCompleted) {
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Sveikiname! 🎉"),
+              content: const Text(
+                  "Įvykdėte visas užduotis. Ką norėtumėte daryti toliau?"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    username == widget.goal.sharedGoalModel.user1Id
+                        ? widget.goal.sharedGoalModel.isCompletedUser1 = true
+                        : widget.goal.sharedGoalModel.isCompletedUser2 = true;
+                    _sharedGoalService
+                        .updateSharedGoalEntry(widget.goal.sharedGoalModel);
+                    setState(() {
+                      username == widget.goal.sharedGoalModel.user1Id
+                          ? widget.goal.sharedGoalModel.isCompletedUser1 = true
+                          : widget.goal.sharedGoalModel.isCompletedUser2 = true;
+                    });
+                    showCustomSnackBar(
+                        context, "Tikslas sėkmingai užbaigtas ✅", true);
+                  },
+                  child: const Text("Užbaigti tikslą"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    CustomDialogs.showNewFirstTaskDialog(
+                      context: context,
+                      type: 1,
+                      onSave: (newTask) => _createTask(newTask),
+                      goal: widget.goal,
+                      accentColor: Colors.lightBlueAccent,
+                    );
+                  },
+                  child: const Text("Pridėti užduotį"),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          showCustomSnackBar(
+              context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+        }
       }
     } catch (e) {
       if (mounted) {
-        showCustomSnackBar(
-            context, "Klaida išsaugant bendro tikslo būseną ❌", false);
+        showCustomSnackBar(context, "Klaida išsaugant tikslo būseną ❌", false);
       }
     }
   }
 
-  int _userPoints() {
+  int _allPoints() {
+    int sum = 0;
+    for (var task in goalTasksMine) {
+      sum += task.points;
+    }
+    for (var task in goalTasksFriend) {
+      sum += task.points;
+    }
+    return (sum / 2).toInt(); // Grąžina bendrą taškų skaičių
+  }
+
+  int _userPoints(List<GoalTask> goalTasks) {
     int sum = 0;
     for (var task in goalTasks) {
       sum += task.points;
@@ -112,15 +216,16 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     return sum;
   }
 
-  double _calculateProgress() {
+  double _calculateProgress(List<GoalTask> goalTasks, int flag) {
     if (widget.goal.sharedGoalModel.endPoints == 0)
       return 0.0; // Apsauga nuo dalybos iš nulio
     //int sum = _userPoints();
-    return widget.goal.sharedGoalModel.points /
-        widget.goal.sharedGoalModel.endPoints;
+    return flag == 0
+        ? _userPoints(goalTasks) / widget.goal.sharedGoalModel.endPoints
+        : _allPoints() / widget.goal.sharedGoalModel.endPoints;
   }
 
-  int _calculatePoints(bool isCompleted) {
+  int _calculatePoints(bool isCompleted, List<GoalTask> goalTasks) {
     if (isCompleted) {
       return (widget.goal.sharedGoalModel.endPoints / goalTasks.length).toInt();
     } else {
@@ -128,9 +233,49 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     }
   }
 
+  Future<void> _recalculateGoalTaskPoints() async {
+    try {
+      // Perkraunam užduotis
+      List<GoalTask> updatedTasks = await _goalTaskService.getGoalTasksForUser(
+          widget.goal.sharedGoalModel.id, username);
+
+      for (var task in updatedTasks) {
+        int points = _calculatePoints(task.isCompleted, updatedTasks);
+        await _goalTaskService.updateGoalTaskState(
+          task.id,
+          task.isCompleted,
+          points,
+        );
+      }
+      updatedTasks = await _goalTaskService.getGoalTasksForUser(
+          widget.goal.sharedGoalModel.id, username);
+
+      setState(() {
+        goalTasksMine = updatedTasks;
+        lengthMine = updatedTasks.length;
+        doneLengthMine = updatedTasks.where((task) => task.isCompleted).length;
+      });
+
+      int totalPoints = _allPoints();
+      print("Total points: $totalPoints");
+
+      await _sharedGoalService.updateGoalPoints(
+          widget.goal.sharedGoalModel.id, totalPoints);
+
+      setState(() {
+        widget.goal.sharedGoalModel.points = totalPoints;
+      });
+    } catch (e) {
+      if (mounted) {
+        showCustomSnackBar(context, "Klaida perskaičiuojant taškus ❌", false);
+      }
+    }
+  }
+
   Future<void> _createTask(GoalTask task) async {
     try {
       await _goalTaskService.createGoalTaskEntry(task);
+      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
       showCustomSnackBar(
           context, "Draugų tikslo užduotis sėkmingai pridėta ✅", true);
       Navigator.pop(context); // Grįžta atgal
@@ -168,6 +313,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       final taskService = GoalTaskService();
       await taskService
           .deleteGoalTaskEntry(taskId); // Ištrinti įprotį iš serverio
+      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
       //Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
         context,
@@ -224,7 +370,9 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        if (widget.goal.goalType.type == 'custom')
+                        if (widget.goal.goalType.type == 'custom' &&
+                            !widget.goal.sharedGoalModel.isCompletedUser1 &&
+                            !widget.goal.sharedGoalModel.isCompletedUser2)
                           IconButton(
                             onPressed: () {
                               CustomDialogs.showEditDialog(
@@ -269,12 +417,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20),
-                    buildProgressIndicator(
-                      _calculateProgress(),
-                      widget.goal.sharedGoalModel.plantId,
-                      widget.goal.sharedGoalModel.points,
-                    ),
+                    const SizedBox(height: 10),
+                    _buildBanner(),
                     const SizedBox(height: 20),
                     const Text(
                       'Apie tikslą',
@@ -285,6 +429,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       style: const TextStyle(fontSize: 18),
                       softWrap: true, // Leisti tekstui kelti į kitą eilutę
                       overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -371,89 +516,188 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                     SizedBox(
                       height: 20,
                     ),
-                    Text(
-                      'Užduotys',
-                      style: TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...goalTasks
-                            .where((task) => !task.isCompleted)
-                            .map((task) => GoalTaskCard(
+                    if (_currentPage != 2) ...[
+                      Text(
+                        'Užduotys',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
+                      ),
+                    ],
+                    if (_currentPage == 0) // Mano progresas
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...goalTasksMine
+                              .where((task) => !task.isCompleted)
+                              .map(
+                                (task) => GoalTaskCard(
                                   task: task,
                                   type: 1,
-                                  length: length,
-                                  calculatePoints: _calculatePoints,
+                                  length: lengthMine,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser1
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser2,
+                                  isMyTask: true,
+                                  doneLength: doneLengthMine,
+                                  calculatePoints: (isCompleted) =>
+                                      _calculatePoints(
+                                          isCompleted, goalTasksMine),
                                   onDelete: _deleteTask,
-                                )),
-                        ...goalTasks
-                            .where((task) => task.isCompleted)
-                            .map((task) => GoalTaskCard(
+                                ),
+                              ),
+                          ...goalTasksMine
+                              .where((task) => task.isCompleted)
+                              .map(
+                                (task) => GoalTaskCard(
                                   task: task,
                                   type: 1,
-                                  length: length,
-                                  calculatePoints: _calculatePoints,
-                                )),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (goalTasks
-                            .isNotEmpty) // Patikriname, ar yra užduočių
-                          ElevatedButton(
-                            onPressed: () async {
-                              await _saveGoalStates(); // Pirma išsaugome duomenis
-                              if (mounted) {
-                                setState(() {}); // Tada atnaujiname ekraną
-                              }
-                            },
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.resolveWith<Color>(
-                                (Set<MaterialState> states) {
-                                  return const Color(0xFFECFFC5);
-                                },
+                                  isMyTask: true,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser1
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser2,
+                                  length: lengthMine,
+                                  doneLength: doneLengthMine,
+                                  calculatePoints: (isCompleted) =>
+                                      _calculatePoints(
+                                          isCompleted, goalTasksMine),
+                                ),
                               ),
-                              foregroundColor:
-                                  MaterialStateProperty.all(Colors.lightGreen),
-                            ),
-                            child: const Text(
-                              'Išsaugoti',
-                              style: TextStyle(fontSize: 15),
-                            ),
+                        ],
+                      )
+                    else if (_currentPage == 1) // Draugo progresas
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...goalTasksFriend
+                              .where((task) => !task.isCompleted)
+                              .map(
+                                (task) => GoalTaskCard(
+                                  task: task,
+                                  type: 1,
+                                  isMyTask: false,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser2
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser1,
+                                  length: lengthFriend,
+                                  doneLength: doneLengthFriend,
+                                  calculatePoints: (isCompleted) =>
+                                      _calculatePoints(
+                                          isCompleted, goalTasksFriend),
+                                  onDelete:
+                                      null, // Draugo užduočių trinti negalima
+                                ),
+                              ),
+                          ...goalTasksFriend
+                              .where((task) => task.isCompleted)
+                              .map(
+                                (task) => GoalTaskCard(
+                                  task: task,
+                                  isMyTask: false,
+                                  type: 1,
+                                  isDoneGoal: username ==
+                                          widget.goal.sharedGoalModel.user1Id
+                                      ? widget
+                                          .goal.sharedGoalModel.isCompletedUser2
+                                      : widget.goal.sharedGoalModel
+                                          .isCompletedUser1,
+                                  length: lengthFriend,
+                                  doneLength: doneLengthFriend,
+                                  calculatePoints: (isCompleted) =>
+                                      _calculatePoints(
+                                          isCompleted, goalTasksFriend),
+                                ),
+                              ),
+                        ],
+                      )
+                    else // Bendras progresas
+                      const SizedBox.shrink(),
+                    if (_currentPage == 2 &&
+                        widget.goal.sharedGoalModel.isCompletedUser1 &&
+                        widget.goal.sharedGoalModel.isCompletedUser2) ...[
+                      const Text(
+                        'Įvykdėte bendrą tikslą!',
+                        style:
+                            TextStyle(fontSize: 25, color: Colors.lightGreen),
+                      ),
+                    ],
+                    if (_currentPage == 0) ...[
+                      if (username == widget.goal.sharedGoalModel.user1Id
+                          ? !widget.goal.sharedGoalModel.isCompletedUser1
+                          : !widget.goal.sharedGoalModel.isCompletedUser2) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (goalTasksMine
+                                .isNotEmpty) // Patikriname, ar yra užduočių
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await _saveGoalStates(); // Pirma išsaugome duomenis
+                                  if (mounted) {
+                                    setState(() {}); // Tada atnaujiname ekraną
+                                  }
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.resolveWith<Color>(
+                                    (Set<MaterialState> states) {
+                                      return const Color(0xFFECFFC5);
+                                    },
+                                  ),
+                                  foregroundColor: MaterialStateProperty.all(
+                                      Colors.lightGreen),
+                                ),
+                                child: const Text(
+                                  'Išsaugoti',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        ElevatedButton(
+                          onPressed:
+                              !widget.goal.sharedGoalModel.isCompletedUser1
+                                  ? null
+                                  : () {
+                                      CustomDialogs.showNewTaskDialog(
+                                        context: context,
+                                        goal: widget.goal,
+                                        accentColor: Colors.lightGreen[400] ??
+                                            Colors.lightGreen,
+                                        onSave: (GoalTask task) {
+                                          _createTask(task);
+                                        },
+                                      );
+                                    },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            backgroundColor:
+                                const Color(0xFFE4F7B4), // Šviesi mėlyna spalva
+                            foregroundColor:
+                                Colors.lightGreen, // Teksto ir ikonos spalva
                           ),
+                          child: Text(
+                            widget.goal.sharedGoalModel.isCompletedUser1
+                                ? 'Pridėti užduotį'
+                                : 'Tikslas įvykdytas',
+                            style: TextStyle(
+                                fontSize: 20, color: Colors.lightGreen),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                       ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        CustomDialogs.showNewTaskDialog(
-                          context: context,
-                          goal: widget.goal,
-                          accentColor:
-                              Colors.lightGreen[400] ?? Colors.lightGreen,
-                          onSave: (GoalTask task) {
-                            _createTask(task);
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor:
-                            const Color(0xFFE4F7B4), // Šviesi mėlyna spalva
-                        foregroundColor:
-                            Colors.lightGreen, // Teksto ir ikonos spalva
-                      ),
-                      child: const Text(
-                        'Pridėti užduotį',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    ],
                     const Text(
                       'Statistika',
                       style: TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
@@ -468,6 +712,81 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBanner() {
+    List<String> titles = [
+      'Mano progresas',
+      '${friendName} progresas', // friendName yra tavo draugo vardas
+      'Bendras progresas',
+    ];
+
+    List<Widget> progressWidgets = [
+      buildProgressIndicator(
+        _calculateProgress(goalTasksMine, 0),
+        widget.goal.sharedGoalModel.plantId,
+        _userPoints(goalTasksMine),
+      ),
+      buildProgressIndicator(
+        _calculateProgress(goalTasksFriend, 0),
+        widget.goal.sharedGoalModel.plantId,
+        _userPoints(goalTasksFriend),
+      ),
+      buildProgressIndicator(
+        _calculateProgress(goalTasksMine, 1),
+        widget.goal.sharedGoalModel.plantId,
+        _allPoints(),
+      ),
+    ];
+
+    return Column(
+      children: [
+        // Dinamiškas tekstas pagal pasirinktą puslapį
+        Text(
+          titles[_currentPage],
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF9CBF6E), // Slightly darker green
+          ),
+        ),
+        SizedBox(height: 10),
+        // Progreso slankiklis (karuselė)
+        Container(
+          height: 270,
+          width: double.infinity,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: progressWidgets.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: progressWidgets[index],
+              );
+            },
+            scrollDirection: Axis.horizontal,
+            pageSnapping: true,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+          ),
+        ),
+        SizedBox(height: 10),
+        // Indikatoriai (taškai)
+        SmoothPageIndicator(
+          controller: _pageController,
+          count: progressWidgets.length,
+          effect: WormEffect(
+            dotColor: Colors.grey.shade400,
+            activeDotColor: Colors.lightGreen.shade600,
+            dotHeight: 8,
+            dotWidth: 8,
+          ),
+        ),
+      ],
     );
   }
 

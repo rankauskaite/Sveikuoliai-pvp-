@@ -65,6 +65,32 @@ class SharedGoalService {
     return goalsWithTypes;
   }
 
+  Future<List<SharedGoal>> getSharedGoalsForUsers(
+      String username, String friendUsername) async {
+    // Query for goals where both user1Id and user2Id match the given usernames
+    QuerySnapshot querySnapshot = await sharedGoalCollection
+        .where('user1Id', isEqualTo: username)
+        .where('user2Id', isEqualTo: friendUsername)
+        .get();
+
+    QuerySnapshot querySnapshotReverse = await sharedGoalCollection
+        .where('user1Id', isEqualTo: friendUsername)
+        .where('user2Id', isEqualTo: username)
+        .get();
+
+    // Combine the results
+    List<QueryDocumentSnapshot> allDocs = [
+      ...querySnapshot.docs,
+      ...querySnapshotReverse.docs
+    ];
+
+    // Map the documents to SharedGoal objects
+    return allDocs
+        .map((doc) =>
+            SharedGoal.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
   // update
   Future<void> updateSharedGoalEntry(SharedGoal sharedGoal) async {
     Map<String, dynamic> data = sharedGoal.toJson();

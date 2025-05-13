@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/friendship_model.dart';
+import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friend_profile.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
+import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -81,8 +83,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
             UserModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
         .toList();
 
+    List<UserModel> premiumUsers =
+        allUsers.where((user) => user.version == 'premium').toList();
+
     setState(() {
-      searchResults = allUsers.where((user) {
+      searchResults = premiumUsers.where((user) {
         final nameLower = user.name.toLowerCase();
         final usernameLower = user.username.toLowerCase();
         final queryLower = query.toLowerCase();
@@ -113,7 +118,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
       );
       await _friendshipService.createFriendship(friendship);
       showCustomSnackBar(context, "Draugas pridėtas ✅", true);
-      _searchUsers(_searchController.text); // Atnaujina paiešką
+      //_searchUsers(_searchController.text); // Atnaujina paiešką
+      setState(() {
+        _searchController.clear(); // Išvalome paieškos laukelį
+        searchResults = [];
+        isSearching = false;
+        FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+      });
       await _fetchUserFriends(userUsername); // Atnaujina draugų sąrašą
       // if (mounted) {
       //   Navigator.pushReplacement(
@@ -217,8 +228,28 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _deleteFriend(FriendshipModel friendship) async {
     try {
+      // Gauti kito draugo ID iš draugystės
+      String otherUserId = friendship.friendship.user1 == userUsername
+          ? friendship.friendship.user2
+          : friendship.friendship.user1;
+      // Pašalinti draugystę
       await _friendshipService.deleteFriendship(friendship.friendship.id);
-      showCustomSnackBar(context, "Draugas pašalintas ✅", true);
+
+      // Pašalinti visas bendras užduotis
+      final SharedGoalService _sharedGoalService = SharedGoalService();
+      List<SharedGoal> goals = await _sharedGoalService.getSharedGoalsForUsers(
+          userUsername, otherUserId);
+
+      for (var goal in goals) {
+        await _sharedGoalService.deleteSharedGoalEntry(goal.id);
+      }
+
+      setState(() {
+        FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+      });
+
+      showCustomSnackBar(
+          context, "Draugas ir bendros užduotys pašalinti ✅", true);
       await _fetchUserFriends(userUsername); // atnaujinti sąrašą
     } catch (e) {
       showCustomSnackBar(context, "Nepavyko pašalinti draugo ❌", false);
@@ -355,6 +386,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   SizedBox(
                     height: 10,
                   ),
+                  if (friends.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Draugų sąrašas tuščias",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
                   // Draugų sąrašas su pilkais stačiakampiais ir piktogramomis
                   Expanded(
                     child: ListView.builder(
@@ -447,7 +489,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                             ),
                                           ),
                                           content: Text(
-                                              "Draugo pašalinimas bus negrįžtamas."),
+                                              "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija."),
                                           actions: [
                                             Row(
                                               mainAxisAlignment:

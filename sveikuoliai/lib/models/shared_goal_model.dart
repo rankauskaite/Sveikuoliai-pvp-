@@ -7,31 +7,30 @@ class SharedGoal {
   DateTime startDate;
   DateTime endDate;
   int points;
-  bool isCountable;
+  bool isCompletedUser1;
+  bool isCompletedUser2;
   CategoryType category;
   int endPoints;
   String user1Id;
   String user2Id;
   String plantId;
   String goalTypeId;
-  bool tikUser;   
-  bool tikFriends;  
+  bool isApproved = false; // Pridėta nauja savybė
 
   SharedGoal({
     required this.id,
     required this.startDate,
     required this.endDate,
     required this.points,
-    required this.isCountable,
+    required this.isCompletedUser1,
+    required this.isCompletedUser2,
     required this.category,
     required this.endPoints,
     required this.user1Id,
     required this.user2Id,
     required this.plantId,
     required this.goalTypeId,
-    this.tikUser = true,     // Default reikšmė, kadangi jau yra sukurtu defaultiniu goals,
-    // tai kad nereiktu perkurt
-    this.tikFriends = false, 
+    required this.isApproved,
   });
 
   /// Konvertavimas į JSON
@@ -40,15 +39,15 @@ class SharedGoal {
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'points': points,
-      'isCountable': isCountable,
+      'isCompletedUser1': isCompletedUser1,
+      'isCompletedUser2': isCompletedUser2,
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'user1Id': user1Id,
       'user2Id': user2Id,
       'plantId': plantId,
       'goalTypeId': goalTypeId,
-      'tikUser': tikUser,
-      'tikFriends': tikFriends,
+      'isApproved': isApproved, // Pridėta nauja savybė
     };
   }
 
@@ -59,15 +58,15 @@ class SharedGoal {
       startDate: (json['startDate'] as Timestamp).toDate(),
       endDate: (json['endDate'] as Timestamp).toDate(),
       points: json['points'] ?? 0,
-      isCountable: json['isCountable'] ?? false,
+      isCompletedUser1: json['isCompletedUser1'] ?? false,
+      isCompletedUser2: json['isCompletedUser2'] ?? false,
       category: CategoryTypeExtension.fromJson(json['category'] ?? ''),
       endPoints: json['endPoints'] ?? 0,
       user1Id: json['user1Id'] ?? '',
       user2Id: json['user2Id'] ?? '',
       plantId: json['plantId'] ?? '',
       goalTypeId: json['goalTypeId'] ?? '',
-      tikUser: json['tikUser'] ?? true, // by default bus true
-      tikFriends: json['tikFriends'] ?? false,
+      isApproved: json['isApproved'] ?? false, // Pridėta nauja savybė
     );
   }
 }
@@ -82,7 +81,8 @@ class SharedGoalInformation {
   });
 
   /// Konvertavimas iš JSON
-  factory SharedGoalInformation.fromJson(SharedGoal goalModel, GoalType goalType) {
+  factory SharedGoalInformation.fromJson(
+      SharedGoal goalModel, GoalType goalType) {
     return SharedGoalInformation(
       sharedGoalModel: goalModel,
       goalType: goalType,

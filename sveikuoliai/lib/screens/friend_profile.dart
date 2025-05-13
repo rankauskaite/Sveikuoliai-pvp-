@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
+import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -20,6 +23,33 @@ class FriendProfileScreen extends StatefulWidget {
 
 class _FriendProfileScreenState extends State<FriendProfileScreen> {
   FriendshipService _friendshipService = FriendshipService();
+  UserService _userService = UserService();
+  UserModel userModel = UserModel(
+      username: "",
+      name: "",
+      password: "",
+      role: "user",
+      notifications: true,
+      darkMode: false,
+      menstrualLength: 7,
+      email: "",
+      createdAt: DateTime.now(),
+      version: "free");
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUser();
+  }
+
+  Future<void> _fetchUser() async {
+    try {
+      UserModel? model = await _userService.getUserEntry(widget.username);
+      setState(() {
+        userModel = model!;
+      });
+    } catch (e) {}
+  }
 
   Future<void> _deleteFriend(String friendshipID) async {
     try {
@@ -178,28 +208,46 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 40),
+                  // Karuselės efektas draugo augalams
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Draugo augalai',
-                        style: TextStyle(fontSize: 17),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    GardenScreen(user: userModel)),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 270,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                color: Colors.green.shade700, width: 3),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 8,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/images/draugo_sodas.png',
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  // Karuselės efektas draugo augalams
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // Horizontali slinktis
-                    child: Row(
-                      children: [
-                        _buildPlantColumn('Orchidėja'),
-                        _buildPlantColumn('Dobilas'),
-                        _buildPlantColumn('Žibuoklės'),
-                        _buildPlantColumn(
-                            'Ramunė'), // Galite pridėti daugiau augalų
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -208,23 +256,6 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPlantColumn(String plantName) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.circle,
-          size: 90,
-          color: Color(0xFFD9D9D9),
-        ),
-        Text(
-          plantName,
-          style: TextStyle(fontSize: 16),
-        ),
-      ],
     );
   }
 }

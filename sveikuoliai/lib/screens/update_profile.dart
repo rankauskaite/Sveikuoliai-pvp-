@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/screens/profile.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -23,9 +24,22 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   String userName = "";
   String userEmail = "";
   String userVersion = "";
+  String selectedIconName = 'account_circle'; // numatytoji
 
   TextEditingController _userNameController = TextEditingController();
   TextEditingController _userEmailController = TextEditingController();
+
+  final Map<String, IconData> availableIcons = {
+    'account_circle': Icons.account_circle,
+    'face': Icons.face,
+    'star': Icons.star,
+    'favorite': Icons.favorite,
+    'pets': Icons.pets,
+    'emoji_emotions': Icons.emoji_emotions,
+    'local_florist': Icons.local_florist,
+    'ac_unit': Icons.ac_unit,
+    'cruelty_free': Icons.cruelty_free
+  };
 
   @override
   void initState() {
@@ -59,16 +73,24 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       String newName = _userNameController.text;
       String newEmail = _userEmailController.text;
       String newVersion = userVersion;
+      String newIcon = selectedIconName;
 
       // Atnaujiname vartotojo duomenis paslaugos pagalba
-      await _userService.updateUserData(userUsername, newName, newEmail, newVersion);
+      await _userService.updateUserData(
+          userUsername, newName, newEmail, newVersion, newIcon);
+      _authService.updateUserSession('name', newName);
+      _authService.updateUserSession('email', newEmail);
+      _authService.updateUserSession('version', newVersion);
 
       // Atvaizduojame sėkmės pranešimą
       String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
       showCustomSnackBar(context, successMessage, true);
 
       // Uždarome ekraną po sėkmingo atnaujinimo
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ProfileScreen()),
+      );
     } catch (e) {
       // Rodo klaidos pranešimą
       String errorMessage = 'Klaida išsaugant duomenis ❌';
@@ -86,154 +108,233 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
         backgroundColor: const Color(0xFF8093F1),
       ),
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
+        child: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 320,
+                  height: 600,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white, width: 20),
+                  ),
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
-                        ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                      ElevatedButton(
-                        onPressed: _saveUserData, // Paspaudus išsaugoti
-                        child: Text('Išsaugoti'),
-                      ),
-                    ],
-                  ),
-                  Stack(
-                    children: [
-                      // Centrinė account_circle ikona
-                      Stack(
-                        alignment:
-                            Alignment.center, // Centruoja tekstą ant ikonos
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          ColorFiltered(
-                            colorFilter: ColorFilter.mode(
-                              Color(
-                                  0xFFD9D9D9), // Naudojame skaidrų filtrą su blur efektu
-                              BlendMode
-                                  .srcIn, // Blend mode, kad būtų matomas tik blur efektas
-                            ),
-                            child: ImageFiltered(
-                              imageFilter: ImageFilter.blur(
-                                  sigmaX: 5.0, sigmaY: 5.0), // Blur stiprumas
-                              child: Icon(
-                                Icons.account_circle,
-                                size: 200,
-                                color: Color(0xFFD9D9D9),
-                              ),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: Icon(
+                              Icons.arrow_back_ios,
+                              size: 30,
                             ),
                           ),
-                          const Text(
-                            'Keisti profilio\nnuotrauką',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
+                          const Expanded(child: SizedBox()),
+                          ElevatedButton(
+                            onPressed: _saveUserData, // Paspaudus išsaugoti
+                            child: Text('Išsaugoti'),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  IntrinsicWidth(
-                    child: TextField(
-                      controller: _userNameController, // Naudojame kontrollerį
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Vardas',
+                      // GestureDetector(
+                      //   onTap: _showIconSelectionDialog,
+                      //   child: Stack(
+                      //     alignment: Alignment.center,
+                      //     children: [
+                      //       CircleAvatar(
+                      //         radius: 60,
+                      //         backgroundColor: Color(0xFFD9D9D9),
+                      //         child: Icon(
+                      //           availableIcons[selectedIconName],
+                      //           size: 100,
+                      //           color: Colors.white,
+                      //         ),
+                      //       ),
+                      //       Container(
+                      //         width: 120,
+                      //         height: 120,
+                      //         decoration: BoxDecoration(
+                      //           shape: BoxShape.circle,
+                      //           color: Colors.black.withOpacity(0.3),
+                      //         ),
+                      //         child: Center(
+                      //           child: Text(
+                      //             'Keisti',
+                      //             style: TextStyle(color: Colors.white),
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                      GestureDetector(
+                        onTap: _showIconSelectionDialog,
+                        child: Stack(
+                          children: [
+                            // Centrinė account_circle ikona
+                            Stack(
+                              alignment: Alignment
+                                  .center, // Centruoja tekstą ant ikonos
+                              children: [
+                                ColorFiltered(
+                                  colorFilter: ColorFilter.mode(
+                                    Color(
+                                        0xFFD9D9D9), // Naudojame skaidrų filtrą su blur efektu
+                                    BlendMode
+                                        .srcIn, // Blend mode, kad būtų matomas tik blur efektas
+                                  ),
+                                  child: ImageFiltered(
+                                    imageFilter: ImageFilter.blur(
+                                        sigmaX: 3.0,
+                                        sigmaY: 3.0), // Blur stiprumas
+                                    child: Icon(
+                                      availableIcons[selectedIconName],
+                                      size: 200,
+                                      color: Color(0xFFD9D9D9),
+                                    ),
+                                  ),
+                                ),
+                                const Text(
+                                  'Keisti profilio\nnuotrauką',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    color: Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  Text(
-                    userUsername,
-                    style: TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mano duomenys',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
                       IntrinsicWidth(
                         child: TextField(
                           controller:
-                              _userEmailController, // Naudojame kontrollerį
+                              _userNameController, // Naudojame kontrollerį
                           style: TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFFB388EB),
-                            decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFB388EB),
-                          ),
+                              fontSize: 20, fontWeight: FontWeight.bold),
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
-                            labelText: 'el. paštas',
+                            labelText: 'Vardas',
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
                       Text(
-                        'Versija:',
-                        style: TextStyle(fontSize: 20),
+                        userUsername,
+                        style:
+                            TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Mano duomenys',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          IntrinsicWidth(
+                            child: TextField(
+                              controller:
+                                  _userEmailController, // Naudojame kontrollerį
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFFB388EB),
+                                decoration: TextDecoration.underline,
+                                decorationColor: Color(0xFFB388EB),
+                              ),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'el. paštas',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Versija:',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      VersionSelection(
+                        currentVersion: widget.version,
+                        onVersionChanged: (newVersion) {
+                          setState(() {
+                            userVersion = newVersion;
+                          });
+                        },
                       ),
                     ],
                   ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  VersionSelection(
-                    currentVersion: widget.version,
-                    onVersionChanged: (newVersion) {
-                      setState(() {
-                        userVersion = newVersion;
-                      });
-                    },
-                  ),
-                ],
-              ),
+                ),
+                const BottomNavigation(), // Įterpiama navigacija
+              ],
             ),
-            const BottomNavigation(), // Įterpiama navigacija
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  void _showIconSelectionDialog() async {
+    String? newIcon = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Pasirink profilio ikoną'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              children: availableIcons.entries.map((entry) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context, entry.key);
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(entry.value, size: 40),
+                      //Text(entry.key),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (newIcon != null) {
+      setState(() {
+        selectedIconName = newIcon;
+      });
+    }
   }
 }

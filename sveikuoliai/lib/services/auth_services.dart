@@ -147,6 +147,12 @@ class AuthService {
     await _storage.write(key: "name", value: user.name);
     await _storage.write(key: "email", value: user.email);
     await _storage.write(key: "version", value: user.version);
+    await _storage.write(
+        key: "date", value: DateTime.now().toIso8601String().split('T').first);
+  }
+
+  Future<void> updateUserSession(String key, String value) async {
+    await _storage.write(key: key, value: value);
   }
 
   Future<Map<String, String?>> getSessionUser() async {
@@ -155,6 +161,7 @@ class AuthService {
       "name": await _storage.read(key: "name"),
       "email": await _storage.read(key: "email"),
       "version": await _storage.read(key: "version"),
+      "date": await _storage.read(key: "date"),
     };
   }
 }

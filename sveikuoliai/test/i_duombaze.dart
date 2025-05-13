@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/services/shared_goal_service.dart';
@@ -17,15 +16,15 @@ Future<void> main() async {
     startDate: DateTime.now(),
     endDate: DateTime.now().add(const Duration(days: 21)),
     points: 0,
-    isCountable: true,
+    isCompletedUser1: false,
+    isCompletedUser2: false,
     category: CategoryType.bekategorijos, // naudok tinkamą enum reikšmę
     endPoints: 21,
     user1Id: 'test2',
     user2Id: 'test3',
     plantId: 'plant_rose',
     goalTypeId: 'focus21',
-    tikUser: true,
-    tikFriends: false,
+    isApproved: false, // Pridėta nauja savybė
   );
 
   await sharedGoalService.createSharedGoalEntry(goal);

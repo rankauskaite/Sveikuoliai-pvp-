@@ -33,7 +33,7 @@ class DriveService {
       final driveFile = drive.File()..name = "journal_${DateTime.now()}.jpg";
 
       final uploaded = await driveApi.files.create(driveFile, uploadMedia: media);
-      print("Įkelta sėkmingai! File ID: ${uploaded.id}");
+      print("Įkelta sėkmingai! File ID: ${uploaded.id}"); //issisaugau fileId kad veliau galeciau pasiekti faila
       return uploaded.id;
     } catch (e) {
       print('Klaida įkeliant į Drive: $e');

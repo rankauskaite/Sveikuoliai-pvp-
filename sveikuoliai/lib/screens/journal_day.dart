@@ -474,6 +474,7 @@ Future<void> _saveJournalEntry() async {
                             //   ),
                             // ),
                             GestureDetector(
+/////rugiles
                             onTap: () async {
                               final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
@@ -510,16 +511,84 @@ Future<void> _saveJournalEntry() async {
                                     height: 150,
                                   ),
                           ),
+/////main
+                              onTap: () async {
+                                await uploadJournalEntry(
+                                  date: selectedDay,
+                                  note: journalText,
+                                  mood: selectedMood,
+                                );
+
+                                if (mounted) {
+                                  showCustomSnackBar(context,
+                                      'Nuotrauka įkelta sėkmingai! 📸', true);
+                                }
+                              },
+                              child: Container(
+                                width: 200,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: Colors.deepPurple[200] ??
+                                          Colors.deepPurple,
+                                      style: BorderStyle.solid),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      spreadRadius: 2,
+                                      blurRadius: 8,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo,
+                                        size: 50,
+                                        color: Colors.deepPurple[300]),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      'Įkelti nuotrauką',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.deepPurple[300]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+/////main
                             SizedBox(height: 5),
                             GestureDetector(
                               onTap: () => _selectDate(context),
-                              child: Text(
-                                'Pažymėti mėnesines',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                    decoration: TextDecoration.underline),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: Colors.deepPurple.shade200),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(Icons.calendar_today,
+                                        color: Colors.deepPurple, size: 16),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Pažymėti mėnesines',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             if (menstruationStart != null &&
