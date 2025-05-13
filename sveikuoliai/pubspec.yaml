@@ -60,6 +60,10 @@ dependencies:
     sdk: flutter
   android_intent_plus: ^5.3.0
   device_info_plus: ^11.4.0
+  chewie: ^1.11.3
+  video_player: ^2.7.2
+  smooth_page_indicator: ^1.1.0
+  flutter_svg: ^2.0.7
 
 dev_dependencies:
   flutter_test:
@@ -106,7 +110,10 @@ flutter:
     - assets/images/salos/
     - assets/images/dienorascio_vizualas.png
     - assets/images/mano_sodas.png
-
+    - assets/images/draugo_sodas.png
+    - assets/videos/
+    - assets/icons/google_logo.svg
+    
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

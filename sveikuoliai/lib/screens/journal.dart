@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:sveikuoliai/screens/meditation.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:sveikuoliai/screens/relax_menu.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -22,7 +23,6 @@ class _JournalScreenState extends State<JournalScreen> {
   JournalService _journalService = JournalService();
   String userUsername = '';
   Set<DateTime> _markedDays = {};
-  int _currentPage = 0; // Puslapio indeksas
   PageController _pageController = PageController();
   final List<String> images = [
     'assets/images/virsKalendoriaus/eziukai.png',
@@ -107,7 +107,7 @@ class _JournalScreenState extends State<JournalScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MeditationScreen()),
+                    MaterialPageRoute(builder: (context) => RelaxMenuScreen()),
                   );
                 },
                 icon: const Icon(
@@ -152,7 +152,7 @@ class _JournalScreenState extends State<JournalScreen> {
                   true, // Užtikrina, kad slinkimas sustotų tik ties kiekvienu paveikslėliu
               onPageChanged: (index) {
                 setState(() {
-                  _currentPage = index; // Atnaujina dabartinį puslapį
+// Atnaujina dabartinį puslapį
                 });
               },
             ),
@@ -161,20 +161,15 @@ class _JournalScreenState extends State<JournalScreen> {
         SizedBox(
           height: 5,
         ),
-        // Indikatoriai (taškai), kurie rodo, kad galima slinkti
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(images.length, (index) {
-            return Container(
-              margin: EdgeInsets.symmetric(horizontal: 4),
-              height: 6,
-              width: 6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _currentPage == index ? Colors.deepPurple : Colors.grey,
-              ),
-            );
-          }),
+        SmoothPageIndicator(
+          controller: _pageController,
+          count: images.length,
+          effect: const WormEffect(
+            dotColor: Colors.grey,
+            activeDotColor: Colors.deepPurple,
+            dotHeight: 6,
+            dotWidth: 6,
+          ),
         ),
       ],
     );

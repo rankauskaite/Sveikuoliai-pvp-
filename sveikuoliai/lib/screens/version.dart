@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/home.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -17,17 +18,18 @@ class VersionScreen extends StatefulWidget {
 class _VersionScreenState extends State<VersionScreen> {
   String? selectedPlan;
   final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
   int currentPage = 0;
 
   final List<double> cardHeights = [
     400, // Gija NULIS
     480, // Gija PLIUS
-    350, // Gija KARTU
   ];
 
   Future<void> saveSelectedPlan(String plan) async {
     try {
-      await _userService.updateUserVersion(widget.username, selectedPlan!);
+      await _userService.updateUserVersion(widget.username, plan);
+      _authService.updateUserSession('version', plan);
       String message = '✅ Registracija sėkminga!';
       showCustomSnackBar(context, message, true);
       Navigator.pushReplacement(
@@ -89,8 +91,8 @@ class _VersionScreenState extends State<VersionScreen> {
           price: '0',
           description: '''
 Stebėk
-  - ? iššūkius
-  - ? įpročius
+  - 3 iššūkius
+  - 3 įpročius
 Naudokis
   - Virtualiu dienoraščiu
   - Meditacijos kampeliu
@@ -113,28 +115,12 @@ Naudokis
   - Virtualiu dienoraščiu
   - Meditacijos kampeliu
 Bendrauk
-  - Kviešk draugus
+  - Kviesk draugus
   - Kelk bendrus iššūkius
   - Stebėk draugų sodą
         ''',
           buttonColor: Color(0xFFEF3BF1),
           fixedHeight: cardHeights[1], // Priskiriame aukštį
-        );
-      case 2:
-        return buildPlanCard(
-          planId: 'together',
-          color: Color(0xFFFDA6B8),
-          borderColor: Color(0xFFFDA6B8),
-          title: 'Gija KARTU',
-          price: '30',
-          description: '''
-Stebėk
-  - kaip tau ir tavo 
-    bendruomenei sekasi
-    vykdyti iššūkius
-        ''',
-          buttonColor: Colors.black,
-          fixedHeight: cardHeights[2], // Priskiriame aukštį
         );
       default:
         return SizedBox.shrink();
@@ -170,7 +156,7 @@ Stebėk
             Expanded(
               child: PageView.builder(
                 controller: PageController(viewportFraction: 0.85),
-                itemCount: 3,
+                itemCount: 2,
                 itemBuilder: (context, index) {
                   return Align(
                     alignment: Alignment.center,

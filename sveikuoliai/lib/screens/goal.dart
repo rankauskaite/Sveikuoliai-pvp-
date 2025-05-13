@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+//import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
@@ -31,6 +31,7 @@ class _GoalPageState extends State<GoalScreen> {
   final GoalService _goalService = GoalService();
   List<GoalTask> goalTasks = [];
   int length = 0;
+  int doneLength = 0;
 
   @override
   void initState() {
@@ -70,6 +71,7 @@ class _GoalPageState extends State<GoalScreen> {
       setState(() {
         goalTasks = tasks;
         length = tasks.length;
+        doneLength = tasks.where((task) => task.isCompleted).length;
       });
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslo užduotis ❌', false);
@@ -92,9 +94,60 @@ class _GoalPageState extends State<GoalScreen> {
         widget.goal.goalModel.points = _userPoints();
       });
 
-      if (mounted) {
-        showCustomSnackBar(
-            context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+      // ✅ Patikriname, ar visos užduotys įvykdytos
+      final allCompleted = goalTasks.every((task) => task.isCompleted);
+      if (allCompleted) {
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Sveikiname! 🎉"),
+              content: const Text(
+                  "Įvykdėte visas užduotis. Ką norėtumėte daryti toliau?"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    widget.goal.goalModel.isCompleted = true;
+                    _goalService.updateGoalEntry(widget.goal.goalModel);
+                    setState(() {
+                      widget.goal.goalModel.isCompleted = true;
+                    });
+                    showCustomSnackBar(
+                        context, "Tikslas sėkmingai užbaigtas ✅", true);
+                  },
+                  child: const Text("Užbaigti tikslą"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    CustomDialogs.showNewFirstTaskDialog(
+                      context: context,
+                      type: 1,
+                      onSave: (newTask) => _createTask(newTask),
+                      goal: widget.goal,
+                      accentColor: Colors.lightBlueAccent,
+                    );
+                  },
+                  child: const Text("Pridėti užduotį"),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          showCustomSnackBar(
+              context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GoalScreen(
+                goal: widget.goal,
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -118,7 +171,7 @@ class _GoalPageState extends State<GoalScreen> {
     return widget.goal.goalModel.points / widget.goal.goalModel.endPoints;
   }
 
-  int _calculatePoints(bool isCompleted) {
+  int _calculatePoints(bool isCompleted, List<GoalTask> goalTasks) {
     if (isCompleted) {
       return (widget.goal.goalModel.endPoints / goalTasks.length).toInt();
     } else {
@@ -126,9 +179,50 @@ class _GoalPageState extends State<GoalScreen> {
     }
   }
 
+  Future<void> _recalculateGoalTaskPoints() async {
+    try {
+      // Perkraunam užduotis
+      List<GoalTask> updatedTasks =
+          await _goalTaskService.getGoalTasks(widget.goal.goalModel.id);
+      print('kiek užduočių: ${updatedTasks.length}');
+
+      for (var task in updatedTasks) {
+        int points = _calculatePoints(task.isCompleted, updatedTasks);
+        await _goalTaskService.updateGoalTaskState(
+          task.id,
+          task.isCompleted,
+          points,
+        );
+      }
+      updatedTasks =
+          await _goalTaskService.getGoalTasks(widget.goal.goalModel.id);
+
+      setState(() {
+        goalTasks = updatedTasks;
+        length = updatedTasks.length;
+        doneLength = updatedTasks.where((task) => task.isCompleted).length;
+      });
+
+      int totalPoints = _userPoints();
+      print("Total points: $totalPoints");
+
+      await _goalService.updateGoalPoints(
+          widget.goal.goalModel.id, totalPoints);
+
+      setState(() {
+        widget.goal.goalModel.points = totalPoints;
+      });
+    } catch (e) {
+      if (mounted) {
+        showCustomSnackBar(context, "Klaida perskaičiuojant taškus ❌", false);
+      }
+    }
+  }
+
   Future<void> _createTask(GoalTask task) async {
     try {
       await _goalTaskService.createGoalTaskEntry(task);
+      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
       showCustomSnackBar(context, "Tikslo užduotis sėkmingai pridėta ✅", true);
       Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
@@ -164,6 +258,7 @@ class _GoalPageState extends State<GoalScreen> {
       final taskService = GoalTaskService();
       await taskService
           .deleteGoalTaskEntry(taskId); // Ištrinti įprotį iš serverio
+      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
       //Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
         context,
@@ -220,7 +315,8 @@ class _GoalPageState extends State<GoalScreen> {
                           ),
                         ),
                         const Expanded(child: SizedBox()),
-                        if (widget.goal.goalType.type == 'custom')
+                        if (widget.goal.goalType.type == 'custom' &&
+                            widget.goal.goalModel.isCompleted == false)
                           IconButton(
                             onPressed: () {
                               CustomDialogs.showEditDialog(
@@ -262,6 +358,7 @@ class _GoalPageState extends State<GoalScreen> {
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF72ddf7),
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
                     buildProgressIndicator(
@@ -279,6 +376,7 @@ class _GoalPageState extends State<GoalScreen> {
                       style: const TextStyle(fontSize: 18),
                       softWrap: true, // Leisti tekstui kelti į kitą eilutę
                       overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -375,70 +473,88 @@ class _GoalPageState extends State<GoalScreen> {
                             .map((task) => GoalTaskCard(
                                   task: task,
                                   type: 0,
+                                  isDoneGoal: widget.goal.goalModel.isCompleted,
+                                  isMyTask: true,
                                   length: length,
-                                  calculatePoints: _calculatePoints,
+                                  doneLength: doneLength,
+                                  calculatePoints: (isCompleted) =>
+                                      _calculatePoints(isCompleted, goalTasks),
                                   onDelete: _deleteTask,
                                 )),
                         ...goalTasks.where((task) => task.isCompleted).map(
                             (task) => GoalTaskCard(
                                 type: 0,
                                 task: task,
+                                isDoneGoal: widget.goal.goalModel.isCompleted,
+                                isMyTask: true,
                                 length: length,
-                                calculatePoints: _calculatePoints)),
+                                doneLength: doneLength,
+                                calculatePoints: (isCompleted) =>
+                                    _calculatePoints(isCompleted, goalTasks))),
                       ],
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (goalTasks
-                            .isNotEmpty) // Patikriname, ar yra užduočių
-                          ElevatedButton(
-                            onPressed: () async {
-                              await _saveGoalStates(); // Pirma išsaugome duomenis
-                              if (mounted) {
-                                setState(() {}); // Tada atnaujiname ekraną
-                              }
-                            },
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.resolveWith<Color>(
-                                (Set<MaterialState> states) {
-                                  return const Color(0xFFCFF4FC);
-                                },
-                              ),
-                              foregroundColor:
-                                  MaterialStateProperty.all(Colors.blue),
-                            ),
-                            child: const Text(
-                              'Išsaugoti',
-                              style: TextStyle(fontSize: 15),
-                            ),
+                    if (widget.goal.goalModel.isCompleted == false)
+                      Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (goalTasks
+                                  .isNotEmpty) // Patikriname, ar yra užduočių
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await _saveGoalStates(); // Pirma išsaugome duomenis
+                                    if (mounted) {
+                                      setState(
+                                          () {}); // Tada atnaujiname ekraną
+                                    }
+                                  },
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty
+                                        .resolveWith<Color>(
+                                      (Set<MaterialState> states) {
+                                        return const Color(0xFFCFF4FC);
+                                      },
+                                    ),
+                                    foregroundColor:
+                                        MaterialStateProperty.all(Colors.blue),
+                                  ),
+                                  child: const Text(
+                                    'Išsaugoti',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
+                        ],
+                      ),
                     const SizedBox(
                       height: 10,
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        CustomDialogs.showNewTaskDialog(
-                          context: context,
-                          goal: widget.goal,
-                          accentColor: Colors.lightBlueAccent,
-                          onSave: (GoalTask task) {
-                            _createTask(task);
-                          },
-                        );
-                      },
+                      onPressed: widget.goal.goalModel.isCompleted
+                          ? null
+                          : () {
+                              CustomDialogs.showNewTaskDialog(
+                                context: context,
+                                goal: widget.goal,
+                                accentColor: Colors.lightBlueAccent,
+                                onSave: (GoalTask task) {
+                                  _createTask(task);
+                                },
+                              );
+                            },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
                         backgroundColor:
                             const Color(0xFFA5E9F9), // Šviesi mėlyna spalva
                         foregroundColor: Colors.blue, // Teksto ir ikonos spalva
                       ),
-                      child: const Text(
-                        'Pridėti užduotį',
-                        style: TextStyle(fontSize: 20),
+                      child: Text(
+                        widget.goal.goalModel.isCompleted
+                            ? 'Tiklas įvykdytas'
+                            : 'Pridėti užduotį',
+                        style: TextStyle(fontSize: 20, color: Colors.blue),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -451,9 +567,8 @@ class _GoalPageState extends State<GoalScreen> {
                     SizedBox(
                       height: 200,
                       child: goalTasks.isEmpty
-                        ? const Text("Nėra progreso duomenų")
-                        : _buildProgressChart(),
-
+                          ? const Text("Nėra progreso duomenų")
+                          : _buildProgressChart(),
                     ),
                   ],
                 ),
@@ -466,45 +581,46 @@ class _GoalPageState extends State<GoalScreen> {
     );
   }
 
-  Widget _buildChart() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                FlSpot(0, 1),
-                FlSpot(1, 3),
-                FlSpot(2, 2),
-                FlSpot(3, 5),
-                FlSpot(4, 4),
-                FlSpot(5, 6),
-              ],
-              isCurved: true,
-              color: const Color(0xFF72ddf7),
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: const Color(0xFF72ddf7).withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ),
+  // Widget _buildChart() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(10),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFFF0F0F0),
+  //       borderRadius: BorderRadius.circular(15),
+  //     ),
+  //     child: LineChart(
+  //       LineChartData(
+  //         gridData: FlGridData(show: false),
+  //         titlesData: FlTitlesData(show: false),
+  //         borderData: FlBorderData(show: false),
+  //         lineBarsData: [
+  //           LineChartBarData(
+  //             spots: [
+  //               FlSpot(0, 1),
+  //               FlSpot(1, 3),
+  //               FlSpot(2, 2),
+  //               FlSpot(3, 5),
+  //               FlSpot(4, 4),
+  //               FlSpot(5, 6),
+  //             ],
+  //             isCurved: true,
+  //             color: const Color(0xFF72ddf7),
+  //             dotData: FlDotData(show: true),
+  //             belowBarData: BarAreaData(
+  //               show: true,
+  //               color: const Color(0xFF72ddf7).withOpacity(0.2),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildProgressChart() {
+    return GoalProgressChart(
+      goal: widget.goal.goalModel,
+      goalTasks: goalTasks,
     );
   }
-  Widget _buildProgressChart() {
-  return GoalProgressChart(
-    goal: widget.goal.goalModel,
-    goalTasks: goalTasks,
-  );
-}
 }

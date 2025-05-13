@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
+import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_services.dart';
+import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class NewGoalScreen extends StatelessWidget {
@@ -73,7 +76,9 @@ class NewGoalScreen extends StatelessWidget {
                       controller: PageController(
                           viewportFraction: 0.9), // Pagerins sklandumą
                       children: [
-                        ...defaultGoalTypes.map((goal) {
+                        ...defaultGoalTypes
+                            .where((goal) => goal.tikUser == true)
+                            .map((goal) {
                           return GoalCard(
                             goalId: goal.id,
                             goalName: goal.title,
@@ -137,6 +142,7 @@ class _GoalCardState extends State<GoalCard> {
   String userUsername = "";
   final GoalTypeService _goalTypeService = GoalTypeService();
   final GoalService _goalService = GoalService();
+  final GoalTaskService _goalTaskService = GoalTaskService();
   String? _selectedDuration = '1 mėnuo'; // Pasirinkta trukmė
   DateTime _startDate = DateTime.now(); // Pradžios data
 
@@ -305,15 +311,31 @@ class _GoalCardState extends State<GoalCard> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        _submitGoal();
+                      onPressed: () async {
+                        GoalModel? result = await _submitGoal();
                         _dateController.text =
                             _startDate.toString().substring(0, 10);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => HabitsGoalsScreen()),
-                        );
+
+                        if (!widget.isCountable && result != null) {
+                          // Jei tikslas ne countable, paprašome įvesti užduotį
+                          CustomDialogs.showNewFirstTaskDialog(
+                            context: context,
+                            goal: result,
+                            type: 0,
+                            accentColor: Colors.lightBlueAccent,
+                            onSave: (GoalTask task) {
+                              // Išsaugoti užduotį ir grįžti atgal
+                              createTask(task);
+                            },
+                          );
+                        } else {
+                          // Jei tikslas countable – iš karto eiti į kitą ekraną
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HabitsGoalsScreen()),
+                          );
+                        }
                       },
                       child: const Text('Išsaugoti'),
                     ),
@@ -358,8 +380,26 @@ class _GoalCardState extends State<GoalCard> {
     );
   }
 
+  Future<void> createTask(GoalTask task) async {
+    try {
+      await _goalTaskService.createGoalTaskEntry(task);
+      showCustomSnackBar(context, "Tikslo užduotis sėkmingai pridėta ✅", true);
+      Navigator.pop(context); // Grįžta atgal
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+      );
+    } catch (e) {
+      showCustomSnackBar(context, "Klaida pridedant tikslo užduotį ❌", false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+      );
+    }
+  }
+
   // Funkcija įrašyti duomenis į duomenų bazę
-  Future<void> _submitGoal() async {
+  Future<GoalModel?> _submitGoal() async {
     String goalId = widget.isCustom
         ? _goalNameController.text
             .toLowerCase()
@@ -428,7 +468,7 @@ class _GoalCardState extends State<GoalCard> {
         title: _goalNameController.text,
         description: _goalDescriptionController.text,
         type: "custom", // Jei tai yra vartotojo sukurtas įprotis
-        isCountable: true,
+        isCountable: false,
       );
 
       try {
@@ -491,18 +531,38 @@ class _GoalCardState extends State<GoalCard> {
                           : _selectedDuration == '3 mėnesiai'
                               ? 'gervuoge'
                               : 'vysnia',
-      isCountable: widget.isCountable,
+      isCompleted: false,
     );
 
     try {
       await _goalService.createGoalEntry(goalModel);
+      if (widget.isCountable) {
+        await _goalTaskService.createDefaultTasksForGoal(
+          goalId: goalID,
+          goalType: goalId,
+          username: userUsername,
+        );
+      }
+      // } else {
+      //   CustomDialogs.showNewTaskDialog(
+      //     context: context,
+      //     goal: goalModel,
+      //     accentColor: Colors.lightBlueAccent,
+      //     onSave: (GoalTask task) {
+      //       createTask(task);
+      //     },
+      //   );
+      // }
+
       String message = 'Tikslas pridėtas! 🎉';
       showCustomSnackBar(context, message, true); // Naudokite funkciją
+      return goalModel; // Grąžinkite sukurtą tikslą
     } catch (e) {
       print("Klaida pridedant tikslą: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Įvyko klaida!')),
       );
+      return null; // Grąžinkite null, jei įvyko klaida
     }
 
     // Čia įrašykite kodą, kuris įrašo duomenis į duomenų bazę

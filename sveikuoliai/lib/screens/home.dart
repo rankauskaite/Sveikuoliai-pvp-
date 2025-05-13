@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:sveikuoliai/services/notification_helper.dart';
@@ -25,6 +27,19 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AppNotification> notifications = []; // Pranešimų sąrašas
   String userName = "";
   String userUsername = "";
+  String userVersion = "";
+  final UserService _userService = UserService();
+  UserModel userModel = UserModel(
+      username: "",
+      name: "",
+      password: "",
+      role: "user",
+      notifications: true,
+      darkMode: false,
+      menstrualLength: 7,
+      email: "",
+      createdAt: DateTime.now(),
+      version: "free");
   final PageController _adController = PageController();
   final List<String> _reklamos = [
     'assets/images/reklamos/drouglas.png',
@@ -107,6 +122,11 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           userName = sessionData['name'] ?? "Nežinomas";
           userUsername = sessionData['username'] ?? "Nežinomas";
+          userVersion = sessionData['version'] ?? "Nežinoma";
+        });
+        UserModel? model = await _userService.getUserEntry(userUsername);
+        setState(() {
+          userModel = model!;
         });
         _fetchUserNotifications(userUsername);
       } catch (e) {
@@ -163,7 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 50,
                             alignment: Alignment.bottomLeft,
                             child: Text(
-                              userName, // Čia bus rodoma naudotojo vardas
+                              userName.length > 15
+                                  ? '${userName.substring(0, 15)}...'
+                                  : userName, // Čia bus rodoma naudotojo vardas
                               style: const TextStyle(fontSize: 20),
                             ),
                           ),
@@ -188,7 +210,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => GardenScreen()),
+                                    builder: (context) =>
+                                        GardenScreen(user: userModel)),
                               );
                             },
                             borderRadius: BorderRadius.circular(12),
@@ -219,74 +242,76 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => VersionScreen(
-                                          username: userUsername,
-                                        )),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 250,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.deepPurple.shade700,
-                                    width: 3),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 8,
-                                    offset: Offset(0, 5),
+                      if (userVersion == "free") ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => VersionScreen(
+                                            username: userUsername,
+                                          )),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: 250,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.deepPurple.shade700,
+                                      width: 3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 8,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(9),
+                                  child: Image.asset(
+                                    'assets/gif/premium.gif',
+                                    fit: BoxFit.cover,
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(9),
-                                child: Image.asset(
-                                  'assets/gif/premium.gif',
-                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 250,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9D9D9),
-                              borderRadius: BorderRadius.circular(10),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 250,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD9D9D9),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: PageView.builder(
+                                controller: _adController,
+                                itemCount: _reklamos.length,
+                                itemBuilder: (context, index) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.asset(
+                                      _reklamos[index],
+                                      fit: BoxFit.cover,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                            child: PageView.builder(
-                              controller: _adController,
-                              itemCount: _reklamos.length,
-                              itemBuilder: (context, index) {
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.asset(
-                                    _reklamos[index],
-                                    fit: BoxFit.cover,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ]
                     ],
                   ),
                 ),
@@ -392,18 +417,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPlantColumn(String plantName, {String? imageUrl}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        imageUrl != null && imageUrl.isNotEmpty
-            ? Image.asset(imageUrl, width: 90, height: 90)
-            : const Icon(Icons.circle, size: 90, color: Color(0xFFD9D9D9)),
-        Text(plantName, style: const TextStyle(fontSize: 16)),
-      ],
     );
   }
 

@@ -7,7 +7,7 @@ class GoalModel {
   DateTime startDate;
   DateTime endDate;
   int points;
-  bool isCountable;
+  bool isCompleted;
   CategoryType category;
   int endPoints;
   String userId;
@@ -19,7 +19,7 @@ class GoalModel {
     required this.startDate,
     required this.endDate,
     required this.points,
-    required this.isCountable,
+    required this.isCompleted,
     required this.category,
     required this.endPoints,
     required this.userId,
@@ -34,7 +34,7 @@ class GoalModel {
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'points': points,
-      'isCountable': isCountable,
+      'isCompleted': isCompleted,
       'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'userId': userId,
@@ -51,7 +51,7 @@ class GoalModel {
       startDate: (json['startDate'] as Timestamp).toDate(),
       endDate: (json['endDate'] as Timestamp).toDate(),
       points: json['points'] ?? 0,
-      isCountable: json['isCountable'] ?? false,
+      isCompleted: json['isCompleted'] ?? false,
       category: CategoryTypeExtension.fromJson(
           json['category'] ?? ''), // Enum iš string
       endPoints: json['endPoints'] ?? 0,
