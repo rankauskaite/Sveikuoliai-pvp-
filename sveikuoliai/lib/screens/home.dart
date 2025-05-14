@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/garden.dart';
@@ -11,6 +10,7 @@ import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:sveikuoliai/services/notification_helper.dart';
+import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,25 +21,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
-  final AppNotificationService _notificationService =
-      AppNotificationService(); // Pridėjome pranešimų paslaugą
-  bool showNotifications = false; // Ar rodyti pranešimų panelę?
-  List<AppNotification> notifications = []; // Pranešimų sąrašas
+  final AppNotificationService _notificationService = AppNotificationService();
+  bool showNotifications = false;
+  List<AppNotification> notifications = [];
   String userName = "";
   String userUsername = "";
   String userVersion = "";
   final UserService _userService = UserService();
   UserModel userModel = UserModel(
-      username: "",
-      name: "",
-      password: "",
-      role: "user",
-      notifications: true,
-      darkMode: false,
-      menstrualLength: 7,
-      email: "",
-      createdAt: DateTime.now(),
-      version: "free");
+    username: "",
+    name: "",
+    password: "",
+    role: "user",
+    notifications: true,
+    darkMode: false,
+    menstrualLength: 7,
+    email: "",
+    createdAt: DateTime.now(),
+    version: "free",
+  );
   final PageController _adController = PageController();
   final List<String> _reklamos = [
     'assets/images/reklamos/drouglas.png',
@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchSessionUser(); // Kviečiame užkrauti sesijos duomenis
+    _fetchSessionUser();
     final now = DateTime.now();
     final trigger = now.add(const Duration(seconds: 10));
     NotificationHelper.scheduleDailyNotification(
@@ -82,14 +82,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _adTimer?.cancel();
     _adController.dispose();
     super.dispose();
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchSessionUser() async {
-    // Patikrinti, ar sesijoje jau yra duomenų
     if (userName.isEmpty || userUsername.isEmpty) {
       try {
         Map<String, String?> sessionData = await _authService.getSessionUser();
@@ -111,7 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Funkcija, kuri gauna vartotojo pranešimus iš Firestore
   Future<void> _fetchUserNotifications(String username) async {
     try {
       List<AppNotification> userNotifications =
@@ -126,28 +124,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
       body: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 320,
-                  height: 600,
+          Column(
+            children: [
+              SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+              Expanded(
+                // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: horizontalPadding),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(color: Colors.white, width: 20),
                   ),
                   child: Column(
+                    // Pakeista iš Column į ListView, kad turinys būtų slenkamas
+                    // padding: const EdgeInsets.symmetric(
+                    //     vertical: 16), // Vidinis tarpas
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -159,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(
                               userName.length > 15
                                   ? '${userName.substring(0, 15)}...'
-                                  : userName, // Čia bus rodoma naudotojo vardas
+                                  : userName,
                               style: const TextStyle(fontSize: 20),
                             ),
                           ),
@@ -176,124 +187,141 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        GardenScreen(user: userModel)),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 250,
-                              height: 130,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.green.shade700, width: 3),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 8,
-                                    offset: Offset(0, 5),
+                      // Slenkama nuotraukų sritis
+                      Expanded(
+                        child: ListView(
+                          //padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              GardenScreen(user: userModel)),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: (screenSize.width -
+                                            2 * horizontalPadding) *
+                                        0.8,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.green.shade700,
+                                          width: 3),
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black26,
+                                          blurRadius: 8,
+                                          offset: Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.asset(
+                                        'assets/images/mano_sodas.png',
+                                        fit: BoxFit.fill,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            if (userVersion == "free") ...[
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => VersionScreen(
+                                                username: userUsername)),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: (screenSize.width -
+                                              2 * horizontalPadding) *
+                                          0.8,
+                                      height: 150,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.deepPurple.shade700,
+                                            width: 3),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(9),
+                                        child: Image.asset(
+                                          'assets/gif/premium.gif',
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.asset(
-                                  'assets/images/mano_sodas.png',
-                                  fit: BoxFit.fill,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      if (userVersion == "free") ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => VersionScreen(
-                                            username: userUsername,
-                                          )),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                width: 250,
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.deepPurple.shade700,
-                                      width: 3),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 8,
-                                      offset: Offset(0, 5),
+                              const SizedBox(height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: (screenSize.width -
+                                            2 * horizontalPadding) *
+                                        0.8,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD9D9D9),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(9),
-                                  child: Image.asset(
-                                    'assets/gif/premium.gif',
-                                    fit: BoxFit.cover,
+                                    child: PageView.builder(
+                                      controller: _adController,
+                                      itemCount: _reklamos.length,
+                                      itemBuilder: (context, index) {
+                                        return ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.asset(
+                                            _reklamos[index],
+                                            fit: BoxFit.cover,
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ),
+                            ],
+                            const SizedBox(
+                                height: 20), // Papildomas tarpas apačioje
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 250,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD9D9D9),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: PageView.builder(
-                                controller: _adController,
-                                itemCount: _reklamos.length,
-                                itemBuilder: (context, index) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.asset(
-                                      _reklamos[index],
-                                      fit: BoxFit.cover,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ]
+                      ),
                     ],
                   ),
                 ),
-                const BottomNavigation(),
-              ],
-            ),
+              ),
+              const BottomNavigation(),
+              SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+            ],
           ),
-          // Išslenkanti pranešimų panelė
           if (showNotifications)
             GestureDetector(
               onTap: () {
@@ -302,11 +330,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 });
               },
               child: Container(
-                color: Colors.black.withOpacity(0.3), // Permatomas fonas
+                color: Colors.black.withOpacity(0.3),
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: Container(
-                    width: 300,
+                    width: screenSize.width * 0.75,
                     height: double.infinity,
                     color: Colors.white,
                     child: Column(
@@ -335,7 +363,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    // Žymime, kad pranešimas perskaitytas
                                     if (isUnread) {
                                       _notificationService
                                           .markNotificationAsRead(
@@ -350,8 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: isUnread
-                                        ? const Color(
-                                            0xFFFFC0CB) // Neperskaityti pranešimai
+                                        ? const Color(0xFFFFC0CB)
                                         : const Color(0xFF8093F1)
                                             .withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(15),

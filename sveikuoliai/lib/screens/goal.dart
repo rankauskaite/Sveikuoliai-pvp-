@@ -68,6 +68,8 @@ class _GoalPageState extends State<GoalScreen> {
       List<GoalTask> tasks =
           await _goalTaskService.getGoalTasks(widget.goal.goalModel.id);
 
+      tasks.sort((a, b) => a.date.compareTo(b.date));
+
       setState(() {
         goalTasks = tasks;
         length = tasks.length;

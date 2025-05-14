@@ -108,6 +108,9 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       List<GoalTask> tasksFriend = await _goalTaskService.getGoalTasksForUser(
           widget.goal.sharedGoalModel.id, friendUsername);
 
+      tasksMine.sort((a, b) => a.date.compareTo(b.date));
+      tasksFriend.sort((a, b) => a.date.compareTo(b.date));
+
       setState(() {
         goalTasksMine = tasksMine;
         goalTasksFriend = tasksFriend;
