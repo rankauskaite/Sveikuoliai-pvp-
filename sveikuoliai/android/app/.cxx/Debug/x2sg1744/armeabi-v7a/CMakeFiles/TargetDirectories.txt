@@ -1,0 +1,2 @@
+C:/ktuvs/Sveikuoliai-pvp-/sveikuoliai/android/app/.cxx/Debug/x2sg1744/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/ktuvs/Sveikuoliai-pvp-/sveikuoliai/android/app/.cxx/Debug/x2sg1744/armeabi-v7a/CMakeFiles/rebuild_cache.dir

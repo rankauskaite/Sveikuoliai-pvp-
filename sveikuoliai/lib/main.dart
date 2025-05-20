@@ -6,9 +6,12 @@ import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sveikuoliai/services/notification_helper.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Stripe.publishableKey = 'pk_test_51RO1Uc2KKqo6abX1WEerA0Dglpw8P5zKNGwNwfgAqXjt7bpAZl9iZjU7YgAIfHLkqWTggU6uneFgu6JKJsVT0DFD00B1ixtIug'; 
   await Firebase.initializeApp();
   await NotificationHelper.init(); // <- Privaloma prieš bet ką kitą
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -40,6 +43,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 class AuthCheckScreen extends StatefulWidget {
   const AuthCheckScreen({super.key});
