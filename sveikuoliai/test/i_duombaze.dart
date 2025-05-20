@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
-import 'package:sveikuoliai/services/shared_goal_service.dart';
 import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:flutter/widgets.dart';
 

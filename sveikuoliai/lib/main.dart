@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   Stripe.publishableKey = 'pk_test_51RO1Uc2KKqo6abX1WEerA0Dglpw8P5zKNGwNwfgAqXjt7bpAZl9iZjU7YgAIfHLkqWTggU6uneFgu6JKJsVT0DFD00B1ixtIug'; 
   await Firebase.initializeApp();
   await NotificationHelper.init(); // <- Privaloma prieš bet ką kitą
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
 }
 

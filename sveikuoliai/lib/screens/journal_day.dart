@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'dart:io';  // reikalinga file klasei
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
@@ -13,7 +12,6 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/services/journal_upload_service.dart';
 import 'package:sveikuoliai/services/drive_services.dart';
 import 'package:sveikuoliai/services/firebase_storage_service.dart';
-import 'package:image_picker/image_picker.dart';
 
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
@@ -33,8 +31,6 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   DateTime? menstruationStart;
   late DateTime selectedTempDay = selectedDay; // Laikinas pasirinkimas
   String userUsername = "";
-  File? _selectedImage; // Įkeltas nuotraukos failas
-
 
   @override
   void initState() {
@@ -60,120 +56,52 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     }
   }
 
-  // Future<void> _fetchJournalEntry(DateTime date) async {
-  //   try {
-  //     JournalModel? entry =
-  //         await _journalService.getJournalEntryByDay(userUsername, date);
-  //     if (entry != null) {
-  //       setState(() {
-  //         journalText = entry.note;
-  //         selectedMood = entry.mood;
-  //       });
-  //     } else {
-  //       setState(() {
-  //         journalText = '';
-  //         selectedMood = MoodType.neutrali;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
-  //   }
-  // }
-
   Future<void> _fetchJournalEntry(DateTime date) async {
-  try {
-    JournalModel? entry = await _journalService.getJournalEntryByDay(userUsername, date);
+    try {
+      JournalModel? entry =
+          await _journalService.getJournalEntryByDay(userUsername, date);
+      if (entry != null) {
+        setState(() {
+          journalText = entry.note;
+          selectedMood = entry.mood;
+        });
+      } else {
+        setState(() {
+          journalText = '';
+          selectedMood = MoodType.neutrali;
+        });
+      }
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+    }
+  }
 
-    if (entry != null) {
-      setState(() {
-        journalText = entry.note ?? '';  // Užrašytas tekstas
-        selectedMood = entry.mood ?? MoodType.neutrali; // Nuotaika
-        _selectedImage = entry.photoUrl?.isNotEmpty == true
-            ? File(entry.photoUrl!) // Jei nuotrauka buvo įkelta, priskiriame ją
-            : null;
-      });
+  Future<void> _saveJournalEntry() async {
+    if (journalText.isNotEmpty) {
+      JournalModel journalModel = JournalModel(
+        id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
+        userId: userUsername,
+        note: journalText,
+        photoUrl: "",
+        mood: selectedMood,
+        date: selectedDay,
+      );
+
+      await _journalService.createJournalEntry(journalModel);
+
+      // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
+      if (mounted) {
+        String message = 'Įrašas išsaugotas! 🎉';
+        showCustomSnackBar(context, message, true);
+      }
     } else {
-      setState(() {
-        journalText = '';
-        selectedMood = MoodType.neutrali;
-        _selectedImage = null; // Jei nėra įrašo, nustatome nulinę nuotrauką
-      });
-    }
-  } catch (e) {
-    showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
-  }
-}
-
-
-  // Future<void> _saveJournalEntry() async {
-  //   if (journalText.isNotEmpty) {
-  //     JournalModel journalModel = JournalModel(
-  //       id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
-  //       userId: userUsername,
-  //       note: journalText,
-  //       photoUrl: "",
-  //       mood: selectedMood,
-  //       date: selectedDay,
-  //     );
-
-  //     await _journalService.createJournalEntry(journalModel);
-
-  //     // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
-  //     if (mounted) {
-  //       String message = 'Įrašas išsaugotas! 🎉';
-  //       showCustomSnackBar(context, message, true);
-  //     }
-  //   } else {
-  //     // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
-  //     if (mounted) {
-  //       String message = 'Užpildyk visus laukus!';
-  //       showCustomSnackBar(context, message, false);
-  //     }
-  //   }
-  // }
-
-Future<void> _saveJournalEntry() async {
-  String photoUrl = "";  // Nuotraukos URL
-
-  // Jei nuotrauka pasirinkta, įkeliam ją į Drive
-  if (_selectedImage != null) {
-    final fileId = await DriveService().uploadImageAndGetFileId();
-    if (fileId != null) {
-      photoUrl = 'https://drive.google.com/uc?export=view&id=$fileId';  // Nuotraukos URL
-      print("Nuotrauka įkelta su ID: $fileId");
-    } else {
-      print('Nepavyko įkelti nuotraukos');
+      // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
+      if (mounted) {
+        String message = 'Užpildyk visus laukus!';
+        showCustomSnackBar(context, message, false);
+      }
     }
   }
-
-  // Jei bent viena reikšmė yra užpildyta, išsaugome įrašą
-  if (journalText.isNotEmpty || selectedMood != MoodType.neutrali || _selectedImage != null) {
-    JournalModel journalModel = JournalModel(
-      id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
-      userId: userUsername,
-      note: journalText,    // Užrašytas tekstas
-      photoUrl: photoUrl,   // Nuotrauka (jei buvo pasirinkta)
-      mood: selectedMood,   // Nuotaika (nebūtina, naudojama pagal nutylėjimą)
-      date: selectedDay,    // Susiejame su pasirinkta diena
-    );
-
-    await _journalService.createJournalEntry(journalModel);
-
-    // Pranešimas apie įrašą
-    if (mounted) {
-      String message = 'Įrašas išsaugotas! 🎉';
-      showCustomSnackBar(context, message, true);
-    }
-  } else {
-    // Jei nėra teksto, nuotraukos ar nuotaikos, rodyti klaidą
-    if (mounted) {
-      String message = 'Užpildyk bent vieną lauką!';
-      showCustomSnackBar(context, message, false);
-    }
-  }
-}
-
-
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showModalBottomSheet(
@@ -271,368 +199,359 @@ Future<void> _saveJournalEntry() async {
   @override
   Widget build(BuildContext context) {
     DateTime currentDay = DateTime.now();
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    final Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Color(0xFFFCE5FC),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Color(0xFFFCE5FC), width: 10),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_left),
-                        onPressed: () {
-                          setState(() {
-                            selectedDay =
-                                selectedDay.subtract(Duration(days: 1));
-                          });
-                          _fetchJournalEntry(selectedDay);
-                        },
-                      ),
-                      Text(
-                        _formatDay(selectedDay.day),
-                        style: TextStyle(
-                            fontSize: 40, fontWeight: FontWeight.bold),
-                      ),
-                      if (!isToday(selectedDay, currentDay))
-                        IconButton(
-                          icon: const Icon(Icons.arrow_right),
-                          onPressed: () {
-                            setState(() {
-                              selectedDay = selectedDay.add(Duration(days: 1));
-                            });
-                            _fetchJournalEntry(selectedDay);
-                          },
-                        )
-                      else
-                        SizedBox(width: 48),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _capitalizeMonth(
-                            DateFormat.MMMM('lt_LT').format(selectedDay)),
-                        style: TextStyle(fontSize: 20),
-                      ),
-                    ],
-                  ),
-                  const Divider(thickness: 1),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 80,
-                        height: 480, // Nustatykite aukštį pagal poreikį
-                        child: ListView(
-                          scrollDirection: Axis.vertical,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate the available height for the pink container
+          // Subtract topPadding, bottomPadding, and approximate BottomNavigation height
+          final double bottomNavigationHeight =
+              60.0; // Approximate height of BottomNavigation
+          final double availableHeight = constraints.maxHeight -
+              topPadding -
+              bottomPadding -
+              bottomNavigationHeight;
+
+          return Center(
+            child: Column(
+              children: [
+                SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: horizontalPadding),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFCE5FC),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Color(0xFFFCE5FC), width: 10),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('Šiandien jaučiuosi:',
-                                style: TextStyle(fontSize: 15)),
-                            SizedBox(height: 10),
-                            _buildMoodCircle(MoodType.laiminga,
-                                'assets/images/nuotaikos/laiminga.png'),
-                            _buildMoodCircle(MoodType.liudna,
-                                'assets/images/nuotaikos/liudna.png'),
-                            _buildMoodCircle(MoodType.pikta,
-                                'assets/images/nuotaikos/pikta.png'),
-                            _buildMoodCircle(MoodType.pavargusi,
-                                'assets/images/nuotaikos/pavargus.png'),
-                            _buildMoodCircle(MoodType.motyvuota,
-                                'assets/images/nuotaikos/motyvuota.png'),
-                            _buildMoodCircle(MoodType.ryztinga,
-                                'assets/images/nuotaikos/ryztinga.png'),
-                            _buildMoodCircle(MoodType.suglumusi,
-                                'assets/images/nuotaikos/suglumusi.png'),
+                            IconButton(
+                              icon: const Icon(Icons.arrow_left),
+                              onPressed: () {
+                                setState(() {
+                                  selectedDay =
+                                      selectedDay.subtract(Duration(days: 1));
+                                });
+                                _fetchJournalEntry(selectedDay);
+                              },
+                            ),
+                            Text(
+                              _formatDay(selectedDay.day),
+                              style: TextStyle(
+                                  fontSize: 40, fontWeight: FontWeight.bold),
+                            ),
+                            if (!isToday(selectedDay, currentDay))
+                              IconButton(
+                                icon: const Icon(Icons.arrow_right),
+                                onPressed: () {
+                                  setState(() {
+                                    selectedDay =
+                                        selectedDay.add(Duration(days: 1));
+                                  });
+                                  _fetchJournalEntry(selectedDay);
+                                },
+                              )
+                            else
+                              SizedBox(width: 48),
                           ],
                         ),
-                      ),
-                      Container(height: 480, width: 1, color: Colors.grey),
-                      Expanded(
-                        child: Column(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 200,
-                              height: 100,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.asset(
-                                  'assets/images/dienorascio_vizualas.png',
-                                  fit: BoxFit.fill,
-                                ),
+                            Text(
+                              _capitalizeMonth(
+                                  DateFormat.MMMM('lt_LT').format(selectedDay)),
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ],
+                        ),
+                        const Divider(thickness: 1),
+                        SizedBox(height: 10),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 80,
+                              // Set height to match the pink container's content area
+                              height: availableHeight -
+                                  140.0, // Subtract approximate height of header (day + month + divider)
+                              child: ListView(
+                                scrollDirection: Axis.vertical,
+                                children: [
+                                  Text('Šiandien jaučiuosi:',
+                                      style: TextStyle(fontSize: 15)),
+                                  SizedBox(height: 10),
+                                  _buildMoodCircle(MoodType.laiminga,
+                                      'assets/images/nuotaikos/laiminga.png'),
+                                  _buildMoodCircle(MoodType.liudna,
+                                      'assets/images/nuotaikos/liudna.png'),
+                                  _buildMoodCircle(MoodType.pikta,
+                                      'assets/images/nuotaikos/pikta.png'),
+                                  _buildMoodCircle(MoodType.pavargusi,
+                                      'assets/images/nuotaikos/pavargus.png'),
+                                  _buildMoodCircle(MoodType.motyvuota,
+                                      'assets/images/nuotaikos/motyvuota.png'),
+                                  _buildMoodCircle(MoodType.ryztinga,
+                                      'assets/images/nuotaikos/ryztinga.png'),
+                                  _buildMoodCircle(MoodType.suglumusi,
+                                      'assets/images/nuotaikos/suglumusi.png'),
+                                ],
                               ),
                             ),
-                            SizedBox(height: 5),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              child: GestureDetector(
-                                onTap: () {
-                                  String tempText =
-                                      journalText; // Laikinas kintamasis įvestam tekstui
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    builder: (BuildContext context) {
-                                      return Padding(
-                                        padding: EdgeInsets.only(
-                                          bottom: MediaQuery.of(context)
-                                              .viewInsets
-                                              .bottom,
-                                          left: 20,
-                                          right: 20,
-                                          top: 20,
+                            Container(
+                              // Set divider height to match the mood ListView
+                              height: availableHeight -
+                                  140.0, // Same as ListView height
+                              width: 1,
+                              color: Colors.grey,
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  Container(
+                                    width: 200,
+                                    height: 110,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.asset(
+                                        'assets/images/dienorascio_vizualas.png',
+                                        fit: BoxFit.fill,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        String tempText = journalText;
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          builder: (BuildContext context) {
+                                            return Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: MediaQuery.of(context)
+                                                    .viewInsets
+                                                    .bottom,
+                                                left: 20,
+                                                right: 20,
+                                                top: 20,
+                                              ),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  TextField(
+                                                    maxLines: null,
+                                                    autofocus: true,
+                                                    onChanged: (value) {
+                                                      tempText = value;
+                                                    },
+                                                    decoration: InputDecoration(
+                                                      hintText:
+                                                          'Rašykite čia...',
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      filled: true,
+                                                      fillColor: Colors.white,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  ElevatedButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        journalText = tempText;
+                                                      });
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text('Išsaugoti'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Container(
+                                        height: 115,
+                                        decoration: BoxDecoration(
+                                          color: Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                              color: Colors.transparent,
+                                              width: 1),
                                         ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            TextField(
-                                            onChanged: (value) {
-                                              setState(() {
-                                                journalText = value;  // Tekstas, kurį įvedė vartotojas
-                                              });
-                                              _saveJournalEntry();  // Automatiškai išsaugoti, kai įvedamas tekstas
-                                            },
-                                            decoration: InputDecoration(
-                                              hintText: 'Rašykite čia...',
-                                              border: OutlineInputBorder(),
-                                              filled: true,
-                                              fillColor: Colors.white,
+                                        child: Center(
+                                          child: Text(
+                                            journalText.isEmpty
+                                                ? 'Įrašyk savo mintis\n································\n································\n································'
+                                                : journalText,
+                                            style: TextStyle(
+                                                color: Color(0xFFB388EB),
+                                                fontSize: 18),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      await uploadJournalEntry(
+                                        date: selectedDay,
+                                        note: journalText,
+                                        mood: selectedMood,
+                                      );
+                                      if (mounted) {
+                                        showCustomSnackBar(
+                                            context,
+                                            'Nuotrauka įkelta sėkmingai! 📸',
+                                            true);
+                                      }
+                                    },
+                                    child: Container(
+                                      width: 200,
+                                      height: 150,
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepPurple.shade50,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                            color: Colors.deepPurple.shade200),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.05),
+                                            spreadRadius: 2,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.add_a_photo,
+                                              size: 50,
+                                              color: Colors.deepPurple[300]),
+                                          SizedBox(height: 10),
+                                          Text(
+                                            'Įkelti nuotrauką',
+                                            style: TextStyle(
+                                                fontSize: 18,
+                                                color: Colors.deepPurple[300]),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  GestureDetector(
+                                    onTap: () => _selectDate(context),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepPurple.shade50,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                            color: Colors.deepPurple.shade200),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.calendar_today,
+                                              color: Colors.deepPurple,
+                                              size: 16),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Pažymėti mėnesines',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.deepPurple,
                                             ),
                                           ),
-                                            SizedBox(height: 10),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  journalText =
-                                                      tempText; // Išsaugome tekstą
-                                                });
-                                                Navigator.pop(
-                                                    context); // Uždaro modalą
-                                              },
-                                              child: Text('Išsaugoti'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                                child: Container(
-                                  height: 115,
-                                  decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                        color: Colors.transparent, width: 1),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      journalText.isEmpty
-                                          ? 'Įrašyk savo mintis\n································\n································\n································'
-                                          : journalText,
-                                      style: TextStyle(
-                                          color: Color(0xFFB388EB),
-                                          fontSize: 18),
-                                      textAlign: TextAlign.justify,
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 5,
-                            ),
-                            // Container(
-                            //   width: 200,
-                            //   height: 150,
-                            //   color: const Color(0xFFD9D9D9),
-                            //   child: Center(
-                            //     child: Text(
-                            //       'Įkelti nuotrauką',
-                            //       style: TextStyle(
-                            //           fontSize: 37, color: Colors.black),
-                            //       textAlign: TextAlign.center,
-                            //     ),
-                            //   ),
-                            // ),
-                            GestureDetector(
-/////rugiles
-                            onTap: () async {
-                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-
-                              if (pickedFile != null) {
-                                setState(() {
-                                  _selectedImage = File(pickedFile.path);  // Laikyti pasirinktą nuotrauką
-                                });
-
-                                // Jei reikia, galite įkelti nuotrauką į Firebase arba Drive
-                                final fileId = await DriveService().uploadImageAndGetFileId();
-                                if (fileId != null) {
-                                  // Galite saugoti fileId į Firestore arba naudoti toliau
-                                  print('Nuotrauka įkelta su ID: $fileId');
-                                }
-                              }
-                            },
-                            child: _selectedImage == null  // Jei nuotrauka nepasirinkta
-                                ? Container(
-                                    width: 200,
-                                    height: 150,
-                                    color: const Color(0xFFD9D9D9),
-                                    child: Center(
+                                  if (menstruationStart != null &&
+                                      !selectedDay
+                                          .isBefore(menstruationStart!) &&
+                                      selectedDay
+                                              .difference(menstruationStart!)
+                                              .inDays <
+                                          7)
+                                    Text(
+                                      'Šiandien yra ${selectedDay.difference(menstruationStart!).inDays + 1} mėnesinių diena',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  SizedBox(height: 5),
+                                  SizedBox(
+                                    width: 150,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {});
+                                        _saveJournalEntry();
+                                        Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    JournalScreen()));
+                                      },
                                       child: Text(
-                                        'Įkelti nuotrauką',
-                                        style: TextStyle(fontSize: 37, color: Colors.black),
-                                        textAlign: TextAlign.center,
+                                        'Išsaugoti',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
-                                  )
-                                : Image.file(
-                                    _selectedImage!,  // Rodyti įkeltą nuotrauką
-                                    fit: BoxFit.cover,
-                                    width: 200,
-                                    height: 150,
                                   ),
-                          ),
-/////main
-                              onTap: () async {
-                                await uploadJournalEntry(
-                                  date: selectedDay,
-                                  note: journalText,
-                                  mood: selectedMood,
-                                );
-
-                                if (mounted) {
-                                  showCustomSnackBar(context,
-                                      'Nuotrauka įkelta sėkmingai! 📸', true);
-                                }
-                              },
-                              child: Container(
-                                width: 200,
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple.shade50,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                      color: Colors.deepPurple[200] ??
-                                          Colors.deepPurple,
-                                      style: BorderStyle.solid),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      spreadRadius: 2,
-                                      blurRadius: 8,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add_a_photo,
-                                        size: 50,
-                                        color: Colors.deepPurple[300]),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      'Įkelti nuotrauką',
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.deepPurple[300]),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-/////main
-                            SizedBox(height: 5),
-                            GestureDetector(
-                              onTap: () => _selectDate(context),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple.shade50,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                      color: Colors.deepPurple.shade200),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    Icon(Icons.calendar_today,
-                                        color: Colors.deepPurple, size: 16),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Pažymėti mėnesines',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.deepPurple,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            if (menstruationStart != null &&
-                                !selectedDay.isBefore(menstruationStart!) &&
-                                selectedDay
-                                        .difference(menstruationStart!)
-                                        .inDays <
-                                    7)
-                              Text(
-                                'Šiandien yra ${selectedDay.difference(menstruationStart!).inDays + 1} mėnesinių diena',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            SizedBox(
-                              width: 150, // Užpildo visą galimą plotį
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {});
-                                  _saveJournalEntry();
-                                  Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              JournalScreen()));
-                                },
-                                child: Text(
-                                  'Išsaugoti',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const BottomNavigation(),
+                SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+              ],
             ),
-            const BottomNavigation(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -651,51 +570,26 @@ Future<void> _saveJournalEntry() async {
     return day.toString().padLeft(2, '0');
   }
 
-  // Widget _buildMoodCircle(MoodType mood, String imageUrl) {
-  //   bool isSelected = selectedMood == mood;
-  //   return GestureDetector(
-  //     onTap: () {
-  //       setState(() {
-  //         selectedMood = mood;
-  //       });
-  //     },
-  //     child: Column(
-  //       children: [
-  //         CircleAvatar(
-  //           radius: 37,
-  //           backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
-  //           child: Image.asset(imageUrl, width: 70, height: 70),
-  //         ),
-  //         Text(mood.toDisplayName(),
-  //             style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
-  //         SizedBox(height: 10),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _buildMoodCircle(MoodType mood, String imageUrl) {
-  bool isSelected = selectedMood == mood;
-
-  return GestureDetector(
-    onTap: () {
-      setState(() {
-        selectedMood = mood;  // Pasirinkta nuotaika
-      });
-      _saveJournalEntry();  // Išsaugome nuotaiką iš karto
-    },
-    child: Column(
-      children: [
-        CircleAvatar(
-          radius: 37,
-          backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
-          child: Image.asset(imageUrl, width: 70, height: 70),
-        ),
-        Text(mood.toDisplayName(), style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
-        SizedBox(height: 10),
-      ],
-    ),
-  );
-}
-
+    bool isSelected = selectedMood == mood;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedMood = mood;
+        });
+      },
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 37,
+            backgroundColor: isSelected ? Colors.deepPurple : Color(0xFFFCE5FC),
+            child: Image.asset(imageUrl, width: 70, height: 70),
+          ),
+          Text(mood.toDisplayName(),
+              style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
+          SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
 }

@@ -38,10 +38,12 @@ class _HabitScreenState extends State<HabitScreen> {
   final TextEditingController _progressController = TextEditingController();
   int pointss = 0;
   int streakk = 0;
+  late DateTime lastProgressDate;
 
   @override
   void initState() {
     super.initState();
+    lastProgressDate = widget.habit.habitModel.startDate;
     _loadData();
   }
 
@@ -79,6 +81,7 @@ class _HabitScreenState extends State<HabitScreen> {
         setState(() {
           progressList = all;
           habitProgress = all.last;
+          lastProgressDate = all.last.date;
         });
       }
     } catch (e) {
@@ -137,262 +140,281 @@ class _HabitScreenState extends State<HabitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
+      resizeToAvoidBottomInset: false,
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HabitsGoalsScreen()),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back_ios,
-                            size: 30,
-                          ),
-                        ),
-                        const Expanded(child: SizedBox()),
-                        if (widget.habit.habitType.type == 'custom' &&
-                            widget.habit.habitModel.isCompleted == false)
+            const SizedBox(height: topPadding),
+            Expanded(
+              child: Container(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
                           IconButton(
                             onPressed: () {
-                              CustomDialogs.showEditDialog(
-                                  context: context,
-                                  entityType: EntityType.habit,
-                                  entity: widget.habit,
-                                  accentColor: Color(0xFFB388EB),
-                                  onSave: () {});
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HabitsGoalsScreen()),
+                              );
                             },
                             icon: const Icon(
-                              Icons.edit_outlined,
+                              Icons.arrow_back_ios,
                               size: 30,
                             ),
                           ),
-                        IconButton(
-                          onPressed: () {
-                            CustomDialogs.showDeleteDialog(
-                              context: context,
-                              entityType: EntityType.habit,
-                              entity: widget.habit,
-                              accentColor: Color(0xFFB388EB),
-                              onDelete: () {
-                                _deleteHabit();
+                          const Expanded(child: SizedBox()),
+                          if (widget.habit.habitType.type == 'custom' &&
+                              widget.habit.habitModel.isCompleted == false)
+                            IconButton(
+                              onPressed: () {
+                                CustomDialogs.showEditDialog(
+                                    context: context,
+                                    entityType: EntityType.habit,
+                                    entity: widget.habit,
+                                    accentColor: Color(0xFFB388EB),
+                                    onSave: () {});
                               },
-                            );
-                          },
-                          icon: Icon(
-                            Icons.remove_circle_outline,
-                            size: 30,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      widget.habit.habitType.title,
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFB388EB),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Progreso indikatorius su procentais
-                    buildProgressIndicator(
-                      _calculateProgress(),
-                      widget.habit.habitModel.plantId,
-                      widget.habit.habitModel.points,
-                    ),
-
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: widget.habit.habitModel.isCompleted
-                          ? null
-                          : () {
-                              CustomDialogs.showProgressDialog(
-                                  context: context,
-                                  habit: widget.habit,
-                                  accentColor: Color(0xFFB388EB),
-                                  onSave: () {},
-                                  progressController: _progressController,
-                                  points: pointss,
-                                  streak: streakk);
-                            },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
-                        iconColor: const Color(0xFFB388EB), // Violetinė spalva
-                        backgroundColor: widget.habit.habitModel.isCompleted
-                            ? Colors.grey
-                            : null,
-                        //: Color(0xFFB388EB),
-                      ),
-                      child: Text(
-                        widget.habit.habitModel.isCompleted
-                            ? 'Įprotis baigtas'
-                            : 'Žymėti progresą',
-                        style: const TextStyle(
-                            fontSize: 20, color: Colors.deepPurple),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Streak: ',
-                          style:
-                              TextStyle(fontSize: 15, color: Color(0xFFB388EB)),
-                        ),
-                        Text(
-                          (habitProgress.date.day == DateTime.now().day ||
-                                  habitProgress.date.day ==
-                                      DateTime.now().day - 1)
-                              ? habitProgress.streak.toString()
-                              : "0",
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFF8093F1),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Apie įprotį',
-                      style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
-                    ),
-                    Text(
-                      widget.habit.habitType.description,
-                      style: const TextStyle(fontSize: 18),
-                      softWrap: true, // Leisti tekstui kelti į kitą eilutę
-                      overflow: TextOverflow.visible, // Nesutrumpinti teksto
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Trukmė: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          widget.habit.habitModel.endPoints == 7
-                              ? "1 savaitė"
-                              : widget.habit.habitModel.endPoints == 14
-                                  ? "2 savaitės"
-                                  : widget.habit.habitModel.endPoints == 30
-                                      ? "1 mėnuo"
-                                      : widget.habit.habitModel.endPoints == 45
-                                          ? "1,5 mėnesio"
-                                          : widget.habit.habitModel.endPoints ==
-                                                  60
-                                              ? "2 mėnesiai"
-                                              : widget.habit.habitModel
-                                                          .endPoints ==
-                                                      90
-                                                  ? "3 mėnesiai"
-                                                  : "6 mėnesiai",
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pradžios data: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.habit.habitModel.startDate),
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
-                        )
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pabaigos data: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.habit.habitModel.endDate),
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Augaliukas: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          plant.name,
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFB388EB)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Statistika',
-                      style: TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 200,
-                      child: progressList.isEmpty
-                          ? const Text("Nėra progreso duomenų")
-                          : HabitProgressChart(
-                              habit: widget.habit.habitModel,
-                              progressList: progressList,
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                size: 30,
+                              ),
                             ),
-                    ),
-                  ],
+                          IconButton(
+                            onPressed: () {
+                              CustomDialogs.showDeleteDialog(
+                                context: context,
+                                entityType: EntityType.habit,
+                                entity: widget.habit,
+                                accentColor: Color(0xFFB388EB),
+                                onDelete: () {
+                                  _deleteHabit();
+                                },
+                              );
+                            },
+                            icon: Icon(
+                              Icons.remove_circle_outline,
+                              size: 30,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        widget.habit.habitType.title,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFB388EB),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Progreso indikatorius su procentais
+                      buildProgressIndicator(
+                        _calculateProgress(),
+                        widget.habit.habitModel.plantId,
+                        widget.habit.habitModel.points,
+                        lastProgressDate,
+                      ),
+
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: widget.habit.habitModel.isCompleted
+                            ? null
+                            : () {
+                                CustomDialogs.showProgressDialog(
+                                    context: context,
+                                    habit: widget.habit,
+                                    accentColor: Color(0xFFB388EB),
+                                    onSave: () {},
+                                    progressController: _progressController,
+                                    points: pointss,
+                                    streak: streakk);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(double.infinity, 50),
+                          iconColor:
+                              const Color(0xFFB388EB), // Violetinė spalva
+                          backgroundColor: widget.habit.habitModel.isCompleted
+                              ? Colors.grey
+                              : null,
+                          //: Color(0xFFB388EB),
+                        ),
+                        child: Text(
+                          widget.habit.habitModel.isCompleted
+                              ? 'Įprotis baigtas'
+                              : 'Žymėti progresą',
+                          style: const TextStyle(
+                              fontSize: 20, color: Colors.deepPurple),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Streak: ',
+                            style: TextStyle(
+                                fontSize: 15, color: Color(0xFFB388EB)),
+                          ),
+                          Text(
+                            (habitProgress.date.day == DateTime.now().day ||
+                                    habitProgress.date.day ==
+                                        DateTime.now().day - 1)
+                                ? habitProgress.streak.toString()
+                                : "0",
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF8093F1),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Apie įprotį',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
+                      ),
+                      Text(
+                        widget.habit.habitType.description,
+                        style: const TextStyle(fontSize: 18),
+                        softWrap: true, // Leisti tekstui kelti į kitą eilutę
+                        overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Trukmė: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            widget.habit.habitModel.endPoints == 7
+                                ? "1 savaitė"
+                                : widget.habit.habitModel.endPoints == 14
+                                    ? "2 savaitės"
+                                    : widget.habit.habitModel.endPoints == 30
+                                        ? "1 mėnuo"
+                                        : widget.habit.habitModel.endPoints ==
+                                                45
+                                            ? "1,5 mėnesio"
+                                            : widget.habit.habitModel
+                                                        .endPoints ==
+                                                    60
+                                                ? "2 mėnesiai"
+                                                : widget.habit.habitModel
+                                                            .endPoints ==
+                                                        90
+                                                    ? "3 mėnesiai"
+                                                    : "6 mėnesiai",
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFFB388EB)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pradžios data: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            DateFormat('yyyy MMMM d', 'lt')
+                                .format(widget.habit.habitModel.startDate),
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFFB388EB)),
+                          )
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pabaigos data: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            DateFormat('yyyy MMMM d', 'lt')
+                                .format(widget.habit.habitModel.endDate),
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFFB388EB)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Augaliukas: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            plant.name,
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFFB388EB)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Statistika',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 200,
+                        child: progressList.isEmpty
+                            ? const Text("Nėra progreso duomenų")
+                            : HabitProgressChart(
+                                habit: widget.habit.habitModel,
+                                progressList: progressList,
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const BottomNavigation(),
+            const SizedBox(height: bottomPadding),
           ],
         ),
       ),

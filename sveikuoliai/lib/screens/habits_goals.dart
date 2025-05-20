@@ -147,174 +147,178 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight:
+            0, // Nustatome nulinį aukštį, nes tarpą valdysime topPadding
         backgroundColor: const Color(0xFF8093F1),
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-                width: 320,
-                height: 600,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        ProfileButton(),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        // Mano įpročiai
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedIndex = 0;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: selectedIndex == 0
-                                    ? Color(0xFFB388EB)
-                                    : Color(0xFFD9D9D9),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(30),
-                                  bottomLeft: Radius.circular(30),
-                                ),
-                                border: selectedIndex == 2
-                                    ? Border(
-                                        right: BorderSide(
-                                          color:
-                                              Colors.grey[400] ?? Colors.grey,
-                                          width: 1,
-                                        ),
-                                      )
-                                    : null,
+      body: Column(
+        children: [
+          SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+          Expanded(
+            // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.white, width: 20),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ProfileButton(),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedIndex = 0;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: selectedIndex == 0
+                                  ? Color(0xFFB388EB)
+                                  : Color(0xFFD9D9D9),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(30),
+                                bottomLeft: Radius.circular(30),
                               ),
-                              child: Center(
-                                child: Text(
-                                  'Mano įpročiai',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: selectedIndex == 0
-                                        ? Colors.white
-                                        : Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              border: selectedIndex == 2
+                                  ? Border(
+                                      right: BorderSide(
+                                        color: Colors.grey[400] ?? Colors.grey,
+                                        width: 1,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Mano įpročiai',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: selectedIndex == 0
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        // Mano tikslai
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedIndex = 1;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: selectedIndex == 1
-                                    ? Color(0xFF72ddf7)
-                                    : Color(0xFFD9D9D9),
-                                borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(30),
-                                  bottomRight: Radius.circular(30),
-                                ),
-                                border: selectedIndex == 2
-                                    ? Border(
-                                        left: BorderSide(
-                                          color:
-                                              Colors.grey[400] ?? Colors.grey,
-                                          width: 1,
-                                        ),
-                                      )
-                                    : null,
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedIndex = 1;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: selectedIndex == 1
+                                  ? Color(0xFF72ddf7)
+                                  : Color(0xFFD9D9D9),
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(30),
+                                bottomRight: Radius.circular(30),
                               ),
-                              child: Center(
-                                child: Text(
-                                  'Mano tikslai',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: selectedIndex == 1
-                                        ? Colors.white
-                                        : Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                              border: selectedIndex == 2
+                                  ? Border(
+                                      left: BorderSide(
+                                        color: Colors.grey[400] ?? Colors.grey,
+                                        width: 1,
+                                      ),
+                                    )
+                                  : null,
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (userVersion == 'premium') ...[
-                      SizedBox(
-                          height:
-                              5), // Tarpas tarp pirmos eilės ir trečio mygtuko
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedIndex = 2;
-                          });
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          margin: EdgeInsets.symmetric(horizontal: 20),
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: selectedIndex == 2
-                                ? Color(0xFFbcd979)
-                                : Color(0xFFD9D9D9),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Mano tikslai su draugais',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: selectedIndex == 2
-                                    ? Colors.white
-                                    : Colors.black,
-                                fontWeight: FontWeight.bold,
+                            child: Center(
+                              child: Text(
+                                'Mano tikslai',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: selectedIndex == 1
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ],
+                  ),
+                  if (userVersion == 'premium') ...[
                     SizedBox(height: 5),
-                    // Turinys pagal pasirinkimą
-                    Expanded(
-                      child: selectedIndex == 0
-                          ? _buildHabits()
-                          : selectedIndex == 1
-                              ? _buildGoals()
-                              : _buildFriendsGoals(
-                                  userUsername), // Nauja funkcija draugų tikslams
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedIndex = 2;
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.symmetric(horizontal: 20),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: selectedIndex == 2
+                              ? Color(0xFFbcd979)
+                              : Color(0xFFD9D9D9),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Mano tikslai su draugais',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: selectedIndex == 2
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
-                )),
-            const BottomNavigation(), // Įterpiama navigacija
-          ],
-        ),
+                  SizedBox(height: 5),
+                  Expanded(
+                    child: selectedIndex == 0
+                        ? _buildHabits()
+                        : selectedIndex == 1
+                            ? _buildGoals()
+                            : _buildFriendsGoals(userUsername),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const BottomNavigation(),
+          SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+        ],
       ),
     );
   }

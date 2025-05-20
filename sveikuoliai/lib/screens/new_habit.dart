@@ -17,88 +17,106 @@ class NewHabitScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
+      resizeToAvoidBottomInset: false, // Prevent resizing when keyboard appears
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 50,
-                  ),
-                  const Text(
-                    'Naujas įprotis',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Karuselė su įpročiais
-                  SizedBox(
-                    height: 300, // Aukštis karuselei
-                    child: PageView(
-                      scrollDirection:
-                          Axis.horizontal, // Horizontalus slinkimas
-                      controller: PageController(
-                          viewportFraction: 0.9), // Pagerins sklandumą
+            SizedBox(
+              height: topPadding,
+            ),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        ...defaultHabitTypes.map((habit) {
-                          return HabitCard(
-                            habitId: habit.id,
-                            habitName: habit.title,
-                            habitDescription: habit.description,
-                            habitIcon: habitIcons[habit.id] ??
-                                Icons
-                                    .help, // Galite naudoti specifinį piktogramą pagal tipą
-                          );
-                        }).toList(),
-                        // Paskutinė kortelė su tikslu
-                        HabitCard(
-                          habitId: '',
-                          habitName: 'Pridėti savo įprotį',
-                          habitDescription: 'Sukurk ir pridėk savo įprotį',
-                          habitIcon: Icons.add_circle,
-                          isCustom:
-                              true, // Nurodoma, kad ši kortelė yra paskutinė
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.arrow_back_ios,
+                            size: 30,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(
+                      height: 50,
+                    ),
+                    const Text(
+                      'Naujas įprotis',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Karuselė su įpročiais
+                    SizedBox(
+                      height: 350, // Aukštis karuselei
+                      child: PageView(
+                        scrollDirection:
+                            Axis.horizontal, // Horizontalus slinkimas
+                        controller: PageController(
+                            viewportFraction: 0.9), // Pagerins sklandumą
+                        children: [
+                          ...defaultHabitTypes.map((habit) {
+                            return HabitCard(
+                              habitId: habit.id,
+                              habitName: habit.title,
+                              habitDescription: habit.description,
+                              habitIcon: habitIcons[habit.id] ??
+                                  Icons
+                                      .help, // Galite naudoti specifinį piktogramą pagal tipą
+                            );
+                          }).toList(),
+                          // Paskutinė kortelė su tikslu
+                          HabitCard(
+                            habitId: '',
+                            habitName: 'Pridėti savo įprotį',
+                            habitDescription: 'Sukurk ir pridėk savo įprotį',
+                            habitIcon: Icons.add_circle,
+                            isCustom:
+                                true, // Nurodoma, kad ši kortelė yra paskutinė
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const BottomNavigation(), // Įterpiama navigacija
+            const SizedBox(
+              height: bottomPadding,
+            ),
           ],
         ),
       ),
@@ -326,7 +344,7 @@ class _HabitCardState extends State<HabitCard> {
           children: [
             Icon(
               widget.habitIcon,
-              size: 80,
+              size: 100,
               color: Colors.white,
             ),
             const SizedBox(height: 20),

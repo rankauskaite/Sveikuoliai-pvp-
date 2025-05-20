@@ -65,221 +65,257 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final AuthService _authService = AuthService();
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    HomeScreen()), // Pakeiskite į jūsų prisijungimo ekraną
-                          );
-                        },
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
-                        ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => UpdateProfileScreen(
-                                      version: userVersion,
-                                    )),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          size: 30,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const SettingsScreen()),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.settings_outlined,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Stack(
-                    children: [
-                      // Centrinė account_circle ikona
-                      Center(
-                        child: const Icon(
-                          Icons.account_circle,
-                          size: 200,
-                          color: Color(0xFFD9D9D9),
-                        ),
-                      ),
-                      // Viršutinė dešinė logout ikona
-                      Positioned(
-                        top: 5, // Galite koreguoti atstumą nuo viršaus
-                        right: 0, // Galite koreguoti atstumą nuo dešinės
-                        child: IconButton(
-                          onPressed: () async {
-                            await _authService.signOut();
+            SizedBox(height: topPadding),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        IconButton(
+                          onPressed: () {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      HelloScreen()), // Pakeiskite į jūsų prisijungimo ekraną
+                                      HomeScreen()), // Pakeiskite į jūsų prisijungimo ekraną
                             );
                           },
                           icon: Icon(
-                            Icons.logout,
+                            Icons.arrow_back_ios,
                             size: 30,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    userName,
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    userUsername,
-                    style: TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mano duomenys',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'El. paštas',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        userEmail,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFFB388EB),
-                          decoration: TextDecoration.underline,
-                          decorationColor: Color(0xFFB388EB),
+                        const Expanded(child: SizedBox()),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => UpdateProfileScreen(
+                                        version: userVersion,
+                                      )),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 30,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Registracijos data',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        userJoinDate.toString().substring(0, 10),
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFFB388EB),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const SettingsScreen()),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.settings_outlined,
+                            size: 30,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Versija: ',
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      Text(
-                        userVersion,
-                        style:
-                            TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-                  if (userVersion == 'Gija PLIUS') ...[
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const FriendsScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
-                        iconColor: const Color(0xFF8093F1), // Violetinė spalva
-                      ),
-                      child: const Text(
-                        'Draugai',
-                        style: TextStyle(fontSize: 20),
-                      ),
+                      ],
                     ),
-                  ] else ...[
-                    ElevatedButton(
-                      onPressed: null,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
-                        iconColor: const Color(0xFF8093F1), // Violetinė spalva
-                      ),
-                      child: const Text(
-                        'Draugų funkcija - Gija PLIUS',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                    Stack(
+                      children: [
+                        // Centrinė account_circle ikona
+                        Center(
+                          child: const Icon(
+                            Icons.account_circle,
+                            size: 250,
+                            color: Color(0xFFD9D9D9),
+                          ),
+                        ),
+                        // Viršutinė dešinė logout ikona
+                        Positioned(
+                          top: 5, // Galite koreguoti atstumą nuo viršaus
+                          right: 0, // Galite koreguoti atstumą nuo dešinės
+                          child: IconButton(
+                            onPressed: () async {
+                              await _authService.signOut();
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        HelloScreen()), // Pakeiskite į jūsų prisijungimo ekraną
+                              );
+                            },
+                            icon: Icon(
+                              Icons.logout,
+                              size: 30,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ]
-                ],
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                userName,
+                                style: TextStyle(
+                                    fontSize: 30, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                userUsername,
+                                style: TextStyle(
+                                    fontSize: 15, color: Color(0xFF8093F1)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Mano duomenys',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                'El. paštas',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                userEmail,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFFB388EB),
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Color(0xFFB388EB),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Registracijos data',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                userJoinDate.toString().substring(0, 10),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFFB388EB),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Versija: ',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                              Text(
+                                userVersion,
+                                style: TextStyle(
+                                    fontSize: 15, color: Color(0xFF8093F1)),
+                              )
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                          if (userVersion == 'Gija PLIUS') ...[
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const FriendsScreen()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: Size(double.infinity, 50),
+                                iconColor:
+                                    const Color(0xFF8093F1), // Violetinė spalva
+                              ),
+                              child: const Text(
+                                'Draugai',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ),
+                          ] else ...[
+                            ElevatedButton(
+                              onPressed: null,
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: Size(double.infinity, 50),
+                                iconColor:
+                                    const Color(0xFF8093F1), // Violetinė spalva
+                              ),
+                              child: const Text(
+                                'Draugų funkcija - Gija PLIUS',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
             const BottomNavigation(), // Įterpiama navigacija
+            SizedBox(
+              height: bottomPadding,
+            ),
           ],
         ),
       ),

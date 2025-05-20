@@ -79,187 +79,201 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.grey[900] : Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: isDarkMode ? Colors.grey[800]! : Colors.white,
-                  width: 20,
+            SizedBox(height: topPadding),
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
                 ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.arrow_back_ios, size: 30),
-                      ),
-                      const Expanded(child: SizedBox()),
-                      ElevatedButton(
-                        onPressed: () {
-                          _saveSettings(); // Išsaugo tik nustatytus duomenis
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Išsaugoti'),
-                      ),
-                    ],
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Nustatymai',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  // Pranešimų nustatymas su keičiamu varpeliu
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        notificationsEnabled = !notificationsEnabled;
-                      });
-                    },
-                    child: Row(
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Icon(
-                          notificationsEnabled
-                              ? Icons.notifications_outlined
-                              : Icons.notifications_off_outlined,
-                          size: 30,
-                          color: isDarkMode ? Colors.white : Colors.black,
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.arrow_back_ios, size: 30),
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          notificationsEnabled
-                              ? 'Pranešimai: gauti'
-                              : 'Pranešimai: negauti',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: isDarkMode ? Colors.white : Colors.black,
-                          ),
+                        const Expanded(child: SizedBox()),
+                        ElevatedButton(
+                          onPressed: () {
+                            _saveSettings(); // Išsaugo tik nustatytus duomenis
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Išsaugoti'),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Temos perjungimas su saulute ir menuliu
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        isDarkMode = !isDarkMode;
-                      });
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Icon(
-                          isDarkMode
-                              ? Icons.dark_mode
-                              : Icons.wb_sunny_outlined,
-                          size: 30,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          isDarkMode ? 'Tema: tamsi' : 'Tema: šviesi',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: isDarkMode ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Pasirinkimas kiek dienų trunka mėnesinės
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 30,
+                    const SizedBox(height: 20),
+                    Text(
+                      'Nustatymai',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Mėnesinių trukmė:',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      SizedBox(width: 5),
-                      // Paspaudus skaičių, rodomas dialogo langas
-                      GestureDetector(
-                        onTap: () {
-                          _showEditDialog(context);
-                        },
-                        child: Row(
-                          children: [
-                            Text(
-                              _selectedDays.toString(),
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
+                    ),
+                    const SizedBox(height: 30),
+                    // Pranešimų nustatymas su keičiamu varpeliu
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          notificationsEnabled = !notificationsEnabled;
+                        });
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(
+                            notificationsEnabled
+                                ? Icons.notifications_outlined
+                                : Icons.notifications_off_outlined,
+                            size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            notificationsEnabled
+                                ? 'Pranešimai: gauti'
+                                : 'Pranešimai: negauti',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.account_circle,
-                        size: 30,
-                        color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                    const SizedBox(height: 20),
+                    // Temos perjungimas su saulute ir menuliu
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isDarkMode = !isDarkMode;
+                        });
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(
+                            isDarkMode
+                                ? Icons.dark_mode
+                                : Icons.wb_sunny_outlined,
+                            size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            isDarkMode ? 'Tema: tamsi' : 'Tema: šviesi',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Ištrinti paskyrą',
-                        style: TextStyle(
-                          fontSize: 20,
+                    ),
+                    const SizedBox(height: 20),
+                    // Pasirinkimas kiek dienų trunka mėnesinės
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 30,
                           color: isDarkMode ? Colors.white : Colors.black,
                         ),
-                      ),
-                      IconButton(
-                          onPressed: () {},
-                          icon: Icon(
-                            Icons.delete,
-                            color:
-                                isDarkMode ? Colors.white : Colors.deepPurple,
-                          )),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 10),
+                        Text(
+                          'Mėnesinių trukmė:',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        SizedBox(width: 5),
+                        // Paspaudus skaičių, rodomas dialogo langas
+                        GestureDetector(
+                          onTap: () {
+                            _showEditDialog(context);
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                _selectedDays.toString(),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.account_circle,
+                          size: 30,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Ištrinti paskyrą',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        IconButton(
+                            onPressed: () {},
+                            icon: Icon(
+                              Icons.delete,
+                              color:
+                                  isDarkMode ? Colors.white : Colors.deepPurple,
+                            )),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const BottomNavigation(), // Įterpiama navigacija
+            const SizedBox(height: bottomPadding),
           ],
         ),
       ),

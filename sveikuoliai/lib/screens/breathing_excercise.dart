@@ -130,126 +130,156 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+              Expanded(
+                // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white, width: 20),
+                  ),
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(
+                              Icons.arrow_back_ios,
+                              size: 30,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // Center vertically
+                          crossAxisAlignment:
+                              CrossAxisAlignment.center, // Center horizontally
+                          children: [
+                            const Text(
+                              'Kvėpavimo pratimai',
+                              style: TextStyle(fontSize: 30),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              width: 280,
+                              height: 280,
+                              child: Center(
+                                child: RiveAnimation.asset(
+                                  'assets/rive/meditacija.riv',
+                                  controllers: [_riveController],
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            if (!_isBreathing) ...[
+                              Text(
+                                'Kiek kartų noretum kvepuoti?',
+                                style: TextStyle(fontSize: 20),
+                                textAlign: TextAlign.center,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        if (totalCycleRepetiton > 1) {
+                                          totalCycleRepetiton--;
+                                        }
+                                      });
+                                    },
+                                    icon: Icon(Icons.remove),
+                                  ),
+                                  Text(
+                                    '$totalCycleRepetiton',
+                                    style: TextStyle(fontSize: 30),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        totalCycleRepetiton++;
+                                      });
+                                    },
+                                    icon: Icon(Icons.add),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (_isBreathing) ...[
+                              Text(
+                                _breathingText, // Rodyti atitinkamą tekstą pagal kvėpavimo etapą
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                _timerText, // Rodyti atbulinį laiką
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                            SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: _isBreathing ? null : _startBreathing,
+                              child:
+                                  Text(_isBreathing ? 'Kvėpuoti' : 'Pradėti'),
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 100, vertical: 15),
+                                textStyle: TextStyle(fontSize: 20),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Kvėpavimo pratimai',
-                    style: TextStyle(fontSize: 30),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: 250,
-                    height: 250,
-                    child: Center(
-                      child: RiveAnimation.asset(
-                        'assets/rive/meditacija.riv',
-                        controllers: [_riveController],
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (!_isBreathing) ...[
-                    Text(
-                      'Kiek kartų noretum kvepuoti?',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              if (totalCycleRepetiton > 1) {
-                                totalCycleRepetiton--;
-                              }
-                            });
-                          },
-                          icon: Icon(Icons.remove),
-                        ),
-                        Text(
-                          '$totalCycleRepetiton',
-                          style: TextStyle(fontSize: 30),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              totalCycleRepetiton++;
-                            });
-                          },
-                          icon: Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (_isBreathing) ...[
-                    Text(
-                      _breathingText, // Rodyti atitinkamą tekstą pagal kvėpavimo etapą
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      _timerText, // Rodyti atbulinį laiką
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple),
-                    ),
-                  ],
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _isBreathing ? null : _startBreathing,
-                    child: Text(_isBreathing ? 'Kvėpuoti' : 'Pradėti'),
-                    style: ElevatedButton.styleFrom(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 100, vertical: 15),
-                      textStyle: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const BottomNavigation(),
-          ],
-        ),
+              const BottomNavigation(),
+              SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+            ],
+          ),
+        ],
       ),
     );
   }
