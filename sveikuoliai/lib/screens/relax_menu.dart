@@ -62,118 +62,133 @@ class RelaxMenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back_ios,
-                          size: 30,
-                        ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                      IconButton(
-                        onPressed: () {
-                          _showStressDialog(
-                              context); // Užkrovimas pop-out lango
-                        },
-                        icon: Icon(
-                          Icons.add_alert, // Galite pasirinkti kitą ikoną
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Atsipalaiduok',
-                    style: TextStyle(fontSize: 35),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Column(
-                        children: [
-                          const Text(
-                            'Pasirink nusiraminimo būdą',
-                            style:
-                                TextStyle(fontSize: 15, color: Colors.black54),
+            SizedBox(height: topPadding),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            size: 30,
                           ),
-                          const Text(
-                            'arba peržiūrėk pasiūlymus viršuje',
-                            style:
-                                TextStyle(fontSize: 15, color: Colors.black54),
+                        ),
+                        const Expanded(child: SizedBox()),
+                        IconButton(
+                          onPressed: () {
+                            _showStressDialog(
+                                context); // Užkrovimas pop-out lango
+                          },
+                          icon: Icon(
+                            Icons.add_alert, // Galite pasirinkti kitą ikoną
+                            size: 30,
                           ),
-                        ],
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildBlock(
-                    context: context,
-                    title: 'Kvėpavimo\npratimai',
-                    icon: Icons.air,
-                    color: Colors.deepPurple.shade50,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => BreathingExcerciseScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildBlock(
-                    context: context,
-                    title: 'Meditacija',
-                    icon: Icons.self_improvement,
-                    color: Colors.pink.shade50,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => MeditationScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildBlock(
-                    context: context,
-                    title: 'Mankšta',
-                    icon: Icons.fitness_center,
-                    color: Colors.blue.shade50,
-                    onTap: () {
-                      // Čia galima pridėti navigaciją į mankštos ekraną
-                    },
-                  ),
-                ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Atsipalaiduok',
+                      style: TextStyle(fontSize: 35),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            const Text(
+                              'Pasirink nusiraminimo būdą',
+                              style: TextStyle(
+                                  fontSize: 15, color: Colors.black54),
+                            ),
+                            const Text(
+                              'arba peržiūrėk pasiūlymus viršuje',
+                              style: TextStyle(
+                                  fontSize: 15, color: Colors.black54),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    _buildBlock(
+                      context: context,
+                      title: 'Kvėpavimo\npratimai',
+                      icon: Icons.air,
+                      color: Colors.deepPurple.shade50,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => BreathingExcerciseScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildBlock(
+                      context: context,
+                      title: 'Meditacija',
+                      icon: Icons.self_improvement,
+                      color: Colors.pink.shade50,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => MeditationScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildBlock(
+                      context: context,
+                      title: 'Mankšta',
+                      icon: Icons.fitness_center,
+                      color: Colors.blue.shade50,
+                      onTap: () {
+                        // Čia galima pridėti navigaciją į mankštos ekraną
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
             const BottomNavigation(),
+            SizedBox(
+              height: bottomPadding,
+            ),
           ],
         ),
       ),
@@ -190,7 +205,7 @@ class RelaxMenuScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 100,
+        height: 110,
         width: double.infinity,
         decoration: BoxDecoration(
           color: color,

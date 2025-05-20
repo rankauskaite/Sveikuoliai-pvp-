@@ -196,179 +196,192 @@ class _GardenScreenState extends State<GardenScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
       body: Stack(
         children: [
           Center(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 320,
-                  height: 600,
-                  decoration: BoxDecoration(
-                    color: Color(0xFFE7EDD9),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Color(0xFFE7EDD9), width: 20),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: const Icon(Icons.arrow_back_ios, size: 30),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        width: 250, // fiksuotas plotis
-                        height: 120, // fiksuotas aukštis
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFC2DD84),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                SizedBox(height: topPadding),
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: horizontalPadding),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFE7EDD9),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Color(0xFFE7EDD9), width: 20),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '${titlesTop[_currentPage]}\n',
-                                    style: TextStyle(
-                                      fontSize: 45,
-                                      fontWeight: FontWeight.bold,
-                                      color: backgroundColors[_currentPage],
-                                      height:
-                                          1.2, // sumažintas tarpas tarp eilučių
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: titlesBottom[_currentPage],
-                                    style: const TextStyle(
-                                      fontSize: 45,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      height:
-                                          1.0, // dar mažesnis tarpas šiai eilutei, jei norisi
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              textAlign: TextAlign.center,
-                            )
+                            IconButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              icon: const Icon(Icons.arrow_back_ios, size: 30),
+                            ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              subtitles[_currentPage],
-                              textAlign: TextAlign.right,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        const SizedBox(height: 10),
+                        Container(
+                          width: 250, // fiksuotas plotis
+                          height: 120, // fiksuotas aukštis
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC2DD84),
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFC2DD84),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              count[_currentPage],
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 35,
-                                color: backgroundColors[_currentPage],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-                      Stack(
-                        children: [
-                          // Kiti Stack elementai (pvz., fonas)
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: SizedBox(
-                              width: 300, // page view plotis
-                              height: 250, // page view aukštis
-                              child: PageView.builder(
-                                controller: _pageController,
-                                itemCount:
-                                    widget.user.version == 'premium' ? 3 : 2,
-                                onPageChanged: (index) {
-                                  if (widget.user.version == 'free' &&
-                                      index == 2) return; // ignoruok
-                                  setState(() {
-                                    _currentPage = index;
-                                  });
-                                },
-                                itemBuilder: (context, index) {
-                                  List<Map<String, dynamic>> currentData;
-                                  if (index == 0) {
-                                    currentData = userHabits;
-                                  } else if (index == 1) {
-                                    currentData = userGoals;
-                                  } else if (widget.user.version == 'premium') {
-                                    currentData = userSharedGoals;
-                                  } else {
-                                    return const SizedBox(); // tuščias widget, jei free bando pasiekti 2 puslapį
-                                  }
-
-                                  return Stack(
-                                    alignment: Alignment.bottomCenter,
-                                    children: [
-                                      Image.asset(
-                                        images[index],
-                                        width: 300,
-                                        height: 200,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '${titlesTop[_currentPage]}\n',
+                                      style: TextStyle(
+                                        fontSize: 45,
+                                        fontWeight: FontWeight.bold,
+                                        color: backgroundColors[_currentPage],
+                                        height:
+                                            1.2, // sumažintas tarpas tarp eilučių
                                       ),
-                                      ..._generatePlants(currentData),
-                                    ],
-                                  );
-                                },
+                                    ),
+                                    TextSpan(
+                                      text: titlesBottom[_currentPage],
+                                      style: const TextStyle(
+                                        fontSize: 45,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        height:
+                                            1.0, // dar mažesnis tarpas šiai eilutei, jei norisi
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.center,
+                              )
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                subtitles[_currentPage],
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      SmoothPageIndicator(
-                        controller: _pageController,
-                        count: widget.user.version == 'premium' ? 3 : 2,
-                        effect: const WormEffect(
-                          dotColor: Colors.grey,
-                          activeDotColor: Colors.deepPurple,
-                          dotHeight: 10,
-                          dotWidth: 10,
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFC2DD84),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                count[_currentPage],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 35,
+                                  color: backgroundColors[_currentPage],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
+                        const SizedBox(height: 50),
+                        Stack(
+                          children: [
+                            // Kiti Stack elementai (pvz., fonas)
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: SizedBox(
+                                width: 300, // page view plotis
+                                height: 250, // page view aukštis
+                                child: PageView.builder(
+                                  controller: _pageController,
+                                  itemCount:
+                                      widget.user.version == 'premium' ? 3 : 2,
+                                  onPageChanged: (index) {
+                                    if (widget.user.version == 'free' &&
+                                        index == 2) return; // ignoruok
+                                    setState(() {
+                                      _currentPage = index;
+                                    });
+                                  },
+                                  itemBuilder: (context, index) {
+                                    List<Map<String, dynamic>> currentData;
+                                    if (index == 0) {
+                                      currentData = userHabits;
+                                    } else if (index == 1) {
+                                      currentData = userGoals;
+                                    } else if (widget.user.version ==
+                                        'premium') {
+                                      currentData = userSharedGoals;
+                                    } else {
+                                      return const SizedBox(); // tuščias widget, jei free bando pasiekti 2 puslapį
+                                    }
+
+                                    return Stack(
+                                      alignment: Alignment.bottomCenter,
+                                      children: [
+                                        Image.asset(
+                                          images[index],
+                                          width: 300,
+                                          height: 200,
+                                        ),
+                                        ..._generatePlants(currentData),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SmoothPageIndicator(
+                          controller: _pageController,
+                          count: widget.user.version == 'premium' ? 3 : 2,
+                          effect: const WormEffect(
+                            dotColor: Colors.grey,
+                            activeDotColor: Colors.deepPurple,
+                            dotHeight: 10,
+                            dotWidth: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
                   ),
                 ),
                 const BottomNavigation(),
+                SizedBox(height: bottomPadding),
               ],
             ),
           ),

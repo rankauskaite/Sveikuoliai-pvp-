@@ -68,19 +68,32 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
+            SizedBox(
+              height: topPadding,
+            ),
             _buildCalendarContainer(context),
             const BottomNavigation(), // Apatinė navigacija
+            SizedBox(
+              height: bottomPadding,
+            ),
           ],
         ),
       ),
@@ -88,42 +101,48 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Widget _buildCalendarContainer(BuildContext context) {
-    return Container(
-      width: 320,
-      height: 600,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white, width: 20),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ProfileButton(),
-              const Expanded(child: SizedBox()),
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RelaxMenuScreen()),
-                  );
-                },
-                icon: const Icon(
-                  Icons.self_improvement,
-                  color: Color(0xFFD9D9D5),
-                  size: 50,
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+
+    return Expanded(
+      child: Container(
+        margin: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white, width: 20),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ProfileButton(),
+                const Expanded(child: SizedBox()),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => RelaxMenuScreen()),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.self_improvement,
+                    color: Color(0xFFD9D9D5),
+                    size: 50,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          _buildBanner(),
-          SizedBox(
-            height: 20,
-          ),
-          _buildCalendar(context),
-        ],
+              ],
+            ),
+            _buildBanner(),
+            SizedBox(
+              height: 20,
+            ),
+            _buildCalendar(context),
+          ],
+        ),
       ),
     );
   }
@@ -132,8 +151,11 @@ class _JournalScreenState extends State<JournalScreen> {
     return Column(
       children: [
         // Karuselė su paveikslėliais
+        SizedBox(
+          height: 10,
+        ),
         Container(
-          height: 100, // Nustatykite aukštį pagal savo poreikius
+          height: 120, // Nustatykite aukštį pagal savo poreikius
           width: double.infinity, // Pakeista į visą plotį
           child: ClipRRect(
             borderRadius: BorderRadius.circular(15),

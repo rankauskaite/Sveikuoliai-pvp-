@@ -32,10 +32,12 @@ class _GoalPageState extends State<GoalScreen> {
   List<GoalTask> goalTasks = [];
   int length = 0;
   int doneLength = 0;
+  late DateTime lastDoneDate;
 
   @override
   void initState() {
     super.initState();
+    lastDoneDate = widget.goal.goalModel.startDate;
     _loadData();
   }
 
@@ -74,6 +76,13 @@ class _GoalPageState extends State<GoalScreen> {
         goalTasks = tasks;
         length = tasks.length;
         doneLength = tasks.where((task) => task.isCompleted).length;
+        // Rask naujausią (vėliausią) atliktos užduoties datą
+        final completedTasks = tasks.where((task) => task.isCompleted).toList();
+        if (completedTasks.isNotEmpty) {
+          lastDoneDate = completedTasks
+              .map((task) => task.date)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
+        }
       });
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslo užduotis ❌', false);
@@ -277,6 +286,15 @@ class _GoalPageState extends State<GoalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
@@ -284,299 +302,312 @@ class _GoalPageState extends State<GoalScreen> {
         toolbarHeight: 20,
         backgroundColor: const Color(0xFF8093F1),
       ),
+      resizeToAvoidBottomInset: false,
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HabitsGoalsScreen()),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back_ios,
-                            size: 30,
-                          ),
-                        ),
-                        const Expanded(child: SizedBox()),
-                        if (widget.goal.goalType.type == 'custom' &&
-                            widget.goal.goalModel.isCompleted == false)
+            SizedBox(height: topPadding),
+            Expanded(
+              child: Container(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
                           IconButton(
                             onPressed: () {
-                              CustomDialogs.showEditDialog(
-                                  context: context,
-                                  entityType: EntityType.goal,
-                                  entity: widget.goal,
-                                  accentColor: Colors.lightBlueAccent,
-                                  onSave: () {});
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HabitsGoalsScreen()),
+                              );
                             },
                             icon: const Icon(
-                              Icons.edit_outlined,
+                              Icons.arrow_back_ios,
                               size: 30,
                             ),
                           ),
-                        IconButton(
-                          onPressed: () {
-                            CustomDialogs.showDeleteDialog(
-                              context: context,
-                              entityType: EntityType.goal,
-                              entity: widget.goal,
-                              accentColor: Colors.lightBlueAccent,
-                              onDelete: () {
-                                _deleteGoal();
+                          const Expanded(child: SizedBox()),
+                          if (widget.goal.goalType.type == 'custom' &&
+                              widget.goal.goalModel.isCompleted == false)
+                            IconButton(
+                              onPressed: () {
+                                CustomDialogs.showEditDialog(
+                                    context: context,
+                                    entityType: EntityType.goal,
+                                    entity: widget.goal,
+                                    accentColor: Colors.lightBlueAccent,
+                                    onSave: () {});
                               },
-                            );
-                          },
-                          icon: Icon(
-                            Icons.remove_circle_outline,
-                            size: 30,
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                size: 30,
+                              ),
+                            ),
+                          IconButton(
+                            onPressed: () {
+                              CustomDialogs.showDeleteDialog(
+                                context: context,
+                                entityType: EntityType.goal,
+                                entity: widget.goal,
+                                accentColor: Colors.lightBlueAccent,
+                                onDelete: () {
+                                  _deleteGoal();
+                                },
+                              );
+                            },
+                            icon: Icon(
+                              Icons.remove_circle_outline,
+                              size: 30,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      widget.goal.goalType.title,
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF72ddf7),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    buildProgressIndicator(
-                      _calculateProgress(),
-                      widget.goal.goalModel.plantId,
-                      widget.goal.goalModel.points,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Apie tikslą',
-                      style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
-                    ),
-                    Text(
-                      widget.goal.goalType.description,
-                      style: const TextStyle(fontSize: 18),
-                      softWrap: true, // Leisti tekstui kelti į kitą eilutę
-                      overflow: TextOverflow.visible, // Nesutrumpinti teksto
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Trukmė: ',
-                          style: TextStyle(fontSize: 18),
+                      const SizedBox(height: 20),
+                      Text(
+                        widget.goal.goalType.title,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF72ddf7),
                         ),
-                        Text(
-                          widget.goal.goalModel.endPoints == 7
-                              ? "1 savaitė"
-                              : widget.goal.goalModel.endPoints == 14
-                                  ? "2 savaitės"
-                                  : widget.goal.goalModel.endPoints == 30
-                                      ? "1 mėnuo"
-                                      : widget.goal.goalModel.endPoints == 45
-                                          ? "1,5 mėnesio"
-                                          : widget.goal.goalModel.endPoints ==
-                                                  60
-                                              ? "2 mėnesiai"
-                                              : widget.goal.goalModel
-                                                          .endPoints ==
-                                                      90
-                                                  ? "3 mėnesiai"
-                                                  : "6 mėnesiai",
-                          style: const TextStyle(
-                              fontSize: 18, color: Color(0xFF72ddf7)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pradžios data: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.goal.goalModel.startDate),
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFF72ddf7)),
-                        )
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pabaigos data: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.goal.goalModel.endDate),
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFF72ddf7)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Augaliukas: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          plant.name,
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFF72ddf7)),
-                        )
-                      ],
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text(
-                      'Užduotys',
-                      style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...goalTasks
-                            .where((task) => !task.isCompleted)
-                            .map((task) => GoalTaskCard(
-                                  task: task,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      buildProgressIndicator(
+                        _calculateProgress(),
+                        widget.goal.goalModel.plantId,
+                        widget.goal.goalModel.points,
+                        lastDoneDate,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Apie tikslą',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
+                      ),
+                      Text(
+                        widget.goal.goalType.description,
+                        style: const TextStyle(fontSize: 18),
+                        softWrap: true, // Leisti tekstui kelti į kitą eilutę
+                        overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Trukmė: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            widget.goal.goalModel.endPoints == 7
+                                ? "1 savaitė"
+                                : widget.goal.goalModel.endPoints == 14
+                                    ? "2 savaitės"
+                                    : widget.goal.goalModel.endPoints == 30
+                                        ? "1 mėnuo"
+                                        : widget.goal.goalModel.endPoints == 45
+                                            ? "1,5 mėnesio"
+                                            : widget.goal.goalModel.endPoints ==
+                                                    60
+                                                ? "2 mėnesiai"
+                                                : widget.goal.goalModel
+                                                            .endPoints ==
+                                                        90
+                                                    ? "3 mėnesiai"
+                                                    : "6 mėnesiai",
+                            style: const TextStyle(
+                                fontSize: 18, color: Color(0xFF72ddf7)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pradžios data: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            DateFormat('yyyy MMMM d', 'lt')
+                                .format(widget.goal.goalModel.startDate),
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFF72ddf7)),
+                          )
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pabaigos data: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            DateFormat('yyyy MMMM d', 'lt')
+                                .format(widget.goal.goalModel.endDate),
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFF72ddf7)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Augaliukas: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            plant.name,
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFF72ddf7)),
+                          )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        'Užduotys',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...goalTasks
+                              .where((task) => !task.isCompleted)
+                              .map((task) => GoalTaskCard(
+                                    task: task,
+                                    type: 0,
+                                    isDoneGoal:
+                                        widget.goal.goalModel.isCompleted,
+                                    isMyTask: true,
+                                    length: length,
+                                    doneLength: doneLength,
+                                    calculatePoints: (isCompleted) =>
+                                        _calculatePoints(
+                                            isCompleted, goalTasks),
+                                    onDelete: _deleteTask,
+                                  )),
+                          ...goalTasks.where((task) => task.isCompleted).map(
+                              (task) => GoalTaskCard(
                                   type: 0,
+                                  task: task,
                                   isDoneGoal: widget.goal.goalModel.isCompleted,
                                   isMyTask: true,
                                   length: length,
                                   doneLength: doneLength,
                                   calculatePoints: (isCompleted) =>
-                                      _calculatePoints(isCompleted, goalTasks),
-                                  onDelete: _deleteTask,
-                                )),
-                        ...goalTasks.where((task) => task.isCompleted).map(
-                            (task) => GoalTaskCard(
-                                type: 0,
-                                task: task,
-                                isDoneGoal: widget.goal.goalModel.isCompleted,
-                                isMyTask: true,
-                                length: length,
-                                doneLength: doneLength,
-                                calculatePoints: (isCompleted) =>
-                                    _calculatePoints(isCompleted, goalTasks))),
-                      ],
-                    ),
-                    if (widget.goal.goalModel.isCompleted == false)
-                      Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              if (goalTasks
-                                  .isNotEmpty) // Patikriname, ar yra užduočių
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    await _saveGoalStates(); // Pirma išsaugome duomenis
-                                    if (mounted) {
-                                      setState(
-                                          () {}); // Tada atnaujiname ekraną
-                                    }
-                                  },
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty
-                                        .resolveWith<Color>(
-                                      (Set<MaterialState> states) {
-                                        return const Color(0xFFCFF4FC);
-                                      },
-                                    ),
-                                    foregroundColor:
-                                        MaterialStateProperty.all(Colors.blue),
-                                  ),
-                                  child: const Text(
-                                    'Išsaugoti',
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                ),
-                            ],
-                          ),
+                                      _calculatePoints(
+                                          isCompleted, goalTasks))),
                         ],
                       ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    ElevatedButton(
-                      onPressed: widget.goal.goalModel.isCompleted
-                          ? null
-                          : () {
-                              CustomDialogs.showNewTaskDialog(
-                                context: context,
-                                goal: widget.goal,
-                                accentColor: Colors.lightBlueAccent,
-                                onSave: (GoalTask task) {
-                                  _createTask(task);
-                                },
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor:
-                            const Color(0xFFA5E9F9), // Šviesi mėlyna spalva
-                        foregroundColor: Colors.blue, // Teksto ir ikonos spalva
+                      if (widget.goal.goalModel.isCompleted == false)
+                        Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (goalTasks
+                                    .isNotEmpty) // Patikriname, ar yra užduočių
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      await _saveGoalStates(); // Pirma išsaugome duomenis
+                                      if (mounted) {
+                                        setState(
+                                            () {}); // Tada atnaujiname ekraną
+                                      }
+                                    },
+                                    style: ButtonStyle(
+                                      backgroundColor: MaterialStateProperty
+                                          .resolveWith<Color>(
+                                        (Set<MaterialState> states) {
+                                          return const Color(0xFFCFF4FC);
+                                        },
+                                      ),
+                                      foregroundColor:
+                                          MaterialStateProperty.all(
+                                              Colors.blue),
+                                    ),
+                                    child: const Text(
+                                      'Išsaugoti',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      const SizedBox(
+                        height: 10,
                       ),
-                      child: Text(
-                        widget.goal.goalModel.isCompleted
-                            ? 'Tiklas įvykdytas'
-                            : 'Pridėti užduotį',
-                        style: TextStyle(fontSize: 20, color: Colors.blue),
+                      ElevatedButton(
+                        onPressed: widget.goal.goalModel.isCompleted
+                            ? null
+                            : () {
+                                CustomDialogs.showNewTaskDialog(
+                                  context: context,
+                                  goal: widget.goal,
+                                  accentColor: Colors.lightBlueAccent,
+                                  onSave: (GoalTask task) {
+                                    _createTask(task);
+                                  },
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                          backgroundColor:
+                              const Color(0xFFA5E9F9), // Šviesi mėlyna spalva
+                          foregroundColor:
+                              Colors.blue, // Teksto ir ikonos spalva
+                        ),
+                        child: Text(
+                          widget.goal.goalModel.isCompleted
+                              ? 'Tiklas įvykdytas'
+                              : 'Pridėti užduotį',
+                          style: TextStyle(fontSize: 20, color: Colors.blue),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Statistika',
-                      style: TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
-                    ),
-                    // SizedBox(height: 200, child: _buildChart()),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 200,
-                      child: goalTasks.isEmpty
-                          ? const Text("Nėra progreso duomenų")
-                          : _buildProgressChart(),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Statistika',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFF72ddf7)),
+                      ),
+                      // SizedBox(height: 200, child: _buildChart()),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 200,
+                        child: goalTasks.isEmpty
+                            ? const Text("Nėra progreso duomenų")
+                            : _buildProgressChart(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const BottomNavigation(),
+            SizedBox(height: bottomPadding),
           ],
         ),
       ),

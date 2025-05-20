@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/profile.dart';
+import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'dart:ui';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
-import 'package:sveikuoliai/widgets/version_selection.dart';
 
 class UpdateProfileScreen extends StatefulWidget {
   final String version;
@@ -100,201 +100,256 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
+      resizeToAvoidBottomInset: false,
       body: Center(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 320,
-                  height: 600,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white, width: 20),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: Icon(
-                              Icons.arrow_back_ios,
-                              size: 30,
-                            ),
+        child: Column(
+          children: [
+            SizedBox(
+              height: topPadding,
+            ),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.arrow_back_ios,
+                            size: 30,
                           ),
-                          const Expanded(child: SizedBox()),
-                          ElevatedButton(
-                            onPressed: _saveUserData, // Paspaudus išsaugoti
-                            child: Text('Išsaugoti'),
+                        ),
+                        const Expanded(child: SizedBox()),
+                        ElevatedButton(
+                          onPressed: _saveUserData, // Paspaudus išsaugoti
+                          child: Text('Išsaugoti'),
+                        ),
+                      ],
+                    ),
+                    // GestureDetector(
+                    //   onTap: _showIconSelectionDialog,
+                    //   child: Stack(
+                    //     alignment: Alignment.center,
+                    //     children: [
+                    //       CircleAvatar(
+                    //         radius: 60,
+                    //         backgroundColor: Color(0xFFD9D9D9),
+                    //         child: Icon(
+                    //           availableIcons[selectedIconName],
+                    //           size: 100,
+                    //           color: Colors.white,
+                    //         ),
+                    //       ),
+                    //       Container(
+                    //         width: 120,
+                    //         height: 120,
+                    //         decoration: BoxDecoration(
+                    //           shape: BoxShape.circle,
+                    //           color: Colors.black.withOpacity(0.3),
+                    //         ),
+                    //         child: Center(
+                    //           child: Text(
+                    //             'Keisti',
+                    //             style: TextStyle(color: Colors.white),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
+                    GestureDetector(
+                      onTap: _showIconSelectionDialog,
+                      child: Stack(
+                        children: [
+                          // Centrinė account_circle ikona
+                          Stack(
+                            alignment:
+                                Alignment.center, // Centruoja tekstą ant ikonos
+                            children: [
+                              ColorFiltered(
+                                colorFilter: ColorFilter.mode(
+                                  Color(
+                                      0xFFD9D9D9), // Naudojame skaidrų filtrą su blur efektu
+                                  BlendMode
+                                      .srcIn, // Blend mode, kad būtų matomas tik blur efektas
+                                ),
+                                child: ImageFiltered(
+                                  imageFilter: ImageFilter.blur(
+                                      sigmaX: 3.0,
+                                      sigmaY: 3.0), // Blur stiprumas
+                                  child: Icon(
+                                    availableIcons[selectedIconName],
+                                    size: 200,
+                                    color: Color(0xFFD9D9D9),
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                'Keisti profilio\nnuotrauką',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: Colors.black,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      // GestureDetector(
-                      //   onTap: _showIconSelectionDialog,
-                      //   child: Stack(
-                      //     alignment: Alignment.center,
-                      //     children: [
-                      //       CircleAvatar(
-                      //         radius: 60,
-                      //         backgroundColor: Color(0xFFD9D9D9),
-                      //         child: Icon(
-                      //           availableIcons[selectedIconName],
-                      //           size: 100,
-                      //           color: Colors.white,
-                      //         ),
-                      //       ),
-                      //       Container(
-                      //         width: 120,
-                      //         height: 120,
-                      //         decoration: BoxDecoration(
-                      //           shape: BoxShape.circle,
-                      //           color: Colors.black.withOpacity(0.3),
-                      //         ),
-                      //         child: Center(
-                      //           child: Text(
-                      //             'Keisti',
-                      //             style: TextStyle(color: Colors.white),
-                      //           ),
-                      //         ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                      GestureDetector(
-                        onTap: _showIconSelectionDialog,
-                        child: Stack(
-                          children: [
-                            // Centrinė account_circle ikona
-                            Stack(
-                              alignment: Alignment
-                                  .center, // Centruoja tekstą ant ikonos
-                              children: [
-                                ColorFiltered(
-                                  colorFilter: ColorFilter.mode(
-                                    Color(
-                                        0xFFD9D9D9), // Naudojame skaidrų filtrą su blur efektu
-                                    BlendMode
-                                        .srcIn, // Blend mode, kad būtų matomas tik blur efektas
-                                  ),
-                                  child: ImageFiltered(
-                                    imageFilter: ImageFilter.blur(
-                                        sigmaX: 3.0,
-                                        sigmaY: 3.0), // Blur stiprumas
-                                    child: Icon(
-                                      availableIcons[selectedIconName],
-                                      size: 200,
-                                      color: Color(0xFFD9D9D9),
-                                    ),
-                                  ),
-                                ),
-                                const Text(
-                                  'Keisti profilio\nnuotrauką',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    color: Colors.black,
-                                  ),
-                                  textAlign: TextAlign.center,
+                    ),
+                    IntrinsicWidth(
+                      child: TextField(
+                        controller:
+                            _userNameController, // Naudojame kontrollerį
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Vardas',
+                        ),
+                      ),
+                    ),
+                    Text(
+                      userUsername,
+                      style: TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mano duomenys',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'El. paštas',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          userEmail,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFFB388EB),
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFFB388EB),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 15,
+                    ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.start,
+                    //   children: [
+                    //     Text(
+                    //       'Versija:',
+                    //       style: TextStyle(fontSize: 20),
+                    //     ),
+                    //   ],
+                    // ),
+                    // SizedBox(
+                    //   height: 5,
+                    // ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      VersionScreen(username: userUsername)),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: (screenSize.width - 2 * horizontalPadding) *
+                                0.8,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.deepPurple.shade700, width: 3),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 5),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                      IntrinsicWidth(
-                        child: TextField(
-                          controller:
-                              _userNameController, // Naudojame kontrollerį
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Vardas',
-                          ),
-                        ),
-                      ),
-                      Text(
-                        userUsername,
-                        style:
-                            TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Mano duomenys',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          IntrinsicWidth(
-                            child: TextField(
-                              controller:
-                                  _userEmailController, // Naudojame kontrollerį
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFFB388EB),
-                                decoration: TextDecoration.underline,
-                                decorationColor: Color(0xFFB388EB),
-                              ),
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'el. paštas',
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(9),
+                              child: Image.asset(
+                                'assets/gif/premium.gif',
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Versija:',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      VersionSelection(
-                        currentVersion: widget.version,
-                        onVersionChanged: (newVersion) {
-                          setState(() {
-                            userVersion = newVersion;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    // VersionSelection(
+                    //   currentVersion: widget.version,
+                    //   onVersionChanged: (newVersion) {
+                    //     setState(() {
+                    //       userVersion = newVersion;
+                    //     });
+                    //   },
+                    // ),
+                  ],
                 ),
-                const BottomNavigation(), // Įterpiama navigacija
-              ],
+              ),
             ),
-          ),
+            const BottomNavigation(), // Įterpiama navigacija
+            SizedBox(
+              height: bottomPadding,
+            ),
+          ],
         ),
       ),
     );

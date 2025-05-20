@@ -154,7 +154,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         20.0; // Tarpas nuo apačios (virš BottomNavigation)
 
     // Gauname ekrano matmenis
-    final Size screenSize = MediaQuery.of(context).size;
+    //final Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),

@@ -45,10 +45,14 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   String friendUsername = ''; // Draugo vartotojo vardas
   String friendName = ''; // Draugo vardas
   String username = ''; // Vartotojo vardas
+  late DateTime lastDoneDate;
+  late DateTime lastDoneDateFriend;
 
   @override
   void initState() {
     super.initState();
+    lastDoneDate = widget.goal.sharedGoalModel.startDate;
+    lastDoneDateFriend = widget.goal.sharedGoalModel.startDate;
     _loadData();
   }
 
@@ -118,6 +122,22 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         lengthFriend = tasksFriend.length;
         doneLengthMine = tasksMine.where((task) => task.isCompleted).length;
         doneLengthFriend = tasksFriend.where((task) => task.isCompleted).length;
+
+        final completedTasks =
+            tasksMine.where((task) => task.isCompleted).toList();
+        if (completedTasks.isNotEmpty) {
+          lastDoneDate = completedTasks
+              .map((task) => task.date)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
+        }
+
+        final completedTasksFriend =
+            tasksFriend.where((task) => task.isCompleted).toList();
+        if (completedTasksFriend.isNotEmpty) {
+          lastDoneDateFriend = completedTasksFriend
+              .map((task) => task.date)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
+        }
       });
     } catch (e) {
       showCustomSnackBar(
@@ -333,385 +353,405 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
+      resizeToAvoidBottomInset: false,
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HabitsGoalsScreen()),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back_ios,
-                            size: 30,
-                          ),
-                        ),
-                        const Expanded(child: SizedBox()),
-                        if (widget.goal.goalType.type == 'custom' &&
-                            !widget.goal.sharedGoalModel.isCompletedUser1 &&
-                            !widget.goal.sharedGoalModel.isCompletedUser2)
+            SizedBox(height: topPadding),
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white, width: 20),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
                           IconButton(
                             onPressed: () {
-                              CustomDialogs.showEditDialog(
-                                  context: context,
-                                  entityType: EntityType.sharedGoal,
-                                  entity: widget.goal,
-                                  accentColor: Colors.lightGreen[400] ??
-                                      Colors.lightGreen,
-                                  onSave: () {});
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HabitsGoalsScreen()),
+                              );
                             },
                             icon: const Icon(
-                              Icons.edit_outlined,
+                              Icons.arrow_back_ios,
                               size: 30,
                             ),
                           ),
-                        IconButton(
-                          onPressed: () {
-                            CustomDialogs.showDeleteDialog(
-                              context: context,
-                              entityType: EntityType.sharedGoal,
-                              entity: widget.goal,
-                              accentColor: Colors.lightGreen,
-                              onDelete: () {
-                                _deleteGoal(); // Ištrinti tikslą
+                          const Expanded(child: SizedBox()),
+                          if (widget.goal.goalType.type == 'custom' &&
+                              !widget.goal.sharedGoalModel.isCompletedUser1 &&
+                              !widget.goal.sharedGoalModel.isCompletedUser2)
+                            IconButton(
+                              onPressed: () {
+                                CustomDialogs.showEditDialog(
+                                    context: context,
+                                    entityType: EntityType.sharedGoal,
+                                    entity: widget.goal,
+                                    accentColor: Colors.lightGreen[400] ??
+                                        Colors.lightGreen,
+                                    onSave: () {});
                               },
-                            );
-                          },
-                          icon: Icon(
-                            Icons.remove_circle_outline,
-                            size: 30,
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                size: 30,
+                              ),
+                            ),
+                          IconButton(
+                            onPressed: () {
+                              CustomDialogs.showDeleteDialog(
+                                context: context,
+                                entityType: EntityType.sharedGoal,
+                                entity: widget.goal,
+                                accentColor: Colors.lightGreen,
+                                onDelete: () {
+                                  _deleteGoal(); // Ištrinti tikslą
+                                },
+                              );
+                            },
+                            icon: Icon(
+                              Icons.remove_circle_outline,
+                              size: 30,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      widget.goal.goalType.title,
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFbcd979),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildBanner(),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Apie tikslą',
-                      style: TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
-                    ),
-                    Text(
-                      widget.goal.goalType.description,
-                      style: const TextStyle(fontSize: 18),
-                      softWrap: true, // Leisti tekstui kelti į kitą eilutę
-                      overflow: TextOverflow.visible, // Nesutrumpinti teksto
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Trukmė: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          widget.goal.sharedGoalModel.endPoints == 7
-                              ? "1 savaitė"
-                              : widget.goal.sharedGoalModel.endPoints == 14
-                                  ? "2 savaitės"
-                                  : widget.goal.sharedGoalModel.endPoints == 30
-                                      ? "1 mėnuo"
-                                      : widget.goal.sharedGoalModel.endPoints ==
-                                              45
-                                          ? "1,5 mėnesio"
-                                          : widget.goal.sharedGoalModel
-                                                      .endPoints ==
-                                                  60
-                                              ? "2 mėnesiai"
-                                              : widget.goal.sharedGoalModel
-                                                          .endPoints ==
-                                                      90
-                                                  ? "3 mėnesiai"
-                                                  : "6 mėnesiai",
-                          style: const TextStyle(
-                              fontSize: 18, color: Color(0xFFbcd979)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pradžios data: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.goal.sharedGoalModel.startDate),
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFbcd979)),
-                        )
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pabaigos data: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          DateFormat('yyyy MMMM d', 'lt')
-                              .format(widget.goal.sharedGoalModel.endDate),
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFbcd979)),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Augaliukas: ',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          plant.name,
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFFbcd979)),
-                        )
-                      ],
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    if (_currentPage != 2) ...[
+                      const SizedBox(height: 20),
                       Text(
-                        'Užduotys',
+                        widget.goal.goalType.title,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFbcd979),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      _buildBanner(),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Apie tikslą',
                         style:
                             TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
                       ),
-                    ],
-                    if (_currentPage == 0) // Mano progresas
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...goalTasksMine
-                              .where((task) => !task.isCompleted)
-                              .map(
-                                (task) => GoalTaskCard(
-                                  task: task,
-                                  type: 1,
-                                  length: lengthMine,
-                                  isDoneGoal: username ==
-                                          widget.goal.sharedGoalModel.user1Id
-                                      ? widget
-                                          .goal.sharedGoalModel.isCompletedUser1
-                                      : widget.goal.sharedGoalModel
-                                          .isCompletedUser2,
-                                  isMyTask: true,
-                                  doneLength: doneLengthMine,
-                                  calculatePoints: (isCompleted) =>
-                                      _calculatePoints(
-                                          isCompleted, goalTasksMine),
-                                  onDelete: _deleteTask,
-                                ),
-                              ),
-                          ...goalTasksMine
-                              .where((task) => task.isCompleted)
-                              .map(
-                                (task) => GoalTaskCard(
-                                  task: task,
-                                  type: 1,
-                                  isMyTask: true,
-                                  isDoneGoal: username ==
-                                          widget.goal.sharedGoalModel.user1Id
-                                      ? widget
-                                          .goal.sharedGoalModel.isCompletedUser1
-                                      : widget.goal.sharedGoalModel
-                                          .isCompletedUser2,
-                                  length: lengthMine,
-                                  doneLength: doneLengthMine,
-                                  calculatePoints: (isCompleted) =>
-                                      _calculatePoints(
-                                          isCompleted, goalTasksMine),
-                                ),
-                              ),
-                        ],
-                      )
-                    else if (_currentPage == 1) // Draugo progresas
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...goalTasksFriend
-                              .where((task) => !task.isCompleted)
-                              .map(
-                                (task) => GoalTaskCard(
-                                  task: task,
-                                  type: 1,
-                                  isMyTask: false,
-                                  isDoneGoal: username ==
-                                          widget.goal.sharedGoalModel.user1Id
-                                      ? widget
-                                          .goal.sharedGoalModel.isCompletedUser2
-                                      : widget.goal.sharedGoalModel
-                                          .isCompletedUser1,
-                                  length: lengthFriend,
-                                  doneLength: doneLengthFriend,
-                                  calculatePoints: (isCompleted) =>
-                                      _calculatePoints(
-                                          isCompleted, goalTasksFriend),
-                                  onDelete:
-                                      null, // Draugo užduočių trinti negalima
-                                ),
-                              ),
-                          ...goalTasksFriend
-                              .where((task) => task.isCompleted)
-                              .map(
-                                (task) => GoalTaskCard(
-                                  task: task,
-                                  isMyTask: false,
-                                  type: 1,
-                                  isDoneGoal: username ==
-                                          widget.goal.sharedGoalModel.user1Id
-                                      ? widget
-                                          .goal.sharedGoalModel.isCompletedUser2
-                                      : widget.goal.sharedGoalModel
-                                          .isCompletedUser1,
-                                  length: lengthFriend,
-                                  doneLength: doneLengthFriend,
-                                  calculatePoints: (isCompleted) =>
-                                      _calculatePoints(
-                                          isCompleted, goalTasksFriend),
-                                ),
-                              ),
-                        ],
-                      )
-                    else // Bendras progresas
-                      const SizedBox.shrink(),
-                    if (_currentPage == 2 &&
-                        widget.goal.sharedGoalModel.isCompletedUser1 &&
-                        widget.goal.sharedGoalModel.isCompletedUser2) ...[
-                      const Text(
-                        'Įvykdėte bendrą tikslą!',
-                        style:
-                            TextStyle(fontSize: 25, color: Colors.lightGreen),
+                      Text(
+                        widget.goal.goalType.description,
+                        style: const TextStyle(fontSize: 18),
+                        softWrap: true, // Leisti tekstui kelti į kitą eilutę
+                        overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                        textAlign: TextAlign.center,
                       ),
-                    ],
-                    if (_currentPage == 0) ...[
-                      if (username == widget.goal.sharedGoalModel.user1Id
-                          ? !widget.goal.sharedGoalModel.isCompletedUser1
-                          : !widget.goal.sharedGoalModel.isCompletedUser2) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            if (goalTasksMine
-                                .isNotEmpty) // Patikriname, ar yra užduočių
-                              ElevatedButton(
-                                onPressed: () async {
-                                  await _saveGoalStates(); // Pirma išsaugome duomenis
-                                  if (mounted) {
-                                    setState(() {}); // Tada atnaujiname ekraną
-                                  }
-                                },
-                                style: ButtonStyle(
-                                  backgroundColor:
-                                      MaterialStateProperty.resolveWith<Color>(
-                                    (Set<MaterialState> states) {
-                                      return const Color(0xFFECFFC5);
-                                    },
-                                  ),
-                                  foregroundColor: MaterialStateProperty.all(
-                                      Colors.lightGreen),
-                                ),
-                                child: const Text(
-                                  'Išsaugoti',
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        ElevatedButton(
-                          onPressed:
-                              !widget.goal.sharedGoalModel.isCompletedUser1
-                                  ? null
-                                  : () {
-                                      CustomDialogs.showNewTaskDialog(
-                                        context: context,
-                                        goal: widget.goal,
-                                        accentColor: Colors.lightGreen[400] ??
-                                            Colors.lightGreen,
-                                        onSave: (GoalTask task) {
-                                          _createTask(task);
-                                        },
-                                      );
-                                    },
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
-                            backgroundColor:
-                                const Color(0xFFE4F7B4), // Šviesi mėlyna spalva
-                            foregroundColor:
-                                Colors.lightGreen, // Teksto ir ikonos spalva
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Trukmė: ',
+                            style: TextStyle(fontSize: 18),
                           ),
-                          child: Text(
-                            widget.goal.sharedGoalModel.isCompletedUser1
-                                ? 'Pridėti užduotį'
-                                : 'Tikslas įvykdytas',
+                          Text(
+                            widget.goal.sharedGoalModel.endPoints == 7
+                                ? "1 savaitė"
+                                : widget.goal.sharedGoalModel.endPoints == 14
+                                    ? "2 savaitės"
+                                    : widget.goal.sharedGoalModel.endPoints ==
+                                            30
+                                        ? "1 mėnuo"
+                                        : widget.goal.sharedGoalModel
+                                                    .endPoints ==
+                                                45
+                                            ? "1,5 mėnesio"
+                                            : widget.goal.sharedGoalModel
+                                                        .endPoints ==
+                                                    60
+                                                ? "2 mėnesiai"
+                                                : widget.goal.sharedGoalModel
+                                                            .endPoints ==
+                                                        90
+                                                    ? "3 mėnesiai"
+                                                    : "6 mėnesiai",
+                            style: const TextStyle(
+                                fontSize: 18, color: Color(0xFFbcd979)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pradžios data: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            DateFormat('yyyy MMMM d', 'lt')
+                                .format(widget.goal.sharedGoalModel.startDate),
                             style: TextStyle(
-                                fontSize: 20, color: Colors.lightGreen),
+                                fontSize: 18, color: Color(0xFFbcd979)),
+                          )
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pabaigos data: ',
+                            style: TextStyle(fontSize: 18),
                           ),
+                          Text(
+                            DateFormat('yyyy MMMM d', 'lt')
+                                .format(widget.goal.sharedGoalModel.endDate),
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFFbcd979)),
+                          )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Augaliukas: ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          Text(
+                            plant.name,
+                            style: TextStyle(
+                                fontSize: 18, color: Color(0xFFbcd979)),
+                          )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      if (_currentPage != 2) ...[
+                        Text(
+                          'Užduotys',
+                          style:
+                              TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
                         ),
-                        const SizedBox(height: 20),
                       ],
+                      if (_currentPage == 0) // Mano progresas
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...goalTasksMine
+                                .where((task) => !task.isCompleted)
+                                .map(
+                                  (task) => GoalTaskCard(
+                                    task: task,
+                                    type: 1,
+                                    length: lengthMine,
+                                    isDoneGoal: username ==
+                                            widget.goal.sharedGoalModel.user1Id
+                                        ? widget.goal.sharedGoalModel
+                                            .isCompletedUser1
+                                        : widget.goal.sharedGoalModel
+                                            .isCompletedUser2,
+                                    isMyTask: true,
+                                    doneLength: doneLengthMine,
+                                    calculatePoints: (isCompleted) =>
+                                        _calculatePoints(
+                                            isCompleted, goalTasksMine),
+                                    onDelete: _deleteTask,
+                                  ),
+                                ),
+                            ...goalTasksMine
+                                .where((task) => task.isCompleted)
+                                .map(
+                                  (task) => GoalTaskCard(
+                                    task: task,
+                                    type: 1,
+                                    isMyTask: true,
+                                    isDoneGoal: username ==
+                                            widget.goal.sharedGoalModel.user1Id
+                                        ? widget.goal.sharedGoalModel
+                                            .isCompletedUser1
+                                        : widget.goal.sharedGoalModel
+                                            .isCompletedUser2,
+                                    length: lengthMine,
+                                    doneLength: doneLengthMine,
+                                    calculatePoints: (isCompleted) =>
+                                        _calculatePoints(
+                                            isCompleted, goalTasksMine),
+                                  ),
+                                ),
+                          ],
+                        )
+                      else if (_currentPage == 1) // Draugo progresas
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...goalTasksFriend
+                                .where((task) => !task.isCompleted)
+                                .map(
+                                  (task) => GoalTaskCard(
+                                    task: task,
+                                    type: 1,
+                                    isMyTask: false,
+                                    isDoneGoal: username ==
+                                            widget.goal.sharedGoalModel.user1Id
+                                        ? widget.goal.sharedGoalModel
+                                            .isCompletedUser2
+                                        : widget.goal.sharedGoalModel
+                                            .isCompletedUser1,
+                                    length: lengthFriend,
+                                    doneLength: doneLengthFriend,
+                                    calculatePoints: (isCompleted) =>
+                                        _calculatePoints(
+                                            isCompleted, goalTasksFriend),
+                                    onDelete:
+                                        null, // Draugo užduočių trinti negalima
+                                  ),
+                                ),
+                            ...goalTasksFriend
+                                .where((task) => task.isCompleted)
+                                .map(
+                                  (task) => GoalTaskCard(
+                                    task: task,
+                                    isMyTask: false,
+                                    type: 1,
+                                    isDoneGoal: username ==
+                                            widget.goal.sharedGoalModel.user1Id
+                                        ? widget.goal.sharedGoalModel
+                                            .isCompletedUser2
+                                        : widget.goal.sharedGoalModel
+                                            .isCompletedUser1,
+                                    length: lengthFriend,
+                                    doneLength: doneLengthFriend,
+                                    calculatePoints: (isCompleted) =>
+                                        _calculatePoints(
+                                            isCompleted, goalTasksFriend),
+                                  ),
+                                ),
+                          ],
+                        )
+                      else // Bendras progresas
+                        const SizedBox.shrink(),
+                      if (_currentPage == 2 &&
+                          widget.goal.sharedGoalModel.isCompletedUser1 &&
+                          widget.goal.sharedGoalModel.isCompletedUser2) ...[
+                        const Text(
+                          'Įvykdėte bendrą tikslą!',
+                          style:
+                              TextStyle(fontSize: 25, color: Colors.lightGreen),
+                        ),
+                      ],
+                      if (_currentPage == 0) ...[
+                        if (username == widget.goal.sharedGoalModel.user1Id
+                            ? !widget.goal.sharedGoalModel.isCompletedUser1
+                            : !widget
+                                .goal.sharedGoalModel.isCompletedUser2) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (goalTasksMine
+                                  .isNotEmpty) // Patikriname, ar yra užduočių
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await _saveGoalStates(); // Pirma išsaugome duomenis
+                                    if (mounted) {
+                                      setState(
+                                          () {}); // Tada atnaujiname ekraną
+                                    }
+                                  },
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty
+                                        .resolveWith<Color>(
+                                      (Set<MaterialState> states) {
+                                        return const Color(0xFFECFFC5);
+                                      },
+                                    ),
+                                    foregroundColor: MaterialStateProperty.all(
+                                        Colors.lightGreen),
+                                  ),
+                                  child: const Text(
+                                    'Išsaugoti',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          ElevatedButton(
+                            onPressed:
+                                !widget.goal.sharedGoalModel.isCompletedUser1
+                                    ? null
+                                    : () {
+                                        CustomDialogs.showNewTaskDialog(
+                                          context: context,
+                                          goal: widget.goal,
+                                          accentColor: Colors.lightGreen[400] ??
+                                              Colors.lightGreen,
+                                          onSave: (GoalTask task) {
+                                            _createTask(task);
+                                          },
+                                        );
+                                      },
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 50),
+                              backgroundColor: const Color(
+                                  0xFFE4F7B4), // Šviesi mėlyna spalva
+                              foregroundColor:
+                                  Colors.lightGreen, // Teksto ir ikonos spalva
+                            ),
+                            child: Text(
+                              widget.goal.sharedGoalModel.isCompletedUser1
+                                  ? 'Pridėti užduotį'
+                                  : 'Tikslas įvykdytas',
+                              style: TextStyle(
+                                  fontSize: 20, color: Colors.lightGreen),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ],
+                      const Text(
+                        'Statistika',
+                        style:
+                            TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(height: 200, child: _buildChart()),
                     ],
-                    const Text(
-                      'Statistika',
-                      style: TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(height: 200, child: _buildChart()),
-                  ],
+                  ),
                 ),
               ),
             ),
             const BottomNavigation(),
+            const SizedBox(height: bottomPadding),
           ],
         ),
       ),
@@ -730,16 +770,19 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         _calculateProgress(goalTasksMine, 0),
         widget.goal.sharedGoalModel.plantId,
         _userPoints(goalTasksMine),
+        lastDoneDate,
       ),
       buildProgressIndicator(
         _calculateProgress(goalTasksFriend, 0),
         widget.goal.sharedGoalModel.plantId,
         _userPoints(goalTasksFriend),
+        lastDoneDateFriend,
       ),
       buildProgressIndicator(
         _calculateProgress(goalTasksMine, 1),
         widget.goal.sharedGoalModel.plantId,
         _allPoints(),
+        DateTime.now(),
       ),
     ];
 

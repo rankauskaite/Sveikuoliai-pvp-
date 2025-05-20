@@ -58,74 +58,90 @@ class _MeditationScreenState extends State<MeditationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Fiksuoti tarpai
+    const double topPadding = 25.0; // Tarpas nuo viršaus
+    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double bottomPadding =
+        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+
+    // Gauname ekrano matmenis
+    //final Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            Container(
-              width: 320,
-              height: 600,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
-              ),
-              child: Column(
-                children: [
-                  Row(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+              Expanded(
+                // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white, width: 20),
+                  ),
+                  child: Column(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_ios, size: 30),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back_ios, size: 30),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 10),
+                      const Text('Meditacija', style: TextStyle(fontSize: 30)),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: _chewieControllers.length,
+                          itemBuilder: (context, index) {
+                            if (_chewieControllers.length > index &&
+                                _videoControllers[index].value.isInitialized) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Chewie(
+                                    controller: _chewieControllers[index]),
+                              );
+                            } else {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SmoothPageIndicator(
+                        controller: _pageController,
+                        count: _videoPaths.length,
+                        effect: const WormEffect(
+                          dotColor: Colors.grey,
+                          activeDotColor: Colors.deepPurple,
+                          dotHeight: 10,
+                          dotWidth: 10,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  const Text('Meditacija', style: TextStyle(fontSize: 30)),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: _chewieControllers.length,
-                      itemBuilder: (context, index) {
-                        if (_chewieControllers.length > index &&
-                            _videoControllers[index].value.isInitialized) {
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child:
-                                Chewie(controller: _chewieControllers[index]),
-                          );
-                        } else {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SmoothPageIndicator(
-                    controller: _pageController,
-                    count: _videoPaths.length,
-                    effect: const WormEffect(
-                      dotColor: Colors.grey,
-                      activeDotColor: Colors.deepPurple,
-                      dotHeight: 10,
-                      dotWidth: 10,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
+                ),
               ),
-            ),
-            const BottomNavigation(),
-          ],
-        ),
+              const BottomNavigation(),
+              SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
+import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
@@ -168,8 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 50,
                             alignment: Alignment.bottomLeft,
                             child: Text(
-                              userName.length > 15
-                                  ? '${userName.substring(0, 15)}...'
+                              userName.length > 12
+                                  ? '${userName.substring(0, 12)}...'
                                   : userName,
                               style: const TextStyle(fontSize: 20),
                             ),
@@ -308,9 +309,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ],
                               ),
+                            ] else ...[
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => FriendsScreen()),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  width: (screenSize.width -
+                                          2 * horizontalPadding) *
+                                      0.8,
+                                  height: 300,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: Color(0xFF833EBD), width: 3),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 8,
+                                        offset: Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(9),
+                                    child: Image.asset(
+                                      'assets/images/premium_vizualas.png',
+                                      fit: BoxFit.fill,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
-                            const SizedBox(
-                                height: 20), // Papildomas tarpas apačioje
+                            // const SizedBox(
+                            //     height: 20), // Papildomas tarpas apačioje
                           ],
                         ),
                       ),
