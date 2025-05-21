@@ -82,10 +82,15 @@ class _GardenScreenState extends State<GardenScreen> {
       final plant = sourceList[index];
       final double left = plantData[index]['left'];
       final double top = plantData[index]['top'];
-      final String imagePath = PlantImageService.getPlantImage(
-        plant['plantId'],
-        plant['points'],
-      );
+      final String imagePath = plant['isPlantDead']
+          ? DeadPlantImageService.getPlantImage(
+              plant['plantId'],
+              plant['points'],
+            )
+          : PlantImageService.getPlantImage(
+              plant['plantId'],
+              plant['points'],
+            );
 
       return Positioned(
         left: left,
@@ -141,12 +146,16 @@ class _GardenScreenState extends State<GardenScreen> {
       List<HabitInformation> habits =
           await _habitService.getUserHabits(username);
 
+      List<HabitInformation> activeHabits =
+          habits.where((habit) => !habit.habitModel.isCompleted).toList();
+
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
-        userHabits = habits
+        userHabits = activeHabits
             .map((habit) => {
                   'plantId': habit.habitModel.plantId,
-                  'points': habit.habitModel.points
+                  'points': habit.habitModel.points,
+                  'isPlantDead': habit.habitModel.isPlantDead,
                 })
             .toList();
       });
@@ -159,13 +168,16 @@ class _GardenScreenState extends State<GardenScreen> {
     try {
       // Gaukime vartotojo įpročius
       List<GoalInformation> goals = await _goalService.getUserGoals(username);
+      List<GoalInformation> activeGoals =
+          goals.where((goal) => !goal.goalModel.isCompleted).toList();
 
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
-        userGoals = goals
+        userGoals = activeGoals
             .map((goal) => {
                   'plantId': goal.goalModel.plantId,
-                  'points': goal.goalModel.points
+                  'points': goal.goalModel.points,
+                  'isPlantDead': goal.goalModel.isPlantDead,
                 })
             .toList();
       });
@@ -179,13 +191,22 @@ class _GardenScreenState extends State<GardenScreen> {
       // Gaukime vartotojo įpročius
       List<SharedGoalInformation> goals =
           await _sharedGoalService.getSharedUserGoals(username);
+      List<SharedGoalInformation> activeGoals = goals
+          .where((goal) =>
+              !goal.sharedGoalModel.isCompletedUser1 &&
+              !goal.sharedGoalModel.isCompletedUser2)
+          .toList();
 
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
-        userSharedGoals = goals
+        userSharedGoals = activeGoals
             .map((goal) => {
                   'plantId': goal.sharedGoalModel.plantId,
-                  'points': goal.sharedGoalModel.points
+                  'points': goal.sharedGoalModel.points,
+                  'isPlantDead': goal.sharedGoalModel.isPlantDeadUser1 &&
+                          goal.sharedGoalModel.isPlantDeadUser2
+                      ? true
+                      : false,
                 })
             .toList();
       });

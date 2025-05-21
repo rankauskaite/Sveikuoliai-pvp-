@@ -24,6 +24,8 @@ Future<void> main() async {
     plantId: 'plant_rose',
     goalTypeId: 'focus21',
     isApproved: false, // Pridėta nauja savybė
+    isPlantDeadUser1: false,
+    isPlantDeadUser2: false,
   );
 
   await sharedGoalService.createSharedGoalEntry(goal);

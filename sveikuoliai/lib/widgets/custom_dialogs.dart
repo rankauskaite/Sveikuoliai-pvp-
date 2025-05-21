@@ -356,6 +356,7 @@ class CustomDialogs {
                   userId: habit.habitModel.userId,
                   habitTypeId: habit.habitModel.habitTypeId,
                   plantId: habit.habitModel.plantId,
+                  isPlantDead: habit.habitModel.isPlantDead,
                 );
 
                 await habitService.updateHabitEntry(updatedHabit);

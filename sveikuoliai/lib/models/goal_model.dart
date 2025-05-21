@@ -13,6 +13,7 @@ class GoalModel {
   String userId;
   String plantId;
   String? goalTypeId; // Dabar nullable
+  bool isPlantDead;
 
   GoalModel({
     required this.id,
@@ -24,6 +25,7 @@ class GoalModel {
     required this.endPoints,
     required this.userId,
     required this.plantId,
+    required this.isPlantDead,
     this.goalTypeId, // Nullable nereikia `required`
   });
 
@@ -39,6 +41,7 @@ class GoalModel {
       'endPoints': endPoints,
       'userId': userId,
       'plantId': plantId,
+      'isPlantDead': isPlantDead,
       if (goalTypeId != null)
         'goalTypeId': goalTypeId, // Neįdeda į JSON, jei `null`
     };
@@ -57,6 +60,7 @@ class GoalModel {
       endPoints: json['endPoints'] ?? 0,
       userId: json['userId'] ?? '',
       plantId: json['plantId'] ?? '',
+      isPlantDead: json['isPlantDead'] ?? false,
       goalTypeId: json['goalTypeId'], // Jei nėra lauko, liks `null`
     );
   }

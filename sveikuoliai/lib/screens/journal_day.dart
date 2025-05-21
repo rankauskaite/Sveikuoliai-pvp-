@@ -3,15 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
 import 'package:sveikuoliai/models/journal_model.dart';
+import 'package:sveikuoliai/models/menstrual_cycle_model.dart';
+import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/journal.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/journal_services.dart';
+import 'package:sveikuoliai/services/menstrual_cycle_services.dart';
+import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sveikuoliai/services/journal_upload_service.dart';
-import 'package:sveikuoliai/services/drive_services.dart';
-import 'package:sveikuoliai/services/firebase_storage_service.dart';
 
 class JournalDayScreen extends StatefulWidget {
   final DateTime selectedDay;
@@ -25,10 +27,13 @@ class JournalDayScreen extends StatefulWidget {
 class _JournalDayScreenState extends State<JournalDayScreen> {
   final JournalService _journalService = JournalService();
   final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+  final MenstrualCycleService _menstrualCycleService = MenstrualCycleService();
   late DateTime selectedDay;
   MoodType selectedMood = MoodType.neutrali;
   String journalText = '';
-  DateTime? menstruationStart;
+  late DateTime menstruationStart;
+  int periodLength = 7; // Mėnesinių trukmė dienomis
   late DateTime selectedTempDay = selectedDay; // Laikinas pasirinkimas
   String userUsername = "";
 
@@ -36,6 +41,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   void initState() {
     super.initState();
     selectedDay = widget.selectedDay;
+    menstruationStart = DateTime(2000, 1, 1); // Nustatome pradinę datą
     _fetchUserData().then((_) {
       _fetchJournalEntry(selectedDay);
     });
@@ -50,6 +56,14 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
           userUsername = sessionData['username'] ?? "Nežinomas";
         },
       );
+      UserModel? userModel = await _userService.getUserEntry(userUsername);
+      if (userModel != null) {
+        setState(() {
+          periodLength = userModel.menstrualLength;
+        });
+      }
+      await _fetchMenstrualCycleEntry();
+      print("Menstruacijų pradžia: $menstruationStart");
     } catch (e) {
       String message = 'Klaida gaunant duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -73,6 +87,31 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
       }
     } catch (e) {
       showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+    }
+  }
+
+  Future<void> _fetchMenstrualCycleEntry() async {
+    try {
+      List<MenstrualCycle> menstrualCycles =
+          await _menstrualCycleService.getUserMenstrualCycles(userUsername);
+
+      if (menstrualCycles.isNotEmpty) {
+        // Sort cycles by startDate in descending order (newest first)
+        menstrualCycles.sort((a, b) => b.startDate.compareTo(a.startDate));
+
+        // Take the most recent cycle
+        MenstrualCycle mostRecentCycle = menstrualCycles.first;
+
+        setState(() {
+          menstruationStart = mostRecentCycle.startDate;
+        });
+      } else {
+        setState(() {
+          menstruationStart = DateTime(2000, 1, 1);
+        });
+      }
+    } catch (e) {
+      //showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
     }
   }
 
@@ -104,7 +143,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         // Apskaičiuojame eilučių skaičių pagal pasirinktą mėnesį
@@ -122,14 +161,12 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                   locale: 'lt_LT',
                   startingDayOfWeek: StartingDayOfWeek.monday,
                   rowHeight: 40,
-                  focusedDay: selectedTempDay ??
-                      selectedDay!, // Atvaizduojama fokusuota diena
+                  focusedDay: selectedTempDay, // Atvaizduojama fokusuota diena
                   selectedDayPredicate: (day) {
                     // Patikriname, ar diena yra menstruacijų pradžia
-                    return selectedTempDay != null &&
-                        day.year == selectedTempDay!.year &&
-                        day.month == selectedTempDay!.month &&
-                        day.day == selectedTempDay!.day;
+                    return day.year == selectedTempDay.year &&
+                        day.month == selectedTempDay.month &&
+                        day.day == selectedTempDay.day;
                   },
                   onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
                     setState(() {
@@ -167,11 +204,20 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                     child: Text('Atšaukti'),
                   ),
                   TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       setState(() {
                         menstruationStart =
                             selectedTempDay; // Išsaugome pasirinktą menstruacijų dieną
                       });
+                      MenstrualCycle menstrualCycle = MenstrualCycle(
+                        id: "${userUsername}_${widget.selectedDay.year}-${widget.selectedDay.month}-${widget.selectedDay.day}",
+                        userId: userUsername,
+                        startDate: menstruationStart,
+                        endDate: menstruationStart.add(Duration(
+                            days: periodLength - 1)), // Pridedame dienas
+                      );
+                      await _menstrualCycleService
+                          .createMenstrualCycleEntry(menstrualCycle);
                       Navigator.pop(context); // Uždaryti modalą
                     },
                     child: Text('Gerai'),
@@ -186,7 +232,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   }
 
   int _getRowCountForMonth(DateTime date) {
-    final firstDayOfMonth = DateTime(date.year, date.month, 1);
+    //final firstDayOfMonth = DateTime(date.year, date.month, 1);
     final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
 
     // Apskaičiuojame, kiek dienų yra šiame mėnesyje
@@ -206,7 +252,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
         20.0; // Tarpas nuo apačios (virš BottomNavigation)
 
     // Gauname ekrano matmenis
-    final Size screenSize = MediaQuery.of(context).size;
+    //final Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
@@ -473,48 +519,56 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                     ),
                                   ),
                                   SizedBox(height: 10),
-                                  GestureDetector(
-                                    onTap: () => _selectDate(context),
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.deepPurple.shade50,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                            color: Colors.deepPurple.shade200),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: const [
-                                          Icon(Icons.calendar_today,
-                                              color: Colors.deepPurple,
-                                              size: 16),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Pažymėti mėnesines',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.deepPurple,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  if (menstruationStart != null &&
-                                      !selectedDay
-                                          .isBefore(menstruationStart!) &&
-                                      selectedDay
-                                              .difference(menstruationStart!)
-                                              .inDays <
-                                          7)
+                                  if (menstruationStart.year >
+                                              2000 && // Ensure valid start date
+                                          !selectedDay
+                                              .isBefore(menstruationStart) &&
+                                          selectedDay.isBefore(
+                                              menstruationStart.add(Duration(
+                                                  days: periodLength))) ||
+                                      selectedDay ==
+                                          menstruationStart.add(
+                                              Duration(days: periodLength - 1)))
                                     Text(
-                                      'Šiandien yra ${selectedDay.difference(menstruationStart!).inDays + 1} mėnesinių diena',
+                                      'Šiandien yra ${selectedDay.difference(menstruationStart).inDays + 1} mėnesinių diena',
                                       style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    )
+                                  else
+                                    GestureDetector(
+                                      onTap: () => _selectDate(context),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.deepPurple.shade50,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                              color:
+                                                  Colors.deepPurple.shade200),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Icon(Icons.calendar_today,
+                                                color: Colors.deepPurple,
+                                                size: 16),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              'Pažymėti mėnesines',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.deepPurple,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   SizedBox(height: 5),
                                   SizedBox(

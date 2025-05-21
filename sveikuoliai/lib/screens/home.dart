@@ -91,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
       minute: trigger.minute,
     );
     print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
+    _setupDailyNotifications();
 
     _adTimer = Timer.periodic(
       const Duration(seconds: 3),

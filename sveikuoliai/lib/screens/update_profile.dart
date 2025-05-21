@@ -325,7 +325,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(9),
                               child: Image.asset(
-                                'assets/gif/premium.gif',
+                                'assets/images/versijos_keitimas.jpg',
                                 fit: BoxFit.cover,
                               ),
                             ),

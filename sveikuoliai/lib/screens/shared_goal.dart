@@ -45,6 +45,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   String friendUsername = ''; // Draugo vartotojo vardas
   String friendName = ''; // Draugo vardas
   String username = ''; // Vartotojo vardas
+  bool isPlantDeadMine = false; // Augalo būsena
+  bool isPlantDeadFriend = false; // Draugo augalo būsena
   late DateTime lastDoneDate;
   late DateTime lastDoneDateFriend;
 
@@ -73,11 +75,21 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
             widget.goal.sharedGoalModel.user1Id == sessionData['username']
                 ? widget.goal.sharedGoalModel.user2Id
                 : widget.goal.sharedGoalModel.user1Id;
+        bool isDead =
+            widget.goal.sharedGoalModel.user1Id == sessionData['username']
+                ? widget.goal.sharedGoalModel.isPlantDeadUser1
+                : widget.goal.sharedGoalModel.isPlantDeadUser2;
+
+        bool isDeadFriend = widget.goal.sharedGoalModel.user1Id == userId
+            ? widget.goal.sharedGoalModel.isPlantDeadUser2
+            : widget.goal.sharedGoalModel.isPlantDeadUser1;
         UserModel? name = await _userService.getUserEntry(userId);
         setState(() {
           username = sessionData['username'] ?? "Nežinomas";
           friendUsername = userId;
           friendName = name?.name ?? "Nežinomas";
+          isPlantDeadMine = isDead;
+          isPlantDeadFriend = isDeadFriend;
         });
       } catch (e) {
         setState(() {
@@ -139,6 +151,21 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
               .reduce((a, b) => a.isAfter(b) ? a : b);
         }
       });
+
+      bool isDead = isPlantDead(lastDoneDate, true);
+      setState(() {
+        widget.goal.sharedGoalModel.isPlantDeadUser1 = isDead;
+        isPlantDeadMine = isDead;
+      });
+      await _sharedGoalService
+          .updateSharedGoalEntry(widget.goal.sharedGoalModel);
+      bool isDeadFriend = isPlantDead(lastDoneDateFriend, false);
+      setState(() {
+        widget.goal.sharedGoalModel.isPlantDeadUser2 = isDeadFriend;
+        isPlantDeadFriend = isDeadFriend;
+      });
+      await _sharedGoalService
+          .updateSharedGoalEntry(widget.goal.sharedGoalModel);
     } catch (e) {
       showCustomSnackBar(
           context, 'Klaida kraunant draugų tikslo užduotis ❌', false);
@@ -217,6 +244,72 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       if (mounted) {
         showCustomSnackBar(context, "Klaida išsaugant tikslo būseną ❌", false);
       }
+    }
+  }
+
+  bool isPlantDead(DateTime date, bool isMine) {
+    DateTime today = DateTime.now();
+    DateTime twoDaysAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 2));
+    DateTime threeDaysAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 3));
+    DateTime weekAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 7));
+    if (widget.goal.sharedGoalModel.plantId == "dobiliukas" &&
+        date.isBefore(twoDaysAgo)) {
+      if (isMine) {
+        showCustomSnackBar(
+            context,
+            "${getPlantName(widget.goal.sharedGoalModel.plantId)} bent 2 dienas 🥺",
+            false);
+      }
+      return true;
+    } else if (widget.goal.sharedGoalModel.plantId == "ramuneles" ||
+        widget.goal.sharedGoalModel.plantId == "zibuokle" ||
+        widget.goal.sharedGoalModel.plantId == "saulegraza") {
+      if (date.isBefore(threeDaysAgo)) {
+        if (isMine) {
+          showCustomSnackBar(
+              context,
+              "${getPlantName(widget.goal.sharedGoalModel.plantId)} bent 3 dienas 🥺",
+              false);
+        }
+        return true;
+      }
+    } else if (widget.goal.sharedGoalModel.plantId == "orchideja" ||
+        widget.goal.sharedGoalModel.plantId == "gervuoge" ||
+        widget.goal.sharedGoalModel.plantId == "vysnia") {
+      if (date.isBefore(weekAgo)) {
+        if (isMine) {
+          showCustomSnackBar(
+              context,
+              "${getPlantName(widget.goal.sharedGoalModel.plantId)} bent savaitę 🥺",
+              false);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String getPlantName(String plantId) {
+    switch (plantId) {
+      case 'dobiliukas':
+        return 'Dobiliukas nuvyto, nes nebuvo laistomas';
+      case 'ramuneles':
+        return 'Ramunėlės nuvyto, nes nebuvo laistomos';
+      case 'zibuokle':
+        return 'Žibuoklė nuvyto, nes nebuvo laistoma';
+      case 'saulegraza':
+        return 'Saulėgrąža nuvyto, nes nebuvo laistoma';
+      case 'orchideja':
+        return 'Orchidėja nuvyto, nes nebuvo laistoma';
+      case 'gervuoge':
+        return 'Gervuogė nuvyto, nes nebuvo laistoma';
+      case 'vysnia':
+        return 'Vyšnia nuvyto, nes nebuvo laistoma';
+      default:
+        return '';
     }
   }
 
@@ -770,19 +863,19 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         _calculateProgress(goalTasksMine, 0),
         widget.goal.sharedGoalModel.plantId,
         _userPoints(goalTasksMine),
-        lastDoneDate,
+        isPlantDeadMine,
       ),
       buildProgressIndicator(
         _calculateProgress(goalTasksFriend, 0),
         widget.goal.sharedGoalModel.plantId,
         _userPoints(goalTasksFriend),
-        lastDoneDateFriend,
+        isPlantDeadFriend,
       ),
       buildProgressIndicator(
         _calculateProgress(goalTasksMine, 1),
         widget.goal.sharedGoalModel.plantId,
         _allPoints(),
-        DateTime.now(),
+        (isPlantDeadMine && isPlantDeadFriend) ? true : false,
       ),
     ];
 

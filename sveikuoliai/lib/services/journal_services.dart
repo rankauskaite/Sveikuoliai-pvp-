@@ -69,5 +69,4 @@ class JournalService {
     return JournalModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
   }).toList();
   }
-  
 }

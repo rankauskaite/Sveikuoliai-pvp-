@@ -4,32 +4,13 @@ import 'package:sveikuoliai/services/plant_image_services.dart';
 
 // Progreso indikatorius su procentais
 Widget buildProgressIndicator(
-    double progress, String plantId, int points, DateTime date) {
+    double progress, String plantId, int points, bool isPlantDead) {
   String plantType = plantId;
   int userPoints = points;
   String imagePath = "";
   // Patikrina ar data yra užvakar arba senesnė
-  DateTime today = DateTime.now();
-  DateTime twoDaysAgo =
-      DateTime(today.year, today.month, today.day).subtract(Duration(days: 2));
-  DateTime threeDaysAgo =
-      DateTime(today.year, today.month, today.day).subtract(Duration(days: 3));
-  DateTime weekAgo =
-      DateTime(today.year, today.month, today.day).subtract(Duration(days: 7));
-  if (plantType == "dobiliukas" && date.isBefore(twoDaysAgo)) {
+  if (isPlantDead) {
     imagePath = DeadPlantImageService.getPlantImage(plantType, userPoints);
-  } else if (plantType == "ramuneles" ||
-      plantType == "zibuokle" ||
-      plantType == "saulegraza") {
-    if (date.isBefore(threeDaysAgo)) {
-      imagePath = DeadPlantImageService.getPlantImage(plantType, userPoints);
-    }
-  } else if (plantType == "orchideja" ||
-      plantType == "gervuoge" ||
-      plantType == "vysnia") {
-    if (date.isBefore(weekAgo)) {
-      imagePath = DeadPlantImageService.getPlantImage(plantType, userPoints);
-    }
   } else {
     imagePath = PlantImageService.getPlantImage(plantType, userPoints);
   }

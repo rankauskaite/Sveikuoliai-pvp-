@@ -13,6 +13,7 @@ class HabitModel {
   String userId;
   String habitTypeId;
   String plantId;
+  bool isPlantDead;
 
   HabitModel({
     required this.id,
@@ -25,6 +26,7 @@ class HabitModel {
     required this.userId,
     required this.habitTypeId,
     required this.plantId,
+    required this.isPlantDead,
   });
 
   // i json
@@ -40,6 +42,7 @@ class HabitModel {
       'userId': userId,
       'habitTypeId': habitTypeId,
       'plantId': plantId,
+      'isPlantDead': isPlantDead,
     };
   }
 
@@ -62,6 +65,7 @@ class HabitModel {
       userId: json['userId'] ?? '',
       plantId: json['plantId'] ?? '',
       habitTypeId: json['habitTypeId'] ?? '',
+      isPlantDead: json['isPlantDead'] ?? false,
     );
   }
 }
