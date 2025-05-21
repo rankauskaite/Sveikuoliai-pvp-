@@ -10,7 +10,10 @@ class FriendshipService {
 
   // create
   Future<void> createFriendship(Friendship friendship) async {
-    await friendshipCollection.doc(friendship.id).set(friendship.toJson());
+    Map<String, dynamic> data = friendship.toJson();
+    data.removeWhere((key, value) =>
+        value == null); // pasalinu null values kad nesusigadintu
+    await friendshipCollection.doc(friendship.id).set(data);
   }
 
   // read if exists

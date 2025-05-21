@@ -322,7 +322,7 @@ class _HabitCardState extends State<HabitCard> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => HabitsGoalsScreen()),
+                              builder: (context) => HabitsGoalsScreen(selectedIndex: 0)),
                         );
                       },
                       child: const Text('Išsaugoti'),

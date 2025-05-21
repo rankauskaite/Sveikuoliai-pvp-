@@ -6,9 +6,6 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tzData;
-import 'package:timezone/timezone.dart' as tz;
 
 class NotificationHelper {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -18,7 +15,8 @@ class NotificationHelper {
     tzData.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Europe/Vilnius'));
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -62,7 +60,9 @@ class NotificationHelper {
       await prefs.setBool('exact_alarm_permission_requested', true);
     }
     // Android 13+ reikia leidimo atskirai
-    final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
     await androidImplementation?.requestNotificationsPermission();
   }
 
@@ -72,11 +72,10 @@ class NotificationHelper {
     required String body,
     required int hour,
     required int minute,
-  }) 
-  
-  async {
+  }) async {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
 
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
@@ -103,7 +102,8 @@ class NotificationHelper {
   }
 
   static Future<void> testNotificationNow() async {
-    final scheduled = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+    final scheduled =
+        tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
 
     await _notificationsPlugin.zonedSchedule(
       999,
@@ -123,6 +123,32 @@ class NotificationHelper {
       //     UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
+  }
+
+  static Future<void> sendFriendshipRequestNotification(
+      String userId, String friendName, String friendUsername) async {
+    await _notificationsPlugin.zonedSchedule(
+      999,
+      'Draugystės pasiūlymas',
+      '$friendName (@$friendUsername) nori tapti tavo draugu!',
+      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'friendship_channel',
+          'Draugystės priminimai',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      matchDateTimeComponents: DateTimeComponents.time,
+      // uiLocalNotificationDateInterpretation:
+      //     UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  static Future<void> cancelNotification(int id) async {
+    await _notificationsPlugin.cancel(id);
   }
 
   static Future<void> scheduleTwoMotivationsPerDay() async {
@@ -150,18 +176,23 @@ class NotificationHelper {
       "Tu verta visko, apie ką svajoji – tik nepamiršk žingsniuoti 💞",
     ]..shuffle();
 
+    String getRandomMessage() {
+      messages.shuffle();
+      return messages.first;
+    }
+
     await scheduleDailyNotification(
       id: 1,
       title: "Rytinė motyvacija",
-      body: messages[0],
-      hour: 7,
+      body: getRandomMessage(),
+      hour: 9,
       minute: 0,
     );
 
     await scheduleDailyNotification(
       id: 2,
       title: "Vakarinė motyvacija",
-      body: messages[1],
+      body: getRandomMessage(),
       hour: 21,
       minute: 0,
     );

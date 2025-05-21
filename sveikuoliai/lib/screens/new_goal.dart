@@ -351,7 +351,7 @@ class _GoalCardState extends State<GoalCard> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => HabitsGoalsScreen()),
+                                builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
                           );
                         }
                       },
@@ -405,13 +405,13 @@ class _GoalCardState extends State<GoalCard> {
       Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
       );
     } catch (e) {
       showCustomSnackBar(context, "Klaida pridedant tikslo užduotį ❌", false);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
       );
     }
   }

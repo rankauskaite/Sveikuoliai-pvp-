@@ -35,9 +35,11 @@ class AppNotificationService {
 
   // create
   Future<void> createNotification(AppNotification notification) async {
-    DocumentReference docRef =
-        await notificationCollection.add(notification.toJson());
-    await docRef.update({'id': docRef.id});
+    Map<String, dynamic> data = notification.toJson();
+
+    data.removeWhere((key, value) => value == null); // pasalinu `null` reikšmes
+
+    await notificationCollection.doc(notification.id).set(data);
   }
 
   // read
@@ -102,12 +104,14 @@ class AppNotificationService {
   // useriui random zinute is statiniu siunciama
   Future<void> sendMotivationalNotification(String userId) async {
     final message = DefaultNotifications.getRandomMessage();
+    final now = DateTime.now();
 
     final notification = AppNotification(
-      id: '',
+      id: "${userId}_$now",
       userId: userId,
       text: message,
-      date: DateTime.now(),
+      type: "motivational",
+      date: now,
     );
 
     await createNotification(notification);
