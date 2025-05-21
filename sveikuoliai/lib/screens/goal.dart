@@ -324,7 +324,7 @@ class _GoalPageState extends State<GoalScreen> {
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
       ); // Grįžti atgal į pagrindinį ekraną
       showCustomSnackBar(context, "Tikslas sėkmingai ištrintas ✅", true);
     } catch (e) {
@@ -396,7 +396,7 @@ class _GoalPageState extends State<GoalScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => HabitsGoalsScreen()),
+                                    builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
                               );
                             },
                             icon: const Icon(

@@ -177,7 +177,8 @@ class _HabitScreenState extends State<HabitScreen> {
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(
+            builder: (context) => HabitsGoalsScreen(selectedIndex: 0)),
       ); // Grįžti atgal į pagrindinį ekraną
       showCustomSnackBar(context, "Įprotis sėkmingai ištrintas ✅", true);
     } catch (e) {
@@ -255,7 +256,8 @@ class _HabitScreenState extends State<HabitScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => HabitsGoalsScreen()),
+                                    builder: (context) =>
+                                        HabitsGoalsScreen(selectedIndex: 0)),
                               );
                             },
                             icon: const Icon(

@@ -3,12 +3,14 @@ import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/friendship_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
+import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
+import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -166,10 +168,12 @@ class GoalCard extends StatefulWidget {
 
 class _GoalCardState extends State<GoalCard> {
   late String userUsername;
+  String userName = "";
   final GoalTypeService _goalTypeService = GoalTypeService();
   final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
   final FriendshipService _friendshipService = FriendshipService();
+  final AppNotificationService _notificationService = AppNotificationService();
   List<FriendshipModel> friends = [];
   String? _selectedDuration = '1 mėnuo'; // Pasirinkta trukmė
   DateTime _startDate = DateTime.now(); // Pradžios data
@@ -183,6 +187,7 @@ class _GoalCardState extends State<GoalCard> {
     super.initState();
     _dateController.text = DateTime.now().toString().substring(0, 10);
     userUsername = widget.username;
+
     _fetchUserFriends(userUsername);
   }
 
@@ -199,6 +204,7 @@ class _GoalCardState extends State<GoalCard> {
       if (!mounted) return; // <- Apsauga prieš setState
       setState(() {
         userUsername = sessionData['username'] ?? "Nežinomas";
+        userName = sessionData['name'] ?? "Nežinomas";
       });
     } catch (e) {
       if (mounted) {
@@ -216,8 +222,11 @@ class _GoalCardState extends State<GoalCard> {
     try {
       List<FriendshipModel> friendsList =
           await _friendshipService.getUserFriendshipModels(username);
+      List<FriendshipModel> friendsListFiltered = friendsList
+          .where((friendship) => friendship.friendship.status == 'accepted')
+          .toList();
       setState(() {
-        friends = friendsList;
+        friends = friendsListFiltered;
         _selectedFriend = friends.isNotEmpty ? friends[0].friend.username : "";
       });
       print("Draugai: $friends");
@@ -403,7 +412,7 @@ class _GoalCardState extends State<GoalCard> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => HabitsGoalsScreen()),
+                              builder: (context) => HabitsGoalsScreen(selectedIndex: 2)),
                         );
                       },
                       child: const Text('Išsaugoti'),
@@ -499,13 +508,13 @@ class _GoalCardState extends State<GoalCard> {
       Navigator.pop(context); // Grįžta atgal
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen(selectedIndex: 2)),
       );
     } catch (e) {
       showCustomSnackBar(context, "Klaida pridedant tikslo užduotį ❌", false);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(builder: (context) => HabitsGoalsScreen(selectedIndex: 2)),
       );
     }
   }
@@ -663,6 +672,17 @@ class _GoalCardState extends State<GoalCard> {
       }
       String message = 'Bendras tikslas pridėtas! 🎉';
       showCustomSnackBar(context, message, true); // Naudokite funkciją
+      DateTime now = DateTime.now();
+      AppNotification notification = AppNotification(
+        id: "${_selectedFriend}_$now",
+        userId: goalModel.user2Id,
+        text:
+            'Draugas $userName (@${userUsername}) sukūrė bendrą tikslą! Prisijungsi? 🪁',
+        isRead: false,
+        date: DateTime.now(),
+        type: 'shared_goal',
+      );
+      await _notificationService.createNotification(notification);
       return goalModel; // Grąžinkite sukurtą tikslą
     } catch (e) {
       print("Klaida pridedant tikslą: $e");

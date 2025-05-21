@@ -4,6 +4,7 @@ import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/garden.dart';
+import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/screens/version.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
@@ -50,6 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _reklamosIndex = 0;
   Timer? _adTimer;
 
+  // Skaičiuojame neperskaitytus pranešimus
+  int get unreadNotificationsCount =>
+      notifications.where((n) => !n.isRead).length;
+
   @override
   void initState() {
     // super.initState();
@@ -81,16 +86,16 @@ class _HomeScreenState extends State<HomeScreen> {
     // );
     super.initState();
     _fetchSessionUser();
-    final now = DateTime.now();
-    final trigger = now.add(const Duration(seconds: 10));
-    NotificationHelper.scheduleDailyNotification(
-      id: 999,
-      title: 'Primename!',
-      body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
-      hour: trigger.hour,
-      minute: trigger.minute,
-    );
-    print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
+    //final now = DateTime.now();
+    //final trigger = now.add(const Duration(seconds: 10));
+    // NotificationHelper.scheduleDailyNotification(
+    //   id: 999,
+    //   title: 'Primename!',
+    //   body: 'Nenusimink – tikslai formuojasi kasdien 🌱',
+    //   hour: trigger.hour,
+    //   minute: trigger.minute,
+    // );
+    // print("🔔 Notification planned for ${trigger.hour}:${trigger.minute}");
     _setupDailyNotifications();
 
     _adTimer = Timer.periodic(
@@ -122,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
     //await FlutterLocalNotificationsPlugin().cancelAll();
 
     await NotificationHelper.scheduleTwoMotivationsPerDay();
-    print("📅 Du pranešimai suplanuoti kasdien 7:00 ir 21:00");
+    print("📅 Du pranešimai suplanuoti kasdien 9:00 ir 21:00");
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -213,14 +218,47 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const Spacer(),
-                          IconButton(
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
                                 showNotifications = true;
                               });
                             },
-                            icon: const Icon(Icons.notifications_outlined,
-                                size: 35),
+                            child: Stack(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.all(4.0),
+                                  child: Icon(Icons.notifications_outlined,
+                                      size: 35),
+                                ),
+                                if (unreadNotificationsCount > 0)
+                                  Positioned(
+                                    right: 4,
+                                    top: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.pink.shade400,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 20,
+                                        minHeight: 20,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '$unreadNotificationsCount',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -441,9 +479,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                       _notificationService
                                           .markNotificationAsRead(
                                               notifications[index].id);
+                                      notifications[index].isRead =
+                                          true; // Atnaujiname lokaliai
                                     }
                                   });
-                                  _showMessageDialog(notifications[index].text);
+                                  _showMessageDialog(notifications[index]);
                                 },
                                 child: Container(
                                   margin: const EdgeInsets.symmetric(
@@ -494,34 +534,135 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showMessageDialog(String message) {
+  void _showMessageDialog(AppNotification notification) {
     showDialog(
       context: context,
       builder: (context) {
+        Widget title;
+        Widget content;
+        List<Widget> actions;
+
+        switch (notification.type) {
+          case 'friend_request':
+            title = const Text(
+              'Nori draugauti?',
+              style: TextStyle(
+                color: Colors.deepPurple,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            );
+            content = Text(
+              notification.text,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+            );
+            actions = [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FriendsScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Peržiūrėti',
+                  style: TextStyle(
+                      color: Colors.deepPurple, fontWeight: FontWeight.bold),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // Reject friend request logic
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  'Uždaryti',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ];
+            break;
+          case 'shared_goal':
+            title = const Text(
+              'Nori auginti augaliuką kartu?',
+              style: TextStyle(
+                color: Colors.purple,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            );
+            content = Text(
+              notification.text,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+            );
+            actions = [
+              TextButton(
+                onPressed: () {
+                  // View shared goal logic
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HabitsGoalsScreen(selectedIndex: 2),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Peržiūrėti',
+                  style: TextStyle(color: Colors.purple),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  'Uždaryti',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ];
+            break;
+          default: // Handles "generic" or any unrecognized type
+            title = const Text(
+              'Pranešimas',
+              style: TextStyle(color: Colors.deepPurple, fontSize: 20),
+            );
+            content = Text(
+              notification.text,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+            );
+            actions = [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  'Uždaryti',
+                  style: TextStyle(color: Colors.deepPurple),
+                ),
+              ),
+            ];
+            break;
+        }
+
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           backgroundColor: Colors.white,
-          title: const Text(
-            'Pranešimas',
-            style: TextStyle(color: Colors.black, fontSize: 20),
+          titlePadding: const EdgeInsets.only(left: 16, top: 16, right: 16),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: title),
+            ],
           ),
-          content: Text(
-            message,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'Uždaryti',
-                style: TextStyle(color: Colors.deepPurple),
-              ),
-            ),
-          ],
+          content: content,
+          actions: actions,
         );
       },
     );

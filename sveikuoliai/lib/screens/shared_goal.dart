@@ -416,7 +416,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen()),
+        MaterialPageRoute(
+            builder: (context) => HabitsGoalsScreen(selectedIndex: 2)),
       ); // Grįžti atgal į pagrindinį ekraną
       showCustomSnackBar(context, "Draugų tikslas sėkmingai ištrintas ✅", true);
     } catch (e) {
@@ -489,7 +490,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => HabitsGoalsScreen()),
+                                    builder: (context) =>
+                                        HabitsGoalsScreen(selectedIndex: 2)),
                               );
                             },
                             icon: const Icon(
@@ -821,9 +823,15 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                   Colors.lightGreen, // Teksto ir ikonos spalva
                             ),
                             child: Text(
-                              widget.goal.sharedGoalModel.isCompletedUser1
-                                  ? 'Pridėti užduotį'
-                                  : 'Tikslas įvykdytas',
+                              widget.goal.sharedGoalModel.user1Id == username
+                                  ? (!widget
+                                          .goal.sharedGoalModel.isCompletedUser1
+                                      ? 'Pridėti užduotį'
+                                      : 'Tikslas įvykdytas')
+                                  : (!widget
+                                          .goal.sharedGoalModel.isCompletedUser2
+                                      ? 'Pridėti užduotį'
+                                      : 'Tikslas įvykdytas'),
                               style: TextStyle(
                                   fontSize: 20, color: Colors.lightGreen),
                             ),

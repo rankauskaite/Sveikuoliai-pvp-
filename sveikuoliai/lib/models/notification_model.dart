@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AppNotification {
-  String id; 
-  String userId; 
+  String id;
+  String userId;
   String text;
   bool isRead;
+  String type;
   DateTime date;
 
   AppNotification({
@@ -13,6 +14,7 @@ class AppNotification {
     required this.text,
     this.isRead = false, // default false
     required this.date,
+    required this.type,
   });
 
   // i json
@@ -22,6 +24,7 @@ class AppNotification {
       'text': text,
       'isRead': isRead,
       'date': Timestamp.fromDate(date),
+      'type': type,
     };
   }
 
@@ -31,10 +34,11 @@ class AppNotification {
       id: id,
       userId: json['userId'] ?? '',
       text: json['text'] ?? '',
-      isRead: json['isRead'] ?? false, 
+      isRead: json['isRead'] ?? false,
+      type: json['type'] ?? 'general',
       date: json['date'] is Timestamp
           ? (json['date'] as Timestamp).toDate()
-          : DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(), 
+          : DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
     );
   }
 }
