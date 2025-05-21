@@ -84,6 +84,14 @@ class _GoalPageState extends State<GoalScreen> {
               .reduce((a, b) => a.isAfter(b) ? a : b);
         }
       });
+
+      if (!widget.goal.goalModel.isCompleted) {
+        bool isDead = isPlantDead(lastDoneDate);
+        setState(() {
+          widget.goal.goalModel.isPlantDead = isDead;
+        });
+        await _goalService.updateGoalEntry(widget.goal.goalModel);
+      }
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslo užduotis ❌', false);
     }
@@ -164,6 +172,66 @@ class _GoalPageState extends State<GoalScreen> {
       if (mounted) {
         showCustomSnackBar(context, "Klaida išsaugant tikslo būseną ❌", false);
       }
+    }
+  }
+
+  bool isPlantDead(DateTime date) {
+    DateTime today = DateTime.now();
+    DateTime twoDaysAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 2));
+    DateTime threeDaysAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 3));
+    DateTime weekAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 7));
+    if (widget.goal.goalModel.plantId == "dobiliukas" &&
+        date.isBefore(twoDaysAgo)) {
+      showCustomSnackBar(
+          context,
+          "${getPlantName(widget.goal.goalModel.plantId)} bent 2 dienas 🥺",
+          false);
+      return true;
+    } else if (widget.goal.goalModel.plantId == "ramuneles" ||
+        widget.goal.goalModel.plantId == "zibuokle" ||
+        widget.goal.goalModel.plantId == "saulegraza") {
+      if (date.isBefore(threeDaysAgo)) {
+        showCustomSnackBar(
+            context,
+            "${getPlantName(widget.goal.goalModel.plantId)} bent 3 dienas 🥺",
+            false);
+        return true;
+      }
+    } else if (widget.goal.goalModel.plantId == "orchideja" ||
+        widget.goal.goalModel.plantId == "gervuoge" ||
+        widget.goal.goalModel.plantId == "vysnia") {
+      if (date.isBefore(weekAgo)) {
+        showCustomSnackBar(
+            context,
+            "${getPlantName(widget.goal.goalModel.plantId)} bent savaitę 🥺",
+            false);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String getPlantName(String plantId) {
+    switch (plantId) {
+      case 'dobiliukas':
+        return 'Dobiliukas nuvyto, nes nebuvo laistomas';
+      case 'ramuneles':
+        return 'Ramunėlės nuvyto, nes nebuvo laistomos';
+      case 'zibuokle':
+        return 'Žibuoklė nuvyto, nes nebuvo laistoma';
+      case 'saulegraza':
+        return 'Saulėgrąža nuvyto, nes nebuvo laistoma';
+      case 'orchideja':
+        return 'Orchidėja nuvyto, nes nebuvo laistoma';
+      case 'gervuoge':
+        return 'Gervuogė nuvyto, nes nebuvo laistoma';
+      case 'vysnia':
+        return 'Vyšnia nuvyto, nes nebuvo laistoma';
+      default:
+        return '';
     }
   }
 
@@ -299,7 +367,7 @@ class _GoalPageState extends State<GoalScreen> {
       backgroundColor: const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 20,
+        toolbarHeight: 0,
         backgroundColor: const Color(0xFF8093F1),
       ),
       resizeToAvoidBottomInset: false,
@@ -387,7 +455,7 @@ class _GoalPageState extends State<GoalScreen> {
                         _calculateProgress(),
                         widget.goal.goalModel.plantId,
                         widget.goal.goalModel.points,
-                        lastDoneDate,
+                        widget.goal.goalModel.isPlantDead,
                       ),
                       const SizedBox(height: 20),
                       const Text(

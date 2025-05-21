@@ -630,6 +630,8 @@ class _GoalCardState extends State<GoalCard> {
                       : 180,
       user1Id: userUsername,
       user2Id: _selectedFriend,
+      isPlantDeadUser1: false,
+      isPlantDeadUser2: false,
       goalTypeId: goalId.trim(),
       plantId: _selectedDuration == '1 savaitė'
           ? 'dobiliukas'

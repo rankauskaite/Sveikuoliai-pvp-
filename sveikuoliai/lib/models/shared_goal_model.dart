@@ -13,6 +13,8 @@ class SharedGoal {
   int endPoints;
   String user1Id;
   String user2Id;
+  bool isPlantDeadUser1;
+  bool isPlantDeadUser2;
   String plantId;
   String goalTypeId;
   bool isApproved = false; // Pridėta nauja savybė
@@ -31,6 +33,8 @@ class SharedGoal {
     required this.plantId,
     required this.goalTypeId,
     required this.isApproved,
+    required this.isPlantDeadUser1,
+    required this.isPlantDeadUser2,
   });
 
   /// Konvertavimas į JSON
@@ -48,6 +52,8 @@ class SharedGoal {
       'plantId': plantId,
       'goalTypeId': goalTypeId,
       'isApproved': isApproved, // Pridėta nauja savybė
+      'isPlantDeadUser1': isPlantDeadUser1,
+      'isPlantDeadUser2': isPlantDeadUser2,
     };
   }
 
@@ -67,6 +73,8 @@ class SharedGoal {
       plantId: json['plantId'] ?? '',
       goalTypeId: json['goalTypeId'] ?? '',
       isApproved: json['isApproved'] ?? false, // Pridėta nauja savybė
+      isPlantDeadUser1: json['isPlantDeadUser1'] ?? false,
+      isPlantDeadUser2: json['isPlantDeadUser2'] ?? false,
     );
   }
 }

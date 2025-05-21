@@ -489,8 +489,13 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(50),
                       child: Image.asset(
-                        PlantImageService.getPlantImage(
-                            habit.habitModel.plantId, habit.habitModel.points),
+                        habit.habitModel.isPlantDead
+                            ? DeadPlantImageService.getPlantImage(
+                                habit.habitModel.plantId,
+                                habit.habitModel.points)
+                            : PlantImageService.getPlantImage(
+                                habit.habitModel.plantId,
+                                habit.habitModel.points),
                         width: 80,
                         height: 80,
                       ),
@@ -712,8 +717,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(50),
                       child: Image.asset(
-                        PlantImageService.getPlantImage(
-                            goal.goalModel.plantId, goal.goalModel.points),
+                        goal.goalModel.isPlantDead
+                            ? DeadPlantImageService.getPlantImage(
+                                goal.goalModel.plantId, goal.goalModel.points)
+                            : PlantImageService.getPlantImage(
+                                goal.goalModel.plantId, goal.goalModel.points),
                         width: 80,
                         height: 80,
                       ),
@@ -937,9 +945,14 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(50),
                         child: Image.asset(
-                          PlantImageService.getPlantImage(
-                              goal.sharedGoalModel.plantId,
-                              goal.sharedGoalModel.points),
+                          goal.sharedGoalModel.isPlantDeadUser1 &&
+                                  goal.sharedGoalModel.isPlantDeadUser2
+                              ? DeadPlantImageService.getPlantImage(
+                                  goal.sharedGoalModel.plantId,
+                                  goal.sharedGoalModel.points)
+                              : PlantImageService.getPlantImage(
+                                  goal.sharedGoalModel.plantId,
+                                  goal.sharedGoalModel.points),
                           width: 80,
                           height: 80,
                         ),

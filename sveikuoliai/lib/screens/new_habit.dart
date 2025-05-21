@@ -492,6 +492,7 @@ class _HabitCardState extends State<HabitCard> {
       isCompleted: false,
       userId: userUsername,
       habitTypeId: habitId.trim(),
+      isPlantDead: false,
       plantId: _selectedDuration == '1 savaitė'
           ? 'dobiliukas'
           : _selectedDuration == '2 savaitės'

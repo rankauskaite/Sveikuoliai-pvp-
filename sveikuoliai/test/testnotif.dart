@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../services/notification_helper.dart';
+import 'package:sveikuoliai/services/notification_helper.dart';
 
 class TestNotificationsScreen extends StatelessWidget {
   const TestNotificationsScreen({super.key});

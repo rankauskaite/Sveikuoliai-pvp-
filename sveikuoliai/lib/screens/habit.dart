@@ -25,6 +25,7 @@ class _HabitScreenState extends State<HabitScreen> {
   PlantModel plant = PlantModel(
       id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
   final PlantService _plantService = PlantService();
+  final HabitService _habitService = HabitService();
   final HabitProgressService _habitProgressService = HabitProgressService();
   List<HabitProgress> progressList = [];
   HabitProgress habitProgress = HabitProgress(
@@ -83,9 +84,81 @@ class _HabitScreenState extends State<HabitScreen> {
           habitProgress = all.last;
           lastProgressDate = all.last.date;
         });
+
+        if (!widget.habit.habitModel.isCompleted) {
+          bool isDead = isPlantDead(lastProgressDate);
+          setState(() {
+            widget.habit.habitModel.isPlantDead = isDead;
+          });
+          await _habitService.updateHabitEntry(widget.habit.habitModel);
+        }
+      } else {
+        setState(() {
+          progressList = [];
+        });
       }
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
+    }
+  }
+
+  bool isPlantDead(DateTime date) {
+    DateTime today = DateTime.now();
+    DateTime twoDaysAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 2));
+    DateTime threeDaysAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 3));
+    DateTime weekAgo = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: 7));
+    if (widget.habit.habitModel.plantId == "dobiliukas" &&
+        date.isBefore(twoDaysAgo)) {
+      showCustomSnackBar(
+          context,
+          "${getPlantName(widget.habit.habitModel.plantId)} bent 2 dienas 🥺",
+          false);
+      return true;
+    } else if (widget.habit.habitModel.plantId == "ramuneles" ||
+        widget.habit.habitModel.plantId == "zibuokle" ||
+        widget.habit.habitModel.plantId == "saulegraza") {
+      if (date.isBefore(threeDaysAgo)) {
+        showCustomSnackBar(
+            context,
+            "${getPlantName(widget.habit.habitModel.plantId)} bent 3 dienas 🥺",
+            false);
+        return true;
+      }
+    } else if (widget.habit.habitModel.plantId == "orchideja" ||
+        widget.habit.habitModel.plantId == "gervuoge" ||
+        widget.habit.habitModel.plantId == "vysnia") {
+      if (date.isBefore(weekAgo)) {
+        showCustomSnackBar(
+            context,
+            "${getPlantName(widget.habit.habitModel.plantId)} bent savaitę 🥺",
+            false);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String getPlantName(String plantId) {
+    switch (plantId) {
+      case 'dobiliukas':
+        return 'Dobiliukas nuvyto, nes nebuvo laistomas';
+      case 'ramuneles':
+        return 'Ramunėlės nuvyto, nes nebuvo laistomos';
+      case 'zibuokle':
+        return 'Žibuoklė nuvyto, nes nebuvo laistoma';
+      case 'saulegraza':
+        return 'Saulėgrąža nuvyto, nes nebuvo laistoma';
+      case 'orchideja':
+        return 'Orchidėja nuvyto, nes nebuvo laistoma';
+      case 'gervuoge':
+        return 'Gervuogė nuvyto, nes nebuvo laistoma';
+      case 'vysnia':
+        return 'Vyšnia nuvyto, nes nebuvo laistoma';
+      default:
+        return '';
     }
   }
 
@@ -242,7 +315,7 @@ class _HabitScreenState extends State<HabitScreen> {
                         _calculateProgress(),
                         widget.habit.habitModel.plantId,
                         widget.habit.habitModel.points,
-                        lastProgressDate,
+                        widget.habit.habitModel.isPlantDead,
                       ),
 
                       const SizedBox(height: 20),
