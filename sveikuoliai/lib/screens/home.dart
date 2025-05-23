@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
@@ -10,6 +14,7 @@ import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:sveikuoliai/services/notification_helper.dart';
 import 'dart:async';
@@ -126,11 +131,36 @@ class _HomeScreenState extends State<HomeScreen> {
     // Tik testavimui – gali ištrinti šią eilutę vėliau
     //await FlutterLocalNotificationsPlugin().cancelAll();
 
-    await NotificationHelper.scheduleTwoMotivationsPerDay();
-    print("📅 Du pranešimai suplanuoti kasdien 9:00 ir 21:00");
+    final notificationsPlugin = FlutterLocalNotificationsPlugin();
+    bool permissionGranted = false;
+
+    // Check SharedPreferences for user preference
+    final prefs = await SharedPreferences.getInstance();
+    final notificationsEnabled = prefs.getBool('notifications') ?? true;
+
+    if (Platform.isAndroid) {
+      final androidImplementation =
+          notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      permissionGranted =
+          await androidImplementation?.areNotificationsEnabled() ?? false;
+    } else if (Platform.isIOS) {
+      final iosImplementation =
+          notificationsPlugin.resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
+      // iOS: Assume granted if initialized; checkPermissions may return null if not configured
+      permissionGranted = await iosImplementation?.checkPermissions() != null;
+    }
+
+    if (permissionGranted && notificationsEnabled) {
+      await NotificationHelper.scheduleTwoMotivationsPerDay();
+      print("📅 Du pranešimai suplanuoti kasdien 9:00 ir 21:00");
+    } else {
+      print(
+          "⚠️ Pranešimai neplanuoti: vartotojas neleido pranešimų arba išjungti nustatymuose");
+    }
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchSessionUser() async {
     if (userName.isEmpty || userUsername.isEmpty) {
       try {
@@ -144,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           userModel = model!;
         });
-        _fetchUserNotifications(userUsername);
+        await _fetchUserNotifications(userUsername); // Ensure await here
       } catch (e) {
         setState(() {
           userName = "Klaida gaunant duomenis";
@@ -153,13 +183,61 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _sendMotivationalNotification() async {
+    if (!userModel.notifications) {
+      print("⚠️ Notifications disabled by user");
+      return;
+    }
+
+    // Patikriname, ar pranešimas jau buvo siųstas šiandien
+    final prefs = await SharedPreferences.getInstance();
+    final lastSentDateString = prefs.getString('lastMotivationalNotification');
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+
+    bool sentToday = false;
+    if (lastSentDateString != null) {
+      final lastSentDate = DateTime.parse(lastSentDateString);
+      final lastSentDateOnly =
+          DateTime(lastSentDate.year, lastSentDate.month, lastSentDate.day);
+      sentToday = lastSentDateOnly == todayDate;
+    }
+
+    if (sentToday) {
+      print("ℹ️ Motivational notification already sent today");
+      return;
+    }
+
+    try {
+      await _notificationService.sendMotivationalNotification(userUsername);
+      // Išsaugome siuntimo laiką
+      await prefs.setString(
+          'lastMotivationalNotification', today.toIso8601String());
+      print("🔔 Sent motivational notification for today");
+    } catch (e) {
+      print("Klaida siunčiant pranešimą: $e");
+    }
+  }
+
   Future<void> _fetchUserNotifications(String username) async {
     try {
       List<AppNotification> userNotifications =
           await _notificationService.getUserNotifications(username);
+
+      // Rūšiuojame pranešimus: neperskaityti pirmi, tada pagal datą mažėjančia tvarka
+      List<AppNotification> sortedNotifications = List.from(userNotifications)
+        ..sort((a, b) {
+          if (a.isRead == b.isRead) {
+            return b.date.compareTo(a.date); // Naujausi pirmi
+          }
+          return a.isRead ? 1 : -1; // Neperskaityti pirmi
+        });
       setState(() {
-        notifications = userNotifications;
+        notifications = sortedNotifications;
       });
+
+      // Siunčiame motyvacinį pranešimą, jei jis dar nebuvo siųstas
+      await _sendMotivationalNotification();
     } catch (e) {
       print("Klaida gaunant pranešimus: $e");
     }
@@ -479,8 +557,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       _notificationService
                                           .markNotificationAsRead(
                                               notifications[index].id);
-                                      notifications[index].isRead =
-                                          true; // Atnaujiname lokaliai
+                                      notifications[index].isRead = true;
                                     }
                                   });
                                   _showMessageDialog(notifications[index]);
@@ -502,11 +579,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.notifications,
-                                          color: isUnread
-                                              ? Colors.pink
-                                              : Colors.deepPurple,
-                                          size: 24),
+                                      Icon(
+                                        Icons.notifications,
+                                        color: isUnread
+                                            ? Colors.pink
+                                            : Colors.deepPurple,
+                                        size: 24,
+                                      ),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
@@ -516,6 +595,71 @@ class _HomeScreenState extends State<HomeScreen> {
                                               fontSize: 16),
                                         ),
                                       ),
+                                      if (!isUnread)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.remove_circle_outline,
+                                            color: Colors.deepPurple,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text(
+                                                    'Ištrinti pranešimą?'),
+                                                content: const Text(
+                                                    'Ar tikrai norite ištrinti šį pranešimą?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(),
+                                                    child:
+                                                        const Text('Atšaukti'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      try {
+                                                        await _notificationService
+                                                            .deleteNotification(
+                                                                notifications[
+                                                                        index]
+                                                                    .id);
+                                                        setState(() {
+                                                          notifications
+                                                              .removeAt(index);
+                                                        });
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                        showCustomSnackBar(
+                                                            context,
+                                                            "✅ Pranešimas sėkmingai ištrintas",
+                                                            true);
+                                                        print(
+                                                            "🗑️ Notification deleted successfully");
+                                                      } catch (e) {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                        showCustomSnackBar(
+                                                            context,
+                                                            "Nepavyko ištrinti pranešimo ",
+                                                            false);
+                                                        print(
+                                                            "Klaida trinant pranešimą: $e");
+                                                      }
+                                                    },
+                                                    child: const Text(
+                                                      'Ištrinti',
+                                                      style: TextStyle(
+                                                          color: Colors.red),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
                                     ],
                                   ),
                                 ),

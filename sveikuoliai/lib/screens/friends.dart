@@ -25,6 +25,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   final AppNotificationService _notificationService = AppNotificationService();
   String userUsername = "";
   String userName = "";
+  String userIcon = "account_circle";
   List<FriendshipModel> friends = [];
   final TextEditingController _searchController = TextEditingController();
   List<UserModel> searchResults = [];
@@ -47,6 +48,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         () {
           userUsername = sessionData['username'] ?? "Nežinomas";
           userName = sessionData['name'] ?? "Nežinomas";
+          userIcon = sessionData['icon'] ?? "account_circle";
         },
       );
       await _fetchUserFriends(userUsername);
@@ -150,9 +152,33 @@ class _FriendsScreenState extends State<FriendsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.center, // Centruojame horizontaliai
             children: [
-              Text("Pridėti draugą "),
+              CircleAvatar(
+                radius: 30, // Ikonos dydis
+                backgroundColor: Colors.grey[200], // Fono spalva
+                backgroundImage: (user.iconUrl != null &&
+                        user.iconUrl!.isNotEmpty)
+                    ? AssetImage(user
+                        .iconUrl!) // Naudojame AssetImage, jei iconUrl egzistuoja
+                    : null,
+                child: (user.iconUrl == null || user.iconUrl!.isEmpty)
+                    ? Icon(
+                        Icons.account_circle,
+                        size: 60,
+                        color: Colors.grey[600], // Ikonos spalva
+                      )
+                    : null, // Jei yra backgroundImage, child nenustatomas
+              ),
+              SizedBox(height: 10), // Tarpas tarp ikonos ir teksto
+              Text(
+                "Pridėti draugą",
+                style: TextStyle(
+                  fontWeight: FontWeight.normal,
+                  fontSize: 16,
+                ),
+              ),
               Text(
                 user.name,
                 style: TextStyle(
@@ -160,13 +186,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   fontSize: 22,
                   color: Colors.deepPurple,
                 ),
-              )
+              ),
             ],
           ),
           content: Text.rich(
             TextSpan(
-              text:
-                  "Ar tikrai norite pridėti ", // Pirmoji dalis (bendras tekstas)
+              text: "Ar tikrai norite pridėti ",
               style: TextStyle(
                 fontWeight: FontWeight.normal,
                 color: Colors.black,
@@ -174,23 +199,23 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
               children: [
                 TextSpan(
-                  text: "${user.name}", // Vardas
+                  text: "${user.name}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple, // Kita spalva vardui
+                    color: Colors.deepPurple,
                     fontSize: 15,
                   ),
                 ),
                 TextSpan(
-                  text: " (${user.username})", // Slapyvardis
+                  text: " (${user.username})",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.pink[300], // Kita spalva slapyvardžiui
+                    color: Colors.pink[300],
                     fontSize: 15,
                   ),
                 ),
                 TextSpan(
-                  text: " kaip draugą?", // Pabaiga
+                  text: " kaip draugą?",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
                     color: Colors.black,
@@ -207,7 +232,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
               child: Text("Ne"),
               onPressed: () {
-                Navigator.of(context).pop(); // Uždaryti dialogą
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
@@ -216,7 +241,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
               child: Text("Taip"),
               onPressed: () async {
-                Navigator.of(context).pop(); // Uždaryti dialogą
+                Navigator.of(context).pop();
                 await _addFriend(user);
               },
             ),
@@ -374,7 +399,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           itemBuilder: (context, index) {
                             final user = searchResults[index];
                             return ListTile(
-                              leading: Icon(Icons.account_circle, size: 40),
+                              leading: (user.iconUrl == null ||
+                                      user.iconUrl!.isEmpty)
+                                  ? Icon(Icons.account_circle, size: 40)
+                                  : CircleAvatar(
+                                      backgroundImage:
+                                          AssetImage(user.iconUrl!),
+                                    ),
                               title: Text(user.name),
                               subtitle: Text(
                                 user.username,
@@ -453,7 +484,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        Icon(Icons.account_circle, size: 40),
+                                        if (pendingFriends[index]
+                                                    .friend
+                                                    .iconUrl ==
+                                                null ||
+                                            pendingFriends[index]
+                                                .friend
+                                                .iconUrl!
+                                                .isEmpty)
+                                          Icon(Icons.account_circle, size: 40)
+                                        else
+                                          CircleAvatar(
+                                            backgroundImage: AssetImage(
+                                                pendingFriends[index]
+                                                    .friend
+                                                    .iconUrl!),
+                                          ),
                                         SizedBox(width: 10),
                                         Column(
                                           crossAxisAlignment:
@@ -628,7 +674,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.account_circle, size: 40),
+                                      if (acceptedFriends[index]
+                                                  .friend
+                                                  .iconUrl ==
+                                              null ||
+                                          acceptedFriends[index]
+                                              .friend
+                                              .iconUrl!
+                                              .isEmpty)
+                                        Icon(Icons.account_circle, size: 40)
+                                      else
+                                        CircleAvatar(
+                                          backgroundImage: AssetImage(
+                                              acceptedFriends[index]
+                                                  .friend
+                                                  .iconUrl!),
+                                        ),
                                       SizedBox(width: 10),
                                       Column(
                                         crossAxisAlignment:

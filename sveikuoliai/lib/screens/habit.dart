@@ -27,6 +27,7 @@ class _HabitScreenState extends State<HabitScreen> {
   final PlantService _plantService = PlantService();
   final HabitService _habitService = HabitService();
   final HabitProgressService _habitProgressService = HabitProgressService();
+  bool notifications = true;
   List<HabitProgress> progressList = [];
   HabitProgress habitProgress = HabitProgress(
       id: '',
@@ -116,6 +117,7 @@ class _HabitScreenState extends State<HabitScreen> {
           context,
           "${getPlantName(widget.habit.habitModel.plantId)} bent 2 dienas 🥺",
           false);
+
       return true;
     } else if (widget.habit.habitModel.plantId == "ramuneles" ||
         widget.habit.habitModel.plantId == "zibuokle" ||
@@ -125,6 +127,7 @@ class _HabitScreenState extends State<HabitScreen> {
             context,
             "${getPlantName(widget.habit.habitModel.plantId)} bent 3 dienas 🥺",
             false);
+
         return true;
       }
     } else if (widget.habit.habitModel.plantId == "orchideja" ||
@@ -135,6 +138,7 @@ class _HabitScreenState extends State<HabitScreen> {
             context,
             "${getPlantName(widget.habit.habitModel.plantId)} bent savaitę 🥺",
             false);
+
         return true;
       }
     }

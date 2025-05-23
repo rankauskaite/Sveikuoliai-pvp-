@@ -86,7 +86,7 @@ class _GoalPageState extends State<GoalScreen> {
       });
 
       if (!widget.goal.goalModel.isCompleted) {
-        bool isDead = isPlantDead(lastDoneDate);
+        bool isDead = await isPlantDead(lastDoneDate);
         setState(() {
           widget.goal.goalModel.isPlantDead = isDead;
         });
@@ -175,7 +175,7 @@ class _GoalPageState extends State<GoalScreen> {
     }
   }
 
-  bool isPlantDead(DateTime date) {
+  Future<bool> isPlantDead(DateTime date) async {
     DateTime today = DateTime.now();
     DateTime twoDaysAgo = DateTime(today.year, today.month, today.day)
         .subtract(Duration(days: 2));
@@ -189,6 +189,7 @@ class _GoalPageState extends State<GoalScreen> {
           context,
           "${getPlantName(widget.goal.goalModel.plantId)} bent 2 dienas 🥺",
           false);
+
       return true;
     } else if (widget.goal.goalModel.plantId == "ramuneles" ||
         widget.goal.goalModel.plantId == "zibuokle" ||
@@ -198,6 +199,7 @@ class _GoalPageState extends State<GoalScreen> {
             context,
             "${getPlantName(widget.goal.goalModel.plantId)} bent 3 dienas 🥺",
             false);
+
         return true;
       }
     } else if (widget.goal.goalModel.plantId == "orchideja" ||
@@ -208,6 +210,7 @@ class _GoalPageState extends State<GoalScreen> {
             context,
             "${getPlantName(widget.goal.goalModel.plantId)} bent savaitę 🥺",
             false);
+
         return true;
       }
     }
@@ -324,7 +327,8 @@ class _GoalPageState extends State<GoalScreen> {
       // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
+        MaterialPageRoute(
+            builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
       ); // Grįžti atgal į pagrindinį ekraną
       showCustomSnackBar(context, "Tikslas sėkmingai ištrintas ✅", true);
     } catch (e) {
@@ -396,7 +400,8 @@ class _GoalPageState extends State<GoalScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => HabitsGoalsScreen(selectedIndex: 1)),
+                                    builder: (context) =>
+                                        HabitsGoalsScreen(selectedIndex: 1)),
                               );
                             },
                             icon: const Icon(

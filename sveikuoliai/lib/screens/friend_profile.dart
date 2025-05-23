@@ -187,13 +187,20 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     ),
                     Stack(
                       children: [
-                        // Centrinė account_circle ikona
                         Center(
-                          child: const Icon(
-                            Icons.account_circle,
-                            size: 200,
-                            color: Color(0xFFD9D9D9),
-                          ),
+                          child: (userModel.iconUrl == '' ||
+                                  userModel.iconUrl == null)
+                              ? const Icon(
+                                  Icons.account_circle,
+                                  size: 250,
+                                  color: Color(0xFFD9D9D9),
+                                )
+                              : Image.asset(
+                                  userModel.iconUrl!,
+                                  width: 250,
+                                  height: 250,
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                       ],
                     ),

@@ -71,9 +71,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       print("Klaida išsaugant nustatymus: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Įvyko klaida!')),
-      );
+      if (mounted) {
+        String message = 'Klaida išsaugant nustatymus! ❌';
+        showCustomSnackBar(context, message, false); // Naudokite funkciją
+      }
     }
   }
 
