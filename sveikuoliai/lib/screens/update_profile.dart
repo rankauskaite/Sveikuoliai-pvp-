@@ -18,28 +18,23 @@ class UpdateProfileScreen extends StatefulWidget {
 
 class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final AuthService _authService = AuthService();
-  final UserService _userService =
-      UserService(); // Sukuriame UserService instanciją
+  final UserService _userService = UserService();
   String userUsername = "";
   String userName = "";
   String userEmail = "";
   String userVersion = "";
-  String selectedIconName = 'account_circle'; // numatytoji
+  String selectedIconName = 'account_circle'; // Default to account_circle
 
   TextEditingController _userNameController = TextEditingController();
   TextEditingController _userEmailController = TextEditingController();
 
-  final Map<String, IconData> availableIcons = {
-    'account_circle': Icons.account_circle,
-    'face': Icons.face,
-    'star': Icons.star,
-    'favorite': Icons.favorite,
-    'pets': Icons.pets,
-    'emoji_emotions': Icons.emoji_emotions,
-    'local_florist': Icons.local_florist,
-    'ac_unit': Icons.ac_unit,
-    'cruelty_free': Icons.cruelty_free
-  };
+  final List<String> availableIcons = [
+    'assets/images/avatarai/1.png',
+    'assets/images/avatarai/2.png',
+    'assets/images/avatarai/3.png',
+    'assets/images/avatarai/4.png',
+    'assets/images/avatarai/5.png',
+  ];
 
   @override
   void initState() {
@@ -47,7 +42,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _fetchUserData();
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
@@ -56,9 +50,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
         userName = sessionData['name'] ?? "Nežinomas";
         userEmail = sessionData['email'] ?? "Nežinomas";
         userVersion = sessionData['version'] ?? "Nežinomas";
+        selectedIconName = sessionData['icon']?.isNotEmpty == true
+            ? sessionData['icon']!
+            : 'account_circle';
 
-        _userNameController.text =
-            userName; // Priskiriame gautus duomenis į TextEditingController
+        _userNameController.text = userName;
         _userEmailController.text = userEmail;
       });
     } catch (e) {
@@ -67,32 +63,29 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     }
   }
 
-  // Funkcija, kad išsaugoti vartotojo duomenis
   Future<void> _saveUserData() async {
     try {
       String newName = _userNameController.text;
       String newEmail = _userEmailController.text;
       String newVersion = userVersion;
-      String newIcon = selectedIconName;
+      String? newIcon =
+          selectedIconName == 'account_circle' ? '' : selectedIconName;
 
-      // Atnaujiname vartotojo duomenis paslaugos pagalba
       await _userService.updateUserData(
           userUsername, newName, newEmail, newVersion, newIcon);
       _authService.updateUserSession('name', newName);
       _authService.updateUserSession('email', newEmail);
       _authService.updateUserSession('version', newVersion);
+      _authService.updateUserSession('icon', newIcon);
 
-      // Atvaizduojame sėkmės pranešimą
       String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
       showCustomSnackBar(context, successMessage, true);
 
-      // Uždarome ekraną po sėkmingo atnaujinimo
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => ProfileScreen()),
       );
     } catch (e) {
-      // Rodo klaidos pranešimą
       String errorMessage = 'Klaida išsaugant duomenis ❌';
       showCustomSnackBar(context, errorMessage, false);
     }
@@ -100,13 +93,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
-    // Gauname ekrano matmenis
     final Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -120,14 +110,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       body: Center(
         child: Column(
           children: [
-            SizedBox(
-              height: topPadding,
-            ),
+            SizedBox(height: topPadding),
             Expanded(
               child: Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                ),
+                margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -143,74 +129,47 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          icon: Icon(
-                            Icons.arrow_back_ios,
-                            size: 30,
-                          ),
+                          icon: Icon(Icons.arrow_back_ios, size: 30),
                         ),
                         const Expanded(child: SizedBox()),
                         ElevatedButton(
-                          onPressed: _saveUserData, // Paspaudus išsaugoti
+                          onPressed: _saveUserData,
                           child: Text('Išsaugoti'),
                         ),
                       ],
                     ),
-                    // GestureDetector(
-                    //   onTap: _showIconSelectionDialog,
-                    //   child: Stack(
-                    //     alignment: Alignment.center,
-                    //     children: [
-                    //       CircleAvatar(
-                    //         radius: 60,
-                    //         backgroundColor: Color(0xFFD9D9D9),
-                    //         child: Icon(
-                    //           availableIcons[selectedIconName],
-                    //           size: 100,
-                    //           color: Colors.white,
-                    //         ),
-                    //       ),
-                    //       Container(
-                    //         width: 120,
-                    //         height: 120,
-                    //         decoration: BoxDecoration(
-                    //           shape: BoxShape.circle,
-                    //           color: Colors.black.withOpacity(0.3),
-                    //         ),
-                    //         child: Center(
-                    //           child: Text(
-                    //             'Keisti',
-                    //             style: TextStyle(color: Colors.white),
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
                     GestureDetector(
                       onTap: _showIconSelectionDialog,
                       child: Stack(
+                        alignment: Alignment.center,
                         children: [
-                          // Centrinė account_circle ikona
                           Stack(
-                            alignment:
-                                Alignment.center, // Centruoja tekstą ant ikonos
+                            alignment: Alignment.center,
                             children: [
                               ColorFiltered(
                                 colorFilter: ColorFilter.mode(
-                                  Color(
-                                      0xFFD9D9D9), // Naudojame skaidrų filtrą su blur efektu
-                                  BlendMode
-                                      .srcIn, // Blend mode, kad būtų matomas tik blur efektas
+                                  selectedIconName == 'account_circle'
+                                      ? Color(0xFFD9D9D9)
+                                      : Colors.transparent,
+                                  selectedIconName == 'account_circle'
+                                      ? BlendMode.srcIn
+                                      : BlendMode.srcOver,
                                 ),
                                 child: ImageFiltered(
                                   imageFilter: ImageFilter.blur(
-                                      sigmaX: 3.0,
-                                      sigmaY: 3.0), // Blur stiprumas
-                                  child: Icon(
-                                    availableIcons[selectedIconName],
-                                    size: 200,
-                                    color: Color(0xFFD9D9D9),
-                                  ),
+                                      sigmaX: 3.0, sigmaY: 3.0),
+                                  child: selectedIconName == 'account_circle'
+                                      ? Icon(
+                                          Icons.account_circle,
+                                          size: 200,
+                                          color: Color(0xFFD9D9D9),
+                                        )
+                                      : Image.asset(
+                                          selectedIconName,
+                                          width: 190,
+                                          height: 190,
+                                          fit: BoxFit.fill,
+                                        ),
                                 ),
                               ),
                               const Text(
@@ -226,10 +185,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 10),
                     IntrinsicWidth(
                       child: TextField(
-                        controller:
-                            _userNameController, // Naudojame kontrollerį
+                        controller: _userNameController,
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
@@ -246,22 +205,14 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                          'Mano duomenys',
-                          style: TextStyle(fontSize: 20),
-                        ),
+                        Text('Mano duomenys', style: TextStyle(fontSize: 20)),
                       ],
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                          'El. paštas',
-                          style: TextStyle(fontSize: 12),
-                        ),
+                        Text('El. paštas', style: TextStyle(fontSize: 12)),
                       ],
                     ),
                     Row(
@@ -278,21 +229,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.start,
-                    //   children: [
-                    //     Text(
-                    //       'Versija:',
-                    //       style: TextStyle(fontSize: 20),
-                    //     ),
-                    //   ],
-                    // ),
-                    // SizedBox(
-                    //   height: 5,
-                    // ),
+                    SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -333,22 +270,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         ),
                       ],
                     ),
-                    // VersionSelection(
-                    //   currentVersion: widget.version,
-                    //   onVersionChanged: (newVersion) {
-                    //     setState(() {
-                    //       userVersion = newVersion;
-                    //     });
-                    //   },
-                    // ),
                   ],
                 ),
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
-            SizedBox(
-              height: bottomPadding,
-            ),
+            const BottomNavigation(),
+            SizedBox(height: bottomPadding),
           ],
         ),
       ),
@@ -366,20 +293,43 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
             child: GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
-              children: availableIcons.entries.map((entry) {
-                return GestureDetector(
+              children: [
+                // "None" option (account_circle)
+                GestureDetector(
                   onTap: () {
-                    Navigator.pop(context, entry.key);
+                    Navigator.pop(context, 'account_circle');
                   },
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(entry.value, size: 40),
-                      //Text(entry.key),
+                      Icon(
+                        Icons.block,
+                        size: 50,
+                        color: Colors.deepPurple,
+                      ),
                     ],
                   ),
-                );
-              }).toList(),
+                ),
+                // Avatar images
+                ...availableIcons.map((entry) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context, entry);
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          entry,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
             ),
           ),
         );

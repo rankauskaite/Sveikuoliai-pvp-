@@ -10,7 +10,9 @@ import 'dart:convert';
 
 class VersionScreen extends StatefulWidget {
   final String username;
-  const VersionScreen({Key? key, required this.username}) : super(key: key);
+  final String? screenName;
+  const VersionScreen({Key? key, required this.username, this.screenName})
+      : super(key: key);
   @override
   _VersionScreenState createState() => _VersionScreenState();
 }
@@ -30,8 +32,13 @@ class _VersionScreenState extends State<VersionScreen> {
     try {
       await _userService.updateUserVersion(widget.username, plan);
       _authService.updateUserSession('version', plan);
-      String message = '✅ Registracija sėkminga!';
-      showCustomSnackBar(context, message, true);
+      if (widget.screenName == 'Signup') {
+        String message = '✅ Registracija sėkminga!';
+        showCustomSnackBar(context, message, true);
+      } else {
+        String message = '✅ Planas pasirinktas sėkmingai!';
+        showCustomSnackBar(context, message, true);
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -44,41 +51,40 @@ class _VersionScreenState extends State<VersionScreen> {
   }
 
   Future<void> payWithStripe(String planId) async {
-  try {
-    final response = await http.post(
-      Uri.parse('https://stripe-server-thr2.onrender.com:10000/create-payment-intent'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    
-    print('SERVERIO ATSAKYMAS: ${response.body}');
-    print('STATUSAS: ${response.statusCode}');
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://stripe-server-thr2.onrender.com:10000/create-payment-intent'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    final jsonResponse = json.decode(response.body);
-    final clientSecret = jsonResponse['clientSecret'];
+      print('SERVERIO ATSAKYMAS: ${response.body}');
+      print('STATUSAS: ${response.statusCode}');
 
-    await Stripe.instance.initPaymentSheet(
-      paymentSheetParameters: SetupPaymentSheetParameters(
-        paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: 'Sveikuoliai App',
-        style: ThemeMode.light,
-        //testEnv: true,
-      ),
-    );
+      final jsonResponse = json.decode(response.body);
+      final clientSecret = jsonResponse['clientSecret'];
 
-    await Stripe.instance.presentPaymentSheet();
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Sveikuoliai App',
+          style: ThemeMode.light,
+          //testEnv: true,
+        ),
+      );
 
-    // Jei sėkminga — išsaugom planą
-    setState(() {
-      selectedPlan = planId;
-    });
-    await saveSelectedPlan(planId);
+      await Stripe.instance.presentPaymentSheet();
 
-  } catch (e) {
-    print('KLAIDA: $e');
-    showCustomSnackBar(context, '❌ Mokėjimas nepavyko: $e', false);
+      // Jei sėkminga — išsaugom planą
+      setState(() {
+        selectedPlan = planId;
+      });
+      await saveSelectedPlan(planId);
+    } catch (e) {
+      print('KLAIDA: $e');
+      showCustomSnackBar(context, '❌ Mokėjimas nepavyko: $e', false);
+    }
   }
-}
-
 
   Widget buildDynamicCard(int index) {
     switch (index) {
@@ -91,7 +97,7 @@ class _VersionScreenState extends State<VersionScreen> {
           price: '0',
           description: '''
 Stebėk
-  - 3 iššūkius
+  - 3 tikslus
   - 3 įpročius
 Naudokis
   - Virtualiu dienoraščiu
@@ -109,14 +115,14 @@ Naudokis
           price: '5',
           description: '''
 Stebėk
-  - neribotus iššūkius
+  - neribotus tikslus
   - neribotus įpročius
 Naudokis
   - Virtualiu dienoraščiu
   - Meditacijos kampeliu
 Bendrauk
   - Kviesk draugus
-  - Kelk bendrus iššūkius
+  - Kelk bendrus tikslus
   - Stebėk draugų sodą
         ''',
           buttonColor: Color(0xFFEF3BF1),
@@ -338,15 +344,15 @@ Bendrauk
                       //   // Gali naviguoti į kitą ekraną arba rodyti pranešimą
                       // },
                       onPressed: () async {
-                          if (planId == 'free') {
-                            setState(() {
-                              selectedPlan = planId;
-                            });
-                            await saveSelectedPlan(planId);
-                          } else {
-                            await payWithStripe(planId); // Stripe mokėjimas
-                          }
-                        },
+                        if (planId == 'free') {
+                          setState(() {
+                            selectedPlan = planId;
+                          });
+                          await saveSelectedPlan(planId);
+                        } else {
+                          await payWithStripe(planId); // Stripe mokėjimas
+                        }
+                      },
                       child: Text("Gauti",
                           style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
