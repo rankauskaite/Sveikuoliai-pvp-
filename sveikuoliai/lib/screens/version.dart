@@ -82,7 +82,9 @@ class _VersionScreenState extends State<VersionScreen> {
       await saveSelectedPlan(planId);
     } catch (e) {
       print('KLAIDA: $e');
-      showCustomSnackBar(context, '❌ Mokėjimas nepavyko: $e', false);
+      if (mounted) {
+        showCustomSnackBar(context, '❌ Mokėjimas nepavyko: $e', false);
+      }
     }
   }
 

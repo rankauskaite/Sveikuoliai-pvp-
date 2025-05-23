@@ -30,13 +30,48 @@ class NotificationHelper {
 
     await _notificationsPlugin.initialize(settings);
 
+    // Handle notification permissions
+    await _handleNotificationPermission();
+
+    // Request exact alarms permission (unchanged)
+    await _requestExactAlarmsPermission();
+  }
+
+  static Future<void> _handleNotificationPermission() async {
+    final prefs = await SharedPreferences.getInstance();
+    final permissionAsked =
+        prefs.getBool('notification_permission_asked') ?? false;
+    final notificationsEnabled = prefs.getBool('notifications') ?? true;
+
+    if (permissionAsked || !notificationsEnabled) {
+      return; // Skip if permission was already asked or notifications are disabled
+    }
+
     final androidImplementation =
         _notificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
+    final iosImplementation =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>();
 
-    await androidImplementation?.requestNotificationsPermission();
+    bool? granted;
+    if (Platform.isAndroid) {
+      granted = await androidImplementation?.requestNotificationsPermission();
+    } else if (Platform.isIOS) {
+      granted = await iosImplementation?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
-    await _requestExactAlarmsPermission();
+    await prefs.setBool('notification_permission_asked', true);
+
+    if (granted == true) {
+      await prefs.setBool('notifications', true);
+    } else {
+      await prefs.setBool('notifications', false);
+    }
   }
 
   static Future<void> _requestExactAlarmsPermission() async {
@@ -55,15 +90,8 @@ class NotificationHelper {
         flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
       );
       await intent.launch();
-
-      // Įrašom, kad jau prašėm leidimo
       await prefs.setBool('exact_alarm_permission_requested', true);
     }
-    // Android 13+ reikia leidimo atskirai
-    final androidImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    await androidImplementation?.requestNotificationsPermission();
   }
 
   static Future<void> scheduleDailyNotification({
@@ -95,8 +123,6 @@ class NotificationHelper {
         ),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      // uiLocalNotificationDateInterpretation:
-      //     UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
@@ -119,30 +145,6 @@ class NotificationHelper {
         ),
       ),
       matchDateTimeComponents: DateTimeComponents.time,
-      // uiLocalNotificationDateInterpretation:
-      //     UILocalNotificationDateInterpretation.absoluteTime,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
-  }
-
-  static Future<void> sendFriendshipRequestNotification(
-      String userId, String friendName, String friendUsername) async {
-    await _notificationsPlugin.zonedSchedule(
-      999,
-      'Draugystės pasiūlymas',
-      '$friendName (@$friendUsername) nori tapti tavo draugu!',
-      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'friendship_channel',
-          'Draugystės priminimai',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      matchDateTimeComponents: DateTimeComponents.time,
-      // uiLocalNotificationDateInterpretation:
-      //     UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
@@ -153,10 +155,10 @@ class NotificationHelper {
 
   static Future<void> scheduleTwoMotivationsPerDay() async {
     final messages = [
-      'Tu gali viską!',
-      'Kiekviena diena – nauja pradžia!',
-      'Niekas tavęs nesustabdys!',
-      'Net mažas žingsnis pirmyn yra progresas!',
+      'Tu gali viską! 🎈',
+      'Kiekviena diena – nauja pradžia! 🌅',
+      'Niekas tavęs nesustabdys! 🥇',
+      'Net mažas žingsnis pirmyn yra progresas! 🚶‍♀️',
       "Puikus darbas! Kiekviena diena priartina tave prie tikslo 🌱",
       "Net mažas žingsnis yra progresas 🚶‍♀️",
       "Dideli pokyčiai prasideda nuo mažų įpročių ✨",

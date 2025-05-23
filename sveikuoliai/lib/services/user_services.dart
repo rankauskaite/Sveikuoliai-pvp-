@@ -129,6 +129,17 @@ class UserService {
     }
   }
 
+  Future<bool> updateUserField(
+      String username, String field, dynamic value) async {
+    try {
+      await userCollection.doc(username).update({field: value});
+      return true;
+    } catch (e) {
+      print("Klaida atnaujinant lauką: $e");
+      return false;
+    }
+  }
+
   // delete
   Future<bool> deleteUserEntry(String username) async {
     try {

@@ -4,6 +4,7 @@ import 'package:sveikuoliai/models/notification_model.dart';
 /// motyvacines zinutes
 class DefaultNotifications {
   static final List<String> motivationalMessages = [
+    // Esamos
     "Puikus darbas! Kiekviena diena priartina tave prie tikslo 🌱",
     "Net mažas žingsnis yra progresas 🚶‍♀️",
     "Dideli pokyčiai prasideda nuo mažų įpročių ✨",
@@ -20,7 +21,23 @@ class DefaultNotifications {
     "Prisimink, dėl ko pradėjai. Tai verta! 💪",
     "Šiandien – puiki diena padaryti kažką dėl savęs 💖",
     "Kiekviena diena – nauja galimybė žydėti 🌸",
-    "Tu verta visko, apie ką svajoji – tik nepamiršk žingsniuoti 💞"
+    "Tu verta visko, apie ką svajoji – tik nepamiršk žingsniuoti 💞",
+    "Įpročiai – tavo supergalia. Naudok ją kasdien 🦸‍♀️",
+    "Kai kartoji, stiprėji. Kartok gėrį 🌼",
+    "Tavo šiandienos pastangos – rytojaus rezultatai 🔁",
+    "Kiekvienas mažas „taip sau“ kuria stipresnę tave 🔔",
+    "Neskubėk – net lėtas progresas yra progresas 🐢",
+    "Sunku? Vadinasi, tu augi 💪🌱",
+    "Geriausias laikas pradėti – buvo vakar. Antras geriausias – šiandien 🕒",
+    "Tavo įpročiai kalba garsiau nei tavo žodžiai 🔄",
+    "Kiekvienas iššūkis – galimybė sužydėti 🌷",
+    "Tavo kelionė unikali – mėgaukis kiekvienu žingsniu 🚶‍♂️✨",
+    "Net jei krenti – atsikėlei, ir tai jau laimėjimas 🧡",
+    "Kiekviena pastanga padeda tavo vidiniam sodui sužydėti 🌻",
+    "Nepalygink savo pradžios su kitų viduriu 🚀",
+    "Tu esi progreso kelyje, ir tai nuostabu 💫",
+    "Dėmesingumas gimsta iš mažų sprendimų 🧘‍♀️",
+    "Vienas žingsnis šiandien – mažiau abejonių rytoj ⏳",
   ];
 
   static String getRandomMessage() {

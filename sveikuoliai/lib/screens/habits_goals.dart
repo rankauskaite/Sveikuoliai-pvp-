@@ -143,6 +143,14 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         }
       }
 
+      // Surikiuojame taip, kad patvirtinti būtų viršuje
+      goals.sort((a, b) {
+        if (a.sharedGoalModel.isApproved == b.sharedGoalModel.isApproved) {
+          return 0;
+        }
+        return a.sharedGoalModel.isApproved ? -1 : 1;
+      });
+
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userSharedGoals = goals;

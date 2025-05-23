@@ -124,8 +124,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       List<GoalTask> tasksFriend = await _goalTaskService.getGoalTasksForUser(
           widget.goal.sharedGoalModel.id, friendUsername);
 
-      tasksMine.sort((a, b) => a.date.compareTo(b.date));
-      tasksFriend.sort((a, b) => a.date.compareTo(b.date));
+      tasksMine.sort((a, b) => a.id.compareTo(b.id));
+      tasksFriend.sort((a, b) => a.id.compareTo(b.id));
 
       setState(() {
         goalTasksMine = tasksMine;
@@ -801,8 +801,22 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                             height: 10,
                           ),
                           ElevatedButton(
-                            onPressed:
-                                !widget.goal.sharedGoalModel.isCompletedUser1
+                            onPressed: (widget.goal.sharedGoalModel.user1Id ==
+                                    username)
+                                ? widget.goal.sharedGoalModel.isCompletedUser1
+                                    ? null
+                                    : () {
+                                        CustomDialogs.showNewTaskDialog(
+                                          context: context,
+                                          goal: widget.goal,
+                                          accentColor: Colors.lightGreen[400] ??
+                                              Colors.lightGreen,
+                                          onSave: (GoalTask task) {
+                                            _createTask(task);
+                                          },
+                                        );
+                                      }
+                                : widget.goal.sharedGoalModel.isCompletedUser2
                                     ? null
                                     : () {
                                         CustomDialogs.showNewTaskDialog(
