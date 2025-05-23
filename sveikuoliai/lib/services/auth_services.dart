@@ -11,6 +11,28 @@ class AuthService {
   final UserService _userService = UserService();
   final FlutterSecureStorage _storage = FlutterSecureStorage();
 
+  // Check if username or email already exists
+  Future<void> checkUserExists(String username, String email) async {
+    try {
+      // Check if username exists
+      UserModel? existingUserByUsername =
+          await _userService.getUserEntry(username);
+      if (existingUserByUsername != null) {
+        throw Exception('Šis slapyvardis jau užimtas');
+      }
+
+      // Check if email exists
+      UserModel? existingUserByEmail =
+          await _userService.getUserEntryByEmail(email);
+      if (existingUserByEmail != null) {
+        throw Exception(
+            'Šis el. pašto adresas jau užregistruotas, bandykite prisijungti');
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
   Future<User?> registerWithEmail(
       String email, String password, String username, String name) async {
     try {
@@ -29,6 +51,7 @@ class AuthService {
           menstrualLength: 7,
           version: "free",
           createdAt: DateTime.now(),
+          iconUrl: "", // Default icon URL
         );
         await _userService.createUserEntry(newUser);
         await _saveUserToSession(newUser);
@@ -90,6 +113,7 @@ class AuthService {
           menstrualLength: 7,
           version: "free",
           createdAt: DateTime.now(),
+          iconUrl: "", // Default icon URL
         );
         await _userService.createUserEntry(newUser);
         await _saveUserToSession(newUser);
@@ -149,6 +173,7 @@ class AuthService {
     await _storage.write(key: "version", value: user.version);
     await _storage.write(
         key: "date", value: DateTime.now().toIso8601String().split('T').first);
+    await _storage.write(key: "icon", value: user.iconUrl);
   }
 
   Future<void> updateUserSession(String key, String value) async {
@@ -162,6 +187,7 @@ class AuthService {
       "email": await _storage.read(key: "email"),
       "version": await _storage.read(key: "version"),
       "date": await _storage.read(key: "date"),
+      "icon": await _storage.read(key: "icon"),
     };
   }
 }

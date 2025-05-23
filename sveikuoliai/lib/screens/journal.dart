@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -31,6 +33,8 @@ class _JournalScreenState extends State<JournalScreen> {
     'assets/images/virsKalendoriaus/suniuks.png',
     'assets/images/virsKalendoriaus/zuikuciai.png',
   ];
+  int _currentPage = 0;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -38,6 +42,29 @@ class _JournalScreenState extends State<JournalScreen> {
     _fetchUserData();
     initializeDateFormatting(
         'lt_LT', null); // Inicijuojame lietuvišką datų formatą
+    _startAutoSwitch();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer to prevent memory leaks
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSwitch() {
+    _timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentPage = (_currentPage + 1) % images.length;
+        });
+        _pageController.animateToPage(
+          _currentPage,
+          duration: Duration(milliseconds: 900),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
@@ -128,9 +155,9 @@ class _JournalScreenState extends State<JournalScreen> {
                           builder: (context) => RelaxMenuScreen()),
                     );
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.self_improvement,
-                    color: Color(0xFFD9D9D5),
+                    color: Colors.grey.shade500, //Color(0xFFD9D9D5),
                     size: 50,
                   ),
                 ),
@@ -150,13 +177,10 @@ class _JournalScreenState extends State<JournalScreen> {
   Widget _buildBanner() {
     return Column(
       children: [
-        // Karuselė su paveikslėliais
-        SizedBox(
-          height: 10,
-        ),
+        SizedBox(height: 10),
         Container(
-          height: 120, // Nustatykite aukštį pagal savo poreikius
-          width: double.infinity, // Pakeista į visą plotį
+          height: 120,
+          width: double.infinity,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(15),
             child: PageView.builder(
@@ -164,25 +188,22 @@ class _JournalScreenState extends State<JournalScreen> {
               itemCount: images.length,
               itemBuilder: (context, index) {
                 return Image.asset(
-                  images[index], // Įkeliamas paveikslėlis
+                  images[index],
                   fit: BoxFit.fill,
-                  width: 250, // Nustatykite plotį pagal poreikius
+                  width: 250,
                 );
               },
-              scrollDirection: Axis.horizontal, // Slinkimas horizontaliai
-              pageSnapping:
-                  true, // Užtikrina, kad slinkimas sustotų tik ties kiekvienu paveikslėliu
+              scrollDirection: Axis.horizontal,
+              pageSnapping: true,
               onPageChanged: (index) {
                 setState(() {
-// Atnaujina dabartinį puslapį
+                  _currentPage = index;
                 });
               },
             ),
           ),
         ),
-        SizedBox(
-          height: 5,
-        ),
+        SizedBox(height: 5),
         SmoothPageIndicator(
           controller: _pageController,
           count: images.length,

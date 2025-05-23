@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true; // Track password visibility
 
   bool _isEmailSignup = false;
   bool _showButtons = true;
@@ -147,8 +148,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                         controller: emailController,
                                         decoration: InputDecoration(
                                           labelText: 'El. paštas',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite el. paštą';
@@ -161,20 +170,43 @@ class _LoginScreenState extends State<LoginScreen> {
                                           return null;
                                         },
                                       ),
-                                      SizedBox(height: 20),
+                                      SizedBox(height: 10),
                                       TextFormField(
                                         controller: passwordController,
-                                        obscureText: true,
+                                        obscureText: _obscurePassword,
                                         decoration: InputDecoration(
                                           labelText: 'Slaptažodis',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              _obscurePassword
+                                                  ? Icons.visibility_off
+                                                  : Icons.visibility,
+                                              size: 20,
+                                              color: Color(0xFF8093F1),
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _obscurePassword =
+                                                    !_obscurePassword;
+                                              });
+                                            },
+                                          ),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite slaptažodį';
                                           }
                                           if (value.length < 6) {
-                                            return 'Slaptažodis turi būti bent 6 simboliai';
+                                            return 'Slaptažodis per trumpas (min. 6 simboliai)';
                                           }
                                           return null;
                                         },

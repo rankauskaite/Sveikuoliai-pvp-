@@ -226,10 +226,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             child: Stack(
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.all(4.0),
+                                Padding(
+                                  padding: const EdgeInsets.all(4.0),
                                   child: Icon(Icons.notifications_outlined,
-                                      size: 35),
+                                      size: 35, color: Colors.grey.shade800),
                                 ),
                                 if (unreadNotificationsCount > 0)
                                   Positioned(

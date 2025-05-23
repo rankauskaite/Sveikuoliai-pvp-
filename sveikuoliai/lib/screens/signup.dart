@@ -16,7 +16,11 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final AuthService _authService = AuthService();
+  bool _obscurePassword = true; // Track password visibility
+  bool _obscurePasswordConfirm = true; // Track password visibility
 
   bool _isEmailSignup = false;
   bool _showButtons = true;
@@ -24,6 +28,11 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void dispose() {
     usernameController.dispose(); // Atlaisvinkite usernameController išteklius
+    nameController.dispose(); // Atlaisvinkite nameController išteklius
+    emailController.dispose(); // Atlaisvinkite emailController išteklius
+    passwordController.dispose(); // Atlaisvinkite passwordController išteklius
+    confirmPasswordController
+        .dispose(); // Atlaisvinkite confirmPasswordController išteklius
     super.dispose();
   }
 
@@ -33,43 +42,68 @@ class _SignupScreenState extends State<SignupScreen> {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
 
-    var user =
-        await _authService.registerWithEmail(email, password, username, name);
+    _authService.checkUserExists(username, email).then((_) async {
+      var user =
+          await _authService.registerWithEmail(email, password, username, name);
 
-    if (user != null) {
-      print("✅ Registracija sėkminga: ${user.email}");
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => VersionScreen(
-                  username: username,
-                )),
-      );
-    } else {
-      print("❌ Registracija nepavyko!");
-      String message = '❌ Registracija nepavyko!';
+      if (user != null) {
+        print("✅ Registracija sėkminga: ${user.email}");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => VersionScreen(
+                    username: username,
+                    screenName: "Signup",
+                  )),
+        );
+      } else {
+        print("❌ Registracija nepavyko!");
+        String message = '❌ Registracija nepavyko!';
+        showCustomSnackBar(context, message, false);
+      }
+    }).catchError((error) {
+      // Extract clean error message
+      String message =
+          error.toString().replaceAll('Exception: Exception: ', '').trim();
+      if (message.isEmpty) {
+        message = '❌ Registracija nepavyko!';
+      }
+      print(message);
       showCustomSnackBar(context, message, false);
-    }
+    });
   }
 
   void _signupWithGoogle(BuildContext context) async {
     String username = usernameController.text.trim();
-    var user = await _authService.registerWithGoogle(username);
-    if (user != null) {
-      print("✅ Google registracija sėkminga: ${user.email}");
-      showCustomSnackBar(context, '✅ Prisijungimas sėkmingas!', true);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => VersionScreen(
-                  username: username,
-                )),
-      );
-    } else {
-      print("❌ Google registracija nepavyko!");
-      showCustomSnackBar(
-          context, 'Nepavyko užsiregistruoti su Google ❌', false);
-    }
+
+    _authService.checkUserExists(username, "").then((_) async {
+      var user = await _authService.registerWithGoogle(username);
+      if (user != null) {
+        print("✅ Google registracija sėkminga: ${user.email}");
+        showCustomSnackBar(context, '✅ Google registracija sėkminga!', true);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => VersionScreen(
+                    username: username,
+                    screenName: "Signup",
+                  )),
+        );
+      } else {
+        print("❌ Google registracija nepavyko!");
+        showCustomSnackBar(
+            context, 'Nepavyko užsiregistruoti su Google ❌', false);
+      }
+    }).catchError((error) {
+      // Extract clean error message
+      String message =
+          error.toString().replaceAll('Exception: Exception: ', '').trim();
+      if (message.isEmpty) {
+        message = '❌ Registracija nepavyko!';
+      }
+      print(message);
+      showCustomSnackBar(context, message, false);
+    });
   }
 
   void _resetSelection() {
@@ -160,8 +194,16 @@ class _SignupScreenState extends State<SignupScreen> {
                                         controller: usernameController,
                                         decoration: InputDecoration(
                                           labelText: 'Slapyvardis',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite slapyvardį';
@@ -169,13 +211,21 @@ class _SignupScreenState extends State<SignupScreen> {
                                           return null;
                                         },
                                       ),
-                                      SizedBox(height: 10),
+                                      SizedBox(height: 5),
                                       TextFormField(
                                         controller: nameController,
                                         decoration: InputDecoration(
                                           labelText: 'Vardas',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite vardą';
@@ -183,13 +233,21 @@ class _SignupScreenState extends State<SignupScreen> {
                                           return null;
                                         },
                                       ),
-                                      SizedBox(height: 10),
+                                      SizedBox(height: 5),
                                       TextFormField(
                                         controller: emailController,
                                         decoration: InputDecoration(
                                           labelText: 'El. paštas',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite el. paštą';
@@ -202,20 +260,85 @@ class _SignupScreenState extends State<SignupScreen> {
                                           return null;
                                         },
                                       ),
-                                      SizedBox(height: 10),
+                                      SizedBox(height: 5),
                                       TextFormField(
                                         controller: passwordController,
                                         obscureText: true,
                                         decoration: InputDecoration(
                                           labelText: 'Slaptažodis',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              _obscurePassword
+                                                  ? Icons.visibility_off
+                                                  : Icons.visibility,
+                                              size: 20,
+                                              color: Color(0xFF8093F1),
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _obscurePassword =
+                                                    !_obscurePassword;
+                                              });
+                                            },
+                                          ),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite slaptažodį';
                                           }
                                           if (value.length < 6) {
                                             return 'Slaptažodis per trumpas (min. 6 simboliai)';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      SizedBox(height: 5),
+                                      TextFormField(
+                                        controller: confirmPasswordController,
+                                        obscureText: true,
+                                        decoration: InputDecoration(
+                                          labelText: 'Patvirtinkite slaptažodį',
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              _obscurePasswordConfirm
+                                                  ? Icons.visibility_off
+                                                  : Icons.visibility,
+                                              size: 20,
+                                              color: Color(0xFF8093F1),
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _obscurePasswordConfirm =
+                                                    !_obscurePasswordConfirm;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        style: TextStyle(fontSize: 14),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Patvirtinkite slaptažodį';
+                                          }
+                                          if (value !=
+                                              passwordController.text) {
+                                            return 'Slaptažodžiai nesutampa';
                                           }
                                           return null;
                                         },

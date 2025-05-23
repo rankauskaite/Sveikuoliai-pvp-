@@ -42,6 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           userName = sessionData['name'] ?? "Nežinomas";
           userUsername = sessionData['username'] ?? "Nežinomas";
           userEmail = sessionData['email'] ?? "Nežinomas";
+          userIcon = sessionData['icon']?.isNotEmpty == true
+              ? sessionData['icon']!
+              : 'account_circle';
         },
       );
       UserModel? userData = await _userService.getUserEntry(userUsername);
@@ -148,26 +151,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     Stack(
                       children: [
-                        // Centrinė account_circle ikona
                         Center(
-                          child: const Icon(
-                            Icons.account_circle,
-                            size: 250,
-                            color: Color(0xFFD9D9D9),
-                          ),
+                          child: userIcon == 'account_circle'
+                              ? const Icon(
+                                  Icons.account_circle,
+                                  size: 250,
+                                  color: Color(0xFFD9D9D9),
+                                )
+                              : Image.asset(
+                                  userIcon,
+                                  width: 250,
+                                  height: 250,
+                                  fit: BoxFit.cover,
+                                ),
                         ),
-                        // Viršutinė dešinė logout ikona
                         Positioned(
-                          top: 5, // Galite koreguoti atstumą nuo viršaus
-                          right: 0, // Galite koreguoti atstumą nuo dešinės
+                          top: 5,
+                          right: 0,
                           child: IconButton(
                             onPressed: () async {
                               await _authService.signOut();
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) =>
-                                        HelloScreen()), // Pakeiskite į jūsų prisijungimo ekraną
+                                    builder: (context) => HelloScreen()),
                               );
                             },
                             icon: Icon(
