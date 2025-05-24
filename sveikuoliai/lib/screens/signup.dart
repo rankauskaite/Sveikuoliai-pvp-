@@ -380,8 +380,16 @@ class _SignupScreenState extends State<SignupScreen> {
                                         controller: usernameController,
                                         decoration: InputDecoration(
                                           labelText: 'Slapyvardis',
-                                          border: OutlineInputBorder(),
+                                          labelStyle: TextStyle(fontSize: 14),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          errorStyle: TextStyle(fontSize: 11),
                                         ),
+                                        style: TextStyle(fontSize: 14),
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Įveskite slapyvardį';

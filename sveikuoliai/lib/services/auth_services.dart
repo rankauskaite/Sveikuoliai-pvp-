@@ -83,6 +83,7 @@ class AuthService {
 
   Future<User?> registerWithGoogle(String username) async {
     try {
+      await checkUserExists(username, '');
       // Pirmiausia atlikime prisijungimą su Google
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null)

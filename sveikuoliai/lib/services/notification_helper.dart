@@ -6,6 +6,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart'; // Added for Android 13+ permissions
 
 class NotificationHelper {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -33,7 +34,7 @@ class NotificationHelper {
     // Handle notification permissions
     await _handleNotificationPermission();
 
-    // Request exact alarms permission (unchanged)
+    // Request exact alarms permission
     await _requestExactAlarmsPermission();
   }
 
@@ -47,17 +48,23 @@ class NotificationHelper {
       return; // Skip if permission was already asked or notifications are disabled
     }
 
-    final androidImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    final iosImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-
     bool? granted;
     if (Platform.isAndroid) {
-      granted = await androidImplementation?.requestNotificationsPermission();
+      // Use permission_handler for Android 13+ (API 33+)
+      if (await DeviceInfoPlugin().androidInfo.then((info) => info.version.sdkInt >= 33)) {
+        var status = await Permission.notification.request();
+        granted = status.isGranted;
+      } else {
+        // For Android < 13, use the plugin's requestPermission
+        final androidImplementation =
+            _notificationsPlugin.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        granted = await androidImplementation?.requestPermission();
+      }
     } else if (Platform.isIOS) {
+      final iosImplementation =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
       granted = await iosImplementation?.requestPermissions(
         alert: true,
         badge: true,
@@ -122,6 +129,8 @@ class NotificationHelper {
           priority: Priority.high,
         ),
       ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
@@ -144,6 +153,8 @@ class NotificationHelper {
           priority: Priority.high,
         ),
       ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
