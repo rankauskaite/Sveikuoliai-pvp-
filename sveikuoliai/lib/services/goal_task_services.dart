@@ -49,12 +49,12 @@ class GoalTaskService {
   }
 
   // read all goal's tasks
-  Future<List<GoalTask>> getGoalTasksForUser(String goalId, String username) async {
-    QuerySnapshot snapshot =
-        await goalTaskCollection
-            .where('goalId', isEqualTo: goalId)
-            .where('userId', isEqualTo: username)
-            .get();
+  Future<List<GoalTask>> getGoalTasksForUser(
+      String goalId, String username) async {
+    QuerySnapshot snapshot = await goalTaskCollection
+        .where('goalId', isEqualTo: goalId)
+        .where('userId', isEqualTo: username)
+        .get();
 
     return snapshot.docs
         .map((doc) =>
@@ -75,6 +75,7 @@ class GoalTaskService {
     await goalTaskCollection.doc(id).update({
       'isCompleted': isCompleted,
       'points': points,
+      'date': DateTime.now().toIso8601String(),
     });
   }
 

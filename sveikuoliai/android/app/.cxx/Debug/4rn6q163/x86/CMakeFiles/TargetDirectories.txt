@@ -1,2 +1,0 @@
-C:/Users/rugil/Desktop/projektaivs/habitTracker hopefully/Sveikuoliai-pvp-/sveikuoliai/android/app/.cxx/Debug/4rn6q163/x86/CMakeFiles/edit_cache.dir
-C:/Users/rugil/Desktop/projektaivs/habitTracker hopefully/Sveikuoliai-pvp-/sveikuoliai/android/app/.cxx/Debug/4rn6q163/x86/CMakeFiles/rebuild_cache.dir
