@@ -4,10 +4,6 @@ import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
 class VersionScreen extends StatefulWidget {
   final String username;
   final String? screenName;
@@ -47,45 +43,7 @@ class _VersionScreenState extends State<VersionScreen> {
       String message = 'Klaida renkantis planą ❌';
       showCustomSnackBar(context, message, false);
     }
-    print("Pasirinktas planas: $plan"); // Kol kas tiesiog atspausdinsime
-  }
-
-  Future<void> payWithStripe(String planId) async {
-    try {
-      final response = await http.post(
-        Uri.parse(
-            'https://stripe-server-thr2.onrender.com:10000/create-payment-intent'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      print('SERVERIO ATSAKYMAS: ${response.body}');
-      print('STATUSAS: ${response.statusCode}');
-
-      final jsonResponse = json.decode(response.body);
-      final clientSecret = jsonResponse['clientSecret'];
-
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'Sveikuoliai App',
-          style: ThemeMode.light,
-          //testEnv: true,
-        ),
-      );
-
-      await Stripe.instance.presentPaymentSheet();
-
-      // Jei sėkminga — išsaugom planą
-      setState(() {
-        selectedPlan = planId;
-      });
-      await saveSelectedPlan(planId);
-    } catch (e) {
-      print('KLAIDA: $e');
-      if (mounted) {
-        showCustomSnackBar(context, '❌ Mokėjimas nepavyko: $e', false);
-      }
-    }
+    print("Pasirinktas planas: $plan");
   }
 
   Widget buildDynamicCard(int index) {
@@ -93,8 +51,8 @@ class _VersionScreenState extends State<VersionScreen> {
       case 0:
         return buildPlanCard(
           planId: 'free',
-          color: Color(0xFFEEEEEEEE),
-          borderColor: Color(0xFFF7AEF8),
+          color: const Color(0xFFEEEEEE),
+          borderColor: const Color(0xFFF7AEF8),
           title: 'Gija NULIS',
           price: '0',
           description: '''
@@ -105,14 +63,14 @@ Naudokis
   - Virtualiu dienoraščiu
   - Meditacijos kampeliu
         ''',
-          buttonColor: Color(0xFFEF3BF1),
-          fixedHeight: cardHeights[0], // Priskiriame aukštį
+          buttonColor: const Color(0xFFEF3BF1),
+          fixedHeight: cardHeights[0],
         );
       case 1:
         return buildPlanCard(
           planId: 'premium',
-          color: Color(0xFFF7AEF8),
-          borderColor: Color(0xFFF7AEF8),
+          color: const Color(0xFFF7AEF8),
+          borderColor: const Color(0xFFF7AEF8),
           title: 'Gija PLIUS',
           price: '5',
           description: '''
@@ -127,30 +85,30 @@ Bendrauk
   - Kelk bendrus tikslus
   - Stebėk draugų sodą
         ''',
-          buttonColor: Color(0xFFEF3BF1),
-          fixedHeight: cardHeights[1], // Priskiriame aukštį
+          buttonColor: const Color(0xFFEF3BF1),
+          fixedHeight: cardHeights[1],
         );
       default:
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF8093F1),
+      backgroundColor: const Color(0xFF8093F1),
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Image.asset('assets/logo.png', width: 100, height: 100),
-            Text(
+            const Text(
               'Pasirink savo',
               style: TextStyle(fontSize: 24, color: Colors.white),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+              children: const [
                 Text('GIJA',
                     style: TextStyle(
                         fontSize: 35,
@@ -160,7 +118,7 @@ Bendrauk
                     style: TextStyle(fontSize: 24, color: Colors.white)),
               ],
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Expanded(
               child: PageView.builder(
                 controller: PageController(viewportFraction: 0.85),
@@ -173,7 +131,7 @@ Bendrauk
                 },
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -188,9 +146,8 @@ Bendrauk
     required String price,
     required String description,
     required Color buttonColor,
-    double? fixedHeight, // <-- naujas parametras
+    double? fixedHeight,
   }) {
-    // Funkcija, kuri suskaido aprašymą į pavadinimus ir punktus
     List<Widget> buildDescription(String description) {
       List<Widget> descriptionWidgets = [];
       final sections = description.split('\n');
@@ -199,23 +156,21 @@ Bendrauk
       for (var line in sections) {
         if (line.trim().isEmpty) continue;
 
-        // Jei eilutė prasideda su pavadinimu (pvz., Stebėk, Naudokis), padarome ją didesnę
         if (line.startsWith('Stebėk') ||
             line.startsWith('Naudokis') ||
             line.startsWith('Bendrauk')) {
           if (currentHeading != null) {
-            //descriptionWidgets.add(SizedBox(height: 10));
+            descriptionWidgets.add(const SizedBox(height: 10));
           }
           currentHeading = line;
           descriptionWidgets.add(Text(
             currentHeading,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ));
         } else {
-          // Pridedame punktus po pavadinimo
           descriptionWidgets.add(Text(
             '  $line',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
           ));
         }
       }
@@ -225,7 +180,7 @@ Bendrauk
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 10),
       child: Container(
-        height: fixedHeight, // <-- čia priskiriam
+        height: fixedHeight,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(30),
@@ -236,23 +191,22 @@ Bendrauk
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  //SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Column(
                         children: [
                           Text(
                             title.split(" ").first,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 28,
                                 color: Colors.black,
                                 fontWeight: FontWeight.w300),
                           ),
                           Text(
                             title.split(" ").last,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 40,
                                 color: Colors.black,
                                 fontStyle: FontStyle.italic),
@@ -262,28 +216,29 @@ Bendrauk
                       Align(
                         alignment: Alignment.topRight,
                         child: Container(
-                          padding: EdgeInsets.all(22),
+                          padding: const EdgeInsets.all(22),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border:
-                                Border.all(color: Color(0xFFEF3BF1), width: 3),
+                            border: Border.all(
+                                color: const Color(0xFFEF3BF1), width: 3),
                             color: Colors.white,
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              SizedBox(height: 5),
+                              const SizedBox(height: 5),
                               RichText(
                                 text: TextSpan(
-                                  style: TextStyle(fontStyle: FontStyle.italic),
+                                  style: const TextStyle(
+                                      fontStyle: FontStyle.italic),
                                   children: [
                                     TextSpan(
                                       text: price,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 40, color: Colors.black),
                                     ),
-                                    TextSpan(
+                                    const TextSpan(
                                       text: '€',
                                       style: TextStyle(
                                           fontSize: 20, color: Colors.black),
@@ -291,14 +246,14 @@ Bendrauk
                                   ],
                                 ),
                               ),
-                              Text(
+                              const Text(
                                 '/ mėn.',
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.black54,
                                     fontStyle: FontStyle.italic),
                               ),
-                              SizedBox(height: 10),
+                              const SizedBox(height: 10),
                             ],
                           ),
                         ),
@@ -308,54 +263,40 @@ Bendrauk
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Pavadinimai ir punktai su fonu
                       Container(
-                        padding: EdgeInsets.only(
+                        padding: const EdgeInsets.only(
                             left: 35, right: 35, top: 16, bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.white, // Fono spalva
-                          borderRadius:
-                              BorderRadius.circular(10), // Kampų suapvalinimas
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment
-                              .start, // Užtikrina, kad tekstas bus kairėje
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Pavadinimai ir punktai, suformatuoti pagal anksčiau sukurtą funkciją
                             ...buildDescription(description),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: buttonColor,
-                        shape: StadiumBorder(),
+                        shape: const StadiumBorder(),
                         elevation: 3,
                       ),
-                      // onPressed: () async {
-                      //   setState(() {
-                      //     selectedPlan = planId;
-                      //   });
-                      //   await saveSelectedPlan(planId);
-                      //   // Gali naviguoti į kitą ekraną arba rodyti pranešimą
-                      // },
                       onPressed: () async {
-                        if (planId == 'free') {
-                          setState(() {
-                            selectedPlan = planId;
-                          });
-                          await saveSelectedPlan(planId);
-                        } else {
-                          await payWithStripe(planId); // Stripe mokėjimas
-                        }
+                        setState(() {
+                          selectedPlan = planId;
+                        });
+                        await saveSelectedPlan(planId);
+                        // Gali naviguoti į kitą ekraną arba rodyti pranešimą
                       },
-                      child: Text("Gauti",
+                      child: const Text("Gauti",
                           style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
                   ),

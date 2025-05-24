@@ -224,7 +224,7 @@ class CustomDialogs {
         case EntityType.habit:
           return 'šį įprotį';
         case EntityType.task:
-          return 'šą užduotį';
+          return 'šią užduotį';
         case EntityType.goal:
           return 'šį tikslą';
         case EntityType.sharedGoal:

@@ -61,7 +61,7 @@ class _GardenScreenState extends State<GardenScreen> {
 
     while (plantData.length < sourceList.length && maxAttempts > 0) {
       double left = -5 + _random.nextDouble() * 200;
-      double top = 18 + _random.nextDouble() * 28;
+      double top = 23 + _random.nextDouble() * 28;
       Offset newPos = Offset(left, top);
 
       bool tooClose = usedPositions.any(
@@ -97,8 +97,8 @@ class _GardenScreenState extends State<GardenScreen> {
         top: top,
         child: Image.asset(
           imagePath,
-          width: 100,
-          height: 100,
+          width: 90,
+          height: 90,
         ),
       );
     });

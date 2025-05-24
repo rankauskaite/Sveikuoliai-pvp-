@@ -145,11 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
       permissionGranted =
           await androidImplementation?.areNotificationsEnabled() ?? false;
     } else if (Platform.isIOS) {
-      final iosImplementation =
-          notificationsPlugin.resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+      // final iosImplementation =
+      //     notificationsPlugin.resolvePlatformSpecificImplementation<
+      //         IOSFlutterLocalNotificationsPlugin>();
       // iOS: Assume granted if initialized; checkPermissions may return null if not configured
-      permissionGranted = await iosImplementation?.checkPermissions() != null;
+      //permissionGranted = await iosImplementation?.checkPermissions() != null;
     }
 
     if (permissionGranted && notificationsEnabled) {
