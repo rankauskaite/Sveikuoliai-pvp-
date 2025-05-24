@@ -39,9 +39,9 @@ class _GardenScreenState extends State<GardenScreen> {
   final List<String> titlesTop = ['Įpročių', 'Tikslų', 'Draugų'];
   final List<String> titlesBottom = ['sodas', 'sodas', 'sodas'];
   List<String> subtitles = [
-    'Šiuo metu bandai\nišsiugdyti\nįpročius',
-    'Šiuo metu vykdai\ntikslus',
-    'Šiuo metu su draugais\nvykdai tikslus'
+    'Tavo įpročių sodą puošia\naugaliukai',
+    'Tavo tikslų sodą puošia\naugaliukai',
+    'Bendrame sode su\ndraugais augini\ntikslų augaliukus'
   ];
   final List<String> images = [
     'assets/images/salos/sala_iprociu.png',
@@ -126,9 +126,9 @@ class _GardenScreenState extends State<GardenScreen> {
         friendFlag = flag;
         if (flag) {
           subtitles = [
-            'Šiuo metu draugas ${widget.user.name}\nbando išsiugdyti\nįpročius',
-            'Šiuo metu draugas ${widget.user.name}\nvykdo tikslus',
-            'Šiuo metu ${widget.user.name} su draugais\nvykdo tikslus'
+            'Draugo ${widget.user.name}\nįpročių sodą puošia\naugaliukai',
+            'Draugo ${widget.user.name}\ntikslų sodą puošia\naugaliukai',
+            '${widget.user.name} augina\ntikslų augaliukus su draugais'
           ];
         }
         count = [
@@ -146,12 +146,12 @@ class _GardenScreenState extends State<GardenScreen> {
       List<HabitInformation> habits =
           await _habitService.getUserHabits(username);
 
-      List<HabitInformation> activeHabits =
-          habits.where((habit) => !habit.habitModel.isCompleted).toList();
+      //List<HabitInformation> activeHabits =
+      //habits.where((habit) => !habit.habitModel.isCompleted).toList();
 
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
-        userHabits = activeHabits
+        userHabits = habits
             .map((habit) => {
                   'plantId': habit.habitModel.plantId,
                   'points': habit.habitModel.points,
@@ -168,12 +168,12 @@ class _GardenScreenState extends State<GardenScreen> {
     try {
       // Gaukime vartotojo įpročius
       List<GoalInformation> goals = await _goalService.getUserGoals(username);
-      List<GoalInformation> activeGoals =
-          goals.where((goal) => !goal.goalModel.isCompleted).toList();
+      // List<GoalInformation> activeGoals =
+      //     goals.where((goal) => !goal.goalModel.isCompleted).toList();
 
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
-        userGoals = activeGoals
+        userGoals = goals
             .map((goal) => {
                   'plantId': goal.goalModel.plantId,
                   'points': goal.goalModel.points,
@@ -191,11 +191,8 @@ class _GardenScreenState extends State<GardenScreen> {
       // Gaukime vartotojo įpročius
       List<SharedGoalInformation> goals =
           await _sharedGoalService.getSharedUserGoals(username);
-      List<SharedGoalInformation> activeGoals = goals
-          .where((goal) =>
-              !goal.sharedGoalModel.isCompletedUser1 &&
-              !goal.sharedGoalModel.isCompletedUser2)
-          .toList();
+      List<SharedGoalInformation> activeGoals =
+          goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
 
       // Atnaujiname būsena su naujais duomenimis
       setState(() {

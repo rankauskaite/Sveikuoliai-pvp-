@@ -481,7 +481,9 @@ class _HabitScreenState extends State<HabitScreen> {
                       SizedBox(
                         height: 200,
                         child: progressList.isEmpty
-                            ? const Text("Nėra progreso duomenų")
+                            ? Text("Nėra progreso duomenų",
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey))
                             : HabitProgressChart(
                                 habit: widget.habit.habitModel,
                                 progressList: progressList,

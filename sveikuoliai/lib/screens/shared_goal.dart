@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
@@ -15,8 +14,10 @@ import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/widgets/goal_progress_graph.dart';
 import 'package:sveikuoliai/widgets/goal_task_card.dart';
 import 'package:sveikuoliai/widgets/progress_indicator.dart';
+import 'package:sveikuoliai/widgets/shared_goal_progress_graph.dart';
 
 class SharedGoalScreen extends StatefulWidget {
   final SharedGoalInformation goal;
@@ -238,6 +239,14 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         if (mounted) {
           showCustomSnackBar(
               context, "Tikslo būsena sėkmingai išsaugota ✅", true);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SharedGoalScreen(
+                goal: widget.goal,
+              ),
+            ),
+          );
         }
       }
     } catch (e) {
@@ -660,6 +669,14 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (goalTasksMine.isEmpty)
+                              Center(
+                                child: Text(
+                                  'Jūs dar neturite užduočių šiam tikslui.',
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.grey),
+                                ),
+                              ),
                             ...goalTasksMine
                                 .where((task) => !task.isCompleted)
                                 .map(
@@ -707,6 +724,15 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (goalTasksFriend.isEmpty)
+                              Center(
+                                child: Text(
+                                  '$friendName dar neturi užduočių šiam tikslui.',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             ...goalTasksFriend
                                 .where((task) => !task.isCompleted)
                                 .map(
@@ -859,7 +885,46 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                             TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
                       ),
                       const SizedBox(height: 10),
-                      SizedBox(height: 200, child: _buildChart()),
+                      //SizedBox(height: 200, child: _buildChart()),
+                      if (_currentPage == 0) ...[
+                        SizedBox(
+                          height: 200,
+                          child: goalTasksMine.isEmpty
+                              ? Text("Nėra progreso duomenų",
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey))
+                              : GoalProgressChart(
+                                  goal: widget.goal.sharedGoalModel,
+                                  goalTasks: goalTasksMine,
+                                ),
+                        ),
+                      ] else if (_currentPage == 1) ...[
+                        SizedBox(
+                          height: 200,
+                          child: goalTasksFriend.isEmpty
+                              ? Text("Nėra progreso duomenų",
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey))
+                              : GoalProgressChart(
+                                  goal: widget.goal.sharedGoalModel,
+                                  goalTasks: goalTasksFriend,
+                                ),
+                        ),
+                      ] else ...[
+                        SizedBox(
+                          height: 200,
+                          child:
+                              (goalTasksMine.isEmpty && goalTasksFriend.isEmpty)
+                                  ? Text("Nėra progreso duomenų",
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.grey))
+                                  : SharedGoalProgressChart(
+                                      goal: widget.goal.sharedGoalModel,
+                                      goalTasksMine: goalTasksMine,
+                                      goalTasksFriend: goalTasksFriend,
+                                    ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -948,42 +1013,6 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildChart() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                FlSpot(0, 1),
-                FlSpot(1, 3),
-                FlSpot(2, 2),
-                FlSpot(3, 5),
-                FlSpot(4, 4),
-                FlSpot(5, 6),
-              ],
-              isCurved: true,
-              color: const Color(0xFFbcd979),
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: const Color(0xFFbcd979).withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

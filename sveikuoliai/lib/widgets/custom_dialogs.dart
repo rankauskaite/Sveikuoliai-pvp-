@@ -5,6 +5,10 @@ import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
+import 'package:sveikuoliai/screens/goal.dart';
+import 'package:sveikuoliai/screens/habit.dart';
+import 'package:sveikuoliai/screens/shared_goal.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/services/habit_progress_services.dart';
@@ -15,6 +19,19 @@ import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 // Enum dialogo tipui
 enum EntityType { habit, goal, sharedGoal, task }
+
+// Pavyzdinis AuthService, kuris grąžina prisijungusio vartotojo username
+class CatchUserService {
+  static Future<String?> getCurrentUserUsername() async {
+    final AuthService authService = AuthService();
+    Map<String, String?> sessionData = await authService.getSessionUser();
+    if (sessionData.isNotEmpty) {
+      return sessionData['username'];
+    } else {
+      return null; // Jei vartotojas neprisijungęs
+    }
+  }
+}
 
 // Bendras dialogų valdymo klasė
 class CustomDialogs {
@@ -143,6 +160,34 @@ class CustomDialogs {
                   showCustomSnackBar(context, errorMessage, false);
                 }
                 Navigator.pop(context);
+                if (entityType == EntityType.habit) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HabitScreen(
+                        habit: entity as HabitInformation,
+                      ),
+                    ),
+                  );
+                } else if (entityType == EntityType.goal) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GoalScreen(
+                        goal: entity as GoalInformation,
+                      ),
+                    ),
+                  );
+                } else if (entityType == EntityType.sharedGoal) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SharedGoalScreen(
+                        goal: entity as SharedGoalInformation,
+                      ),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: accentColor),
               child: const Text("Išsaugoti",
@@ -331,7 +376,7 @@ class CustomDialogs {
 
                 HabitProgress newProgress = HabitProgress(
                   id: currentProgressId ??
-                      '${habit.habitModel.habitTypeId}${habit.habitModel.userId[0].toUpperCase() + habit.habitModel.userId.substring(1)}${DateTime.now()}',
+                      '${habit.habitModel.habitTypeId}${habit.habitModel.userId[0].toUpperCase() + habit.habitModel.userId.substring(1)}${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
                   habitId: habit.habitModel.id,
                   description: progressController.text,
                   points: currentProgressId != null ? points : points + 1,
@@ -361,9 +406,19 @@ class CustomDialogs {
 
                 await habitService.updateHabitEntry(updatedHabit);
 
+                habit.habitModel = updatedHabit; // Atstatome atnaujintą įprotį
+
                 onSave();
                 showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
                 Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HabitScreen(
+                      habit: habit,
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(backgroundColor: accentColor),
               child: const Text('Išsaugoti'),
@@ -375,14 +430,16 @@ class CustomDialogs {
   }
 
   // Naujas metodas naujos užduoties dialogui
-  static void showNewTaskDialog({
+  static Future<void> showNewTaskDialog({
     required BuildContext context,
     required dynamic goal, // Priima GoalInformation arba SharedGoalInformation
     required Color accentColor,
     required Function(GoalTask) onSave, // Callback naujai užduočiai išsaugoti
-  }) {
+  }) async {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
+    final String? currentUserUsername =
+        await CatchUserService.getCurrentUserUsername();
 
     showDialog(
       context: context,
@@ -424,11 +481,17 @@ class CustomDialogs {
                 if (titleController.text.isNotEmpty) {
                   // Sukuriame naują užduotį
                   final task = GoalTask(
-                    id: '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}',
+                    id: goal is GoalInformation
+                        ? '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}'
+                        : '${goal.sharedGoalModel.goalTypeId}${currentUserUsername![0].toUpperCase() + currentUserUsername.substring(1)}${DateTime.now()}',
                     title: titleController.text,
                     description: descriptionController.text,
-                    goalId: goal.goalModel.id,
+                    goalId: goal is GoalInformation
+                        ? goal.goalModel.id
+                        : goal.sharedGoalModel.id,
                     date: DateTime.now(),
+                    userId:
+                        goal is GoalInformation ? null : currentUserUsername,
                   );
 
                   try {
