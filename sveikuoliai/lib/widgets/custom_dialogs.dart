@@ -97,6 +97,8 @@ class CustomDialogs {
         break;
     }
 
+    final _formKey = GlobalKey<FormState>(); // Add form key for validation
+
     showDialog(
       context: context,
       builder: (context) {
@@ -105,26 +107,51 @@ class CustomDialogs {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: "Pavadinimas",
-                    border: OutlineInputBorder(),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: "Pavadinimas",
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorStyle: const TextStyle(fontSize: 11),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Pavadinimas negali būti tuščias';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: "Aprašymas",
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: "Aprašymas",
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorStyle: const TextStyle(fontSize: 11),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Aprašymas negali būti tuščias';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -134,59 +161,63 @@ class CustomDialogs {
             ),
             ElevatedButton(
               onPressed: () async {
-                try {
-                  if (entityType == EntityType.habit) {
-                    final habitTypeService = HabitTypeService();
-                    entity.habitType.title = titleController.text;
-                    entity.habitType.description = descriptionController.text;
-                    await habitTypeService
-                        .updateHabitTypeEntry(entity.habitType);
-                  } else if (entityType == EntityType.goal ||
-                      entityType == EntityType.sharedGoal) {
-                    final goalTypeService = GoalTypeService();
-                    entity.goalType.title = titleController.text;
-                    entity.goalType.description = descriptionController.text;
-                    await goalTypeService.updateGoalTypeEntry(entity.goalType);
-                  } else if (entityType == EntityType.task) {
-                    final goalTaskService = GoalTaskService();
-                    entity.title = titleController.text;
-                    entity.description = descriptionController.text;
-                    await goalTaskService.updateGoalTaskEntry(entity);
-                  }
+                if (_formKey.currentState!.validate()) {
+                  try {
+                    if (entityType == EntityType.habit) {
+                      final habitTypeService = HabitTypeService();
+                      entity.habitType.title = titleController.text;
+                      entity.habitType.description = descriptionController.text;
+                      await habitTypeService
+                          .updateHabitTypeEntry(entity.habitType);
+                    } else if (entityType == EntityType.goal ||
+                        entityType == EntityType.sharedGoal) {
+                      final goalTypeService = GoalTypeService();
+                      entity.goalType.title = titleController.text;
+                      entity.goalType.description = descriptionController.text;
+                      await goalTypeService
+                          .updateGoalTypeEntry(entity.goalType);
+                    } else if (entityType == EntityType.task) {
+                      final goalTaskService = GoalTaskService();
+                      entity.title = titleController.text;
+                      entity.description = descriptionController.text;
+                      await goalTaskService.updateGoalTaskEntry(entity);
+                    }
 
-                  onSave(); // Callback po sėkmingo išsaugojimo
-                  showCustomSnackBar(context, successMessage, true);
-                } catch (e) {
-                  showCustomSnackBar(context, errorMessage, false);
-                }
-                Navigator.pop(context);
-                if (entityType == EntityType.habit) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HabitScreen(
-                        habit: entity as HabitInformation,
-                      ),
-                    ),
-                  );
-                } else if (entityType == EntityType.goal) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GoalScreen(
-                        goal: entity as GoalInformation,
-                      ),
-                    ),
-                  );
-                } else if (entityType == EntityType.sharedGoal) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SharedGoalScreen(
-                        goal: entity as SharedGoalInformation,
-                      ),
-                    ),
-                  );
+                    onSave();
+                    showCustomSnackBar(context, successMessage, true);
+                    Navigator.pop(context);
+                    if (entityType == EntityType.habit) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HabitScreen(
+                            habit: entity as HabitInformation,
+                          ),
+                        ),
+                      );
+                    } else if (entityType == EntityType.goal) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GoalScreen(
+                            goal: entity as GoalInformation,
+                          ),
+                        ),
+                      );
+                    } else if (entityType == EntityType.sharedGoal) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SharedGoalScreen(
+                            goal: entity as SharedGoalInformation,
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    showCustomSnackBar(context, errorMessage, false);
+                    Navigator.pop(context);
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: accentColor),
@@ -318,6 +349,7 @@ class CustomDialogs {
     required int streak,
   }) {
     String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final _formKey = GlobalKey<FormState>(); // Add form key for validation
 
     showDialog(
       context: context,
@@ -347,21 +379,35 @@ class CustomDialogs {
             ],
           ),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: progressController,
-                  maxLines: null,
-                  decoration: const InputDecoration(
-                    labelText: 'Įveskite informaciją',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.transparent,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: progressController,
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      labelText: 'Įveskite informaciją',
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      errorStyle: const TextStyle(fontSize: 11),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Informacija negali būti tuščia';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -371,54 +417,57 @@ class CustomDialogs {
             ),
             ElevatedButton(
               onPressed: () async {
-                final habitProgressService = HabitProgressService();
-                final habitService = HabitService();
+                if (_formKey.currentState!.validate()) {
+                  final habitProgressService = HabitProgressService();
+                  final habitService = HabitService();
 
-                HabitProgress newProgress = HabitProgress(
-                  id: currentProgressId ??
-                      '${habit.habitModel.habitTypeId}${habit.habitModel.userId[0].toUpperCase() + habit.habitModel.userId.substring(1)}${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
-                  habitId: habit.habitModel.id,
-                  description: progressController.text,
-                  points: currentProgressId != null ? points : points + 1,
-                  streak: currentProgressId != null ? streak : streak + 1,
-                  plantUrl: PlantImageService.getPlantImage(
-                      habit.habitModel.plantId, habit.habitModel.points + 1),
-                  date: DateTime.now(),
-                  isCompleted: true,
-                );
+                  HabitProgress newProgress = HabitProgress(
+                    id: currentProgressId ??
+                        '${habit.habitModel.habitTypeId}${habit.habitModel.userId[0].toUpperCase() + habit.habitModel.userId.substring(1)}${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
+                    habitId: habit.habitModel.id,
+                    description: progressController.text,
+                    points: currentProgressId != null ? points : points + 1,
+                    streak: currentProgressId != null ? streak : streak + 1,
+                    plantUrl: PlantImageService.getPlantImage(
+                        habit.habitModel.plantId, habit.habitModel.points + 1),
+                    date: DateTime.now(),
+                    isCompleted: true,
+                  );
 
-                await habitProgressService
-                    .createHabitProgressEntry(newProgress);
+                  await habitProgressService
+                      .createHabitProgressEntry(newProgress);
 
-                HabitModel updatedHabit = HabitModel(
-                  id: habit.habitModel.id,
-                  startDate: habit.habitModel.startDate,
-                  endDate: habit.habitModel.endDate,
-                  points: newProgress.points,
-                  category: habit.habitModel.category,
-                  endPoints: habit.habitModel.endPoints,
-                  isCompleted: habit.habitModel.isCompleted,
-                  userId: habit.habitModel.userId,
-                  habitTypeId: habit.habitModel.habitTypeId,
-                  plantId: habit.habitModel.plantId,
-                  isPlantDead: habit.habitModel.isPlantDead,
-                );
+                  HabitModel updatedHabit = HabitModel(
+                    id: habit.habitModel.id,
+                    startDate: habit.habitModel.startDate,
+                    endDate: habit.habitModel.endDate,
+                    points: newProgress.points,
+                    category: habit.habitModel.category,
+                    endPoints: habit.habitModel.endPoints,
+                    isCompleted: habit.habitModel.isCompleted,
+                    userId: habit.habitModel.userId,
+                    habitTypeId: habit.habitModel.habitTypeId,
+                    plantId: habit.habitModel.plantId,
+                    isPlantDead: habit.habitModel.isPlantDead,
+                  );
 
-                await habitService.updateHabitEntry(updatedHabit);
+                  await habitService.updateHabitEntry(updatedHabit);
 
-                habit.habitModel = updatedHabit; // Atstatome atnaujintą įprotį
+                  habit.habitModel =
+                      updatedHabit; // Atstatome atnaujintą įprotį
 
-                onSave();
-                showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HabitScreen(
-                      habit: habit,
+                  onSave();
+                  showCustomSnackBar(context, 'Progresas išsaugotas! 🎉', true);
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HabitScreen(
+                        habit: habit,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: accentColor),
               child: const Text('Išsaugoti'),
@@ -440,6 +489,7 @@ class CustomDialogs {
     final descriptionController = TextEditingController();
     final String? currentUserUsername =
         await CatchUserService.getCurrentUserUsername();
+    final _formKey = GlobalKey<FormState>(); // Add form key for validation
 
     showDialog(
       context: context,
@@ -449,26 +499,51 @@ class CustomDialogs {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Pavadinimas',
-                    border: OutlineInputBorder(),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Pavadinimas',
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorStyle: const TextStyle(fontSize: 11),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Pavadinimas negali būti tuščias';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Aprašymas',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Aprašymas',
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorStyle: const TextStyle(fontSize: 11),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Aprašymas negali būti tuščias';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -478,8 +553,7 @@ class CustomDialogs {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.isNotEmpty) {
-                  // Sukuriame naują užduotį
+                if (_formKey.currentState!.validate()) {
                   final task = GoalTask(
                     id: goal is GoalInformation
                         ? '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}'
@@ -497,18 +571,15 @@ class CustomDialogs {
                   try {
                     final goalTaskService = GoalTaskService();
                     await goalTaskService.createGoalTaskEntry(task);
-                    onSave(task); // Išsaugome naują užduotį
+                    onSave(task);
                     showCustomSnackBar(
                         context, 'Užduotis sėkmingai pridėta ✅', true);
+                    Navigator.pop(context);
                   } catch (e) {
                     showCustomSnackBar(
                         context, 'Klaida pridedant užduotį ❌', false);
+                    Navigator.pop(context);
                   }
-
-                  Navigator.pop(context);
-                } else {
-                  showCustomSnackBar(
-                      context, 'Pavadinimas negali būti tuščias ❌', false);
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: accentColor),
@@ -523,7 +594,7 @@ class CustomDialogs {
     );
   }
 
-// Naujas metodas naujos užduoties dialogui
+  // Naujas metodas naujos užduoties dialogui
   static void showNewFirstTaskDialog({
     required BuildContext context,
     required dynamic goal, // Priima GoalInformation arba SharedGoalInformation
@@ -533,6 +604,7 @@ class CustomDialogs {
   }) {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
+    final _formKey = GlobalKey<FormState>(); // Add form key for validation
 
     showDialog(
       context: context,
@@ -546,32 +618,49 @@ class CustomDialogs {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Pavadinimas',
-                      border: OutlineInputBorder(),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Pavadinimas',
+                        border: OutlineInputBorder(),
+                        errorStyle: TextStyle(fontSize: 11),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Pavadinimas negali būti tuščias';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: descriptionController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Aprašymas',
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Aprašymas',
+                        border: OutlineInputBorder(),
+                        errorStyle: TextStyle(fontSize: 11),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Aprašymas negali būti tuščias';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             actions: [
               ElevatedButton(
                 onPressed: () async {
-                  if (titleController.text.isNotEmpty) {
+                  if (_formKey.currentState!.validate()) {
                     final task = GoalTask(
                       id: type == 1
                           ? '${goal.goalModel.goalTypeId}${goal.goalModel.userId[0].toUpperCase() + goal.goalModel.userId.substring(1)}${DateTime.now()}'
@@ -592,15 +681,12 @@ class CustomDialogs {
                       onSave(task);
                       showCustomSnackBar(
                           context, 'Užduotis sėkmingai pridėta ✅', true);
-                      Navigator.pop(
-                          context); // Leidžiam uždaryti tik po išsaugojimo
+                      Navigator.pop(context);
                     } catch (e) {
                       showCustomSnackBar(
                           context, 'Klaida pridedant užduotį ❌', false);
+                      Navigator.pop(context);
                     }
-                  } else {
-                    showCustomSnackBar(
-                        context, 'Pavadinimas negali būti tuščias ❌', false);
                   }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: accentColor),

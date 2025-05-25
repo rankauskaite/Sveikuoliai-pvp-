@@ -24,6 +24,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   String userEmail = "";
   String userVersion = "";
   String selectedIconName = 'account_circle'; // Default to account_circle
+  String? _nameError; // To store the error message
 
   TextEditingController _userNameController = TextEditingController();
   TextEditingController _userEmailController = TextEditingController();
@@ -64,30 +65,38 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   }
 
   Future<void> _saveUserData() async {
-    try {
-      String newName = _userNameController.text;
-      String newEmail = _userEmailController.text;
-      String newVersion = userVersion;
-      String? newIcon =
-          selectedIconName == 'account_circle' ? '' : selectedIconName;
+    setState(() {
+      _nameError = _userNameController.text.trim().isEmpty
+          ? 'Vardas negali būti tuščias!'
+          : null; // Validate and set error
+    });
 
-      await _userService.updateUserData(
-          userUsername, newName, newEmail, newVersion, newIcon);
-      _authService.updateUserSession('name', newName);
-      _authService.updateUserSession('email', newEmail);
-      _authService.updateUserSession('version', newVersion);
-      _authService.updateUserSession('icon', newIcon);
+    if (_nameError == null) {
+      try {
+        String newName = _userNameController.text;
+        String newEmail = _userEmailController.text;
+        String newVersion = userVersion;
+        String? newIcon =
+            selectedIconName == 'account_circle' ? '' : selectedIconName;
 
-      String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
-      showCustomSnackBar(context, successMessage, true);
+        await _userService.updateUserData(
+            userUsername, newName, newEmail, newVersion, newIcon);
+        _authService.updateUserSession('name', newName);
+        _authService.updateUserSession('email', newEmail);
+        _authService.updateUserSession('version', newVersion);
+        _authService.updateUserSession('icon', newIcon);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ProfileScreen()),
-      );
-    } catch (e) {
-      String errorMessage = 'Klaida išsaugant duomenis ❌';
-      showCustomSnackBar(context, errorMessage, false);
+        String successMessage = 'Duomenys sėkmingai atnaujinti ✅';
+        showCustomSnackBar(context, successMessage, true);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileScreen()),
+        );
+      } catch (e) {
+        String errorMessage = 'Klaida išsaugant duomenis ❌';
+        showCustomSnackBar(context, errorMessage, false);
+      }
     }
   }
 
@@ -133,7 +142,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         ),
                         const Expanded(child: SizedBox()),
                         ElevatedButton(
-                          onPressed: _saveUserData,
+                          onPressed:
+                              _saveUserData, // Save button triggers validation
                           child: Text('Išsaugoti'),
                         ),
                       ],
@@ -187,14 +197,38 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     ),
                     const SizedBox(height: 10),
                     IntrinsicWidth(
-                      child: TextField(
-                        controller: _userNameController,
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Vardas',
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _userNameController,
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Vardas',
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                _nameError = value.trim().isEmpty
+                                    ? 'Vardas negali būti tuščias!'
+                                    : null; // Real-time validation
+                              });
+                            },
+                          ),
+                          if (_nameError != null)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 5.0, left: 10.0),
+                              child: Text(
+                                _nameError!,
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     Text(
