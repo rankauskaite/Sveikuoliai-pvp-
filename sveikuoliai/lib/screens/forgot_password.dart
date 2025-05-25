@@ -68,14 +68,39 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         style: TextStyle(fontSize: 16),
                       ),
                       SizedBox(height: 20),
-                      TextField(
+                      // TextField(
+                      //   controller: _emailController,
+                      //   decoration: InputDecoration(
+                      //     labelText: 'El. paštas',
+                      //     border: OutlineInputBorder(),
+                      //     prefixIcon: Icon(Icons.email),
+                      //   ),
+                      //   keyboardType: TextInputType.emailAddress,
+                      // ),
+                      TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
                           labelText: 'El. paštas',
-                          border: OutlineInputBorder(),
+                          labelStyle: TextStyle(fontSize: 14),
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           prefixIcon: Icon(Icons.email),
+                          errorStyle: TextStyle(fontSize: 11),
                         ),
-                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(fontSize: 14),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Įveskite el. paštą';
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
+                              .hasMatch(value)) {
+                            return 'Netinkamas el. pašto formatas';
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: 20),
                       ElevatedButton(

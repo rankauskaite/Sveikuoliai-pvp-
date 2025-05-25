@@ -188,13 +188,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: ListView(
                         children: [
-                          Row(
+                          Column(
                             mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 userName,
                                 style: TextStyle(
                                     fontSize: 30, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
                               ),
                             ],
                           ),
@@ -312,6 +314,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ],
+                          SizedBox(
+                            height: 5,
+                          ),
                         ],
                       ),
                     )

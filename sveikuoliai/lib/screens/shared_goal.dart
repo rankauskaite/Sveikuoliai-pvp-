@@ -674,7 +674,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                 child: Text(
                                   'Jūs dar neturite užduočių šiam tikslui.',
                                   style: TextStyle(
-                                      fontSize: 18, color: Colors.grey),
+                                      fontSize: 16, color: Colors.grey),
                                 ),
                               ),
                             ...goalTasksMine

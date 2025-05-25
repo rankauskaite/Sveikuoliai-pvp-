@@ -156,6 +156,10 @@ class _HabitCardState extends State<HabitCard> {
 
   final TextEditingController _habitNameController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _habitDescriptionController =
+      TextEditingController();
+  final AuthService _authService = AuthService();
+  final _formKey = GlobalKey<FormState>(); // Add form key for validation
 
   @override
   void initState() {
@@ -163,20 +167,13 @@ class _HabitCardState extends State<HabitCard> {
     _dateController.text = DateTime.now().toString().substring(0, 10);
   }
 
-  final TextEditingController _habitDescriptionController =
-      TextEditingController();
-
-  final AuthService _authService = AuthService();
-
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(
-        () {
-          userUsername = sessionData['username'] ?? "Nežinomas";
-        },
-      );
+      setState(() {
+        userUsername = sessionData['username'] ?? "Nežinomas";
+      });
     } catch (e) {
       String message = 'Klaida gaunant duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -208,126 +205,145 @@ class _HabitCardState extends State<HabitCard> {
                 ],
               ),
               content: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Text(widget.habitDescription),
-                    const SizedBox(height: 20),
-                    // Jei tai paskutinė kortelė, naudoti kitus laukus
-                    if (widget.isCustom)
-                      Column(
-                        children: [
-                          TextFormField(
-                            controller: _habitNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Pavadinimas',
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .always, // Label tekstas visada ant lauko
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0,
-                                  horizontal:
-                                      10), // Lygiavimas su kitais laukais
-                              border: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Colors.transparent), // Nematoma riba
+                child: Form(
+                  key: _formKey, // Assign the form key
+                  child: Column(
+                    children: [
+                      Text(widget.habitDescription),
+                      const SizedBox(height: 20),
+                      // Jei tai paskutinė kortelė, naudoti kitus laukus
+                      if (widget.isCustom)
+                        Column(
+                          children: [
+                            TextFormField(
+                              controller: _habitNameController,
+                              decoration: InputDecoration(
+                                labelText: 'Pavadinimas',
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.always,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 0, horizontal: 10),
+                                border: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.transparent),
+                                ),
+                                errorStyle: TextStyle(fontSize: 11),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Įveskite pavadinimą';
+                                }
+                                return null;
+                              },
+                              onChanged: (String newValue) {},
                             ),
-                            onChanged: (String newValue) {},
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            controller: _habitDescriptionController,
-                            decoration: InputDecoration(
-                              labelText: 'Aprašymas',
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .always, // Label tekstas visada ant lauko
-                              contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 5, horizontal: 10),
-                              border: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.transparent),
+                            const SizedBox(height: 10),
+                            TextFormField(
+                              controller: _habitDescriptionController,
+                              decoration: InputDecoration(
+                                labelText: 'Aprašymas',
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.always,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 5, horizontal: 10),
+                                border: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.transparent),
+                                ),
+                                errorStyle: TextStyle(fontSize: 11),
                               ),
+                              maxLines: null,
+                              minLines: 1,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Įveskite aprašymą';
+                                }
+                                return null;
+                              },
+                              onChanged: (String newValue) {},
                             ),
-                            maxLines: null, // Leidžia laukui augti pagal turinį
-                            minLines: 2,
-                            onChanged: (String newValue) {},
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: 10),
-                    // Trukmės pasirinkimas su dekoracija
-                    DropdownButtonFormField<String>(
-                      value: _selectedDuration,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedDuration = newValue;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Įpročio trukmė',
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 0, horizontal: 5),
-                        border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.transparent)),
-                      ),
-                      isExpanded: true, // Užima visą plotį
-                      items: <String>[
-                        '1 savaitė',
-                        '2 savaitės',
-                        '1 mėnuo',
-                        '1,5 menesio',
-                        '2 mėnesiai',
-                        '3 mėnesiai',
-                        '6 mėnesiai'
-                      ].map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12),
-                            child: Text(value),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 10),
-                    // Pradžios datos pasirinkimas
-                    TextFormField(
-                      controller: _dateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Pradžios data',
-                        border: OutlineInputBorder(),
-                      ),
-                      readOnly: true, // Neleidžia redaguoti lauko
-                      onTap: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: _startDate,
-                          firstDate: DateTime
-                              .now(), // Neleidžia pasirinkti ankstesnių datų
-                          lastDate: DateTime(2101),
-                          locale: const Locale('lt', 'LT'),
-                        );
-                        if (pickedDate != null && pickedDate != _startDate) {
+                          ],
+                        ),
+                      const SizedBox(height: 10),
+                      // Trukmės pasirinkimas su dekoracija
+                      DropdownButtonFormField<String>(
+                        value: _selectedDuration,
+                        onChanged: (String? newValue) {
                           setState(() {
-                            _startDate = pickedDate;
+                            _selectedDuration = newValue;
                           });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        _submitHabit();
-                        _dateController.text =
-                            _startDate.toString().substring(0, 10);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => HabitsGoalsScreen(selectedIndex: 0)),
-                        );
-                      },
-                      child: const Text('Išsaugoti'),
-                    ),
-                  ],
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Įpročio trukmė',
+                          contentPadding:
+                              EdgeInsets.symmetric(vertical: 0, horizontal: 5),
+                          border: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.transparent)),
+                        ),
+                        isExpanded: true,
+                        items: <String>[
+                          '1 savaitė',
+                          '2 savaitės',
+                          '1 mėnuo',
+                          '1,5 menesio',
+                          '2 mėnesiai',
+                          '3 mėnesiai',
+                          '6 mėnesiai'
+                        ].map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Text(value),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+                      // Pradžios datos pasirinkimas
+                      TextFormField(
+                        controller: _dateController,
+                        decoration: const InputDecoration(
+                          labelText: 'Pradžios data',
+                          border: OutlineInputBorder(),
+                        ),
+                        readOnly: true,
+                        onTap: () async {
+                          DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: _startDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2101),
+                            locale: const Locale('lt', 'LT'),
+                          );
+                          if (pickedDate != null && pickedDate != _startDate) {
+                            setState(() {
+                              _startDate = pickedDate;
+                              _dateController.text =
+                                  _startDate.toString().substring(0, 10);
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            // Proceed only if the form is valid
+                            _submitHabit();
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HabitsGoalsScreen(selectedIndex: 0)),
+                            );
+                          }
+                        },
+                        child: const Text('Išsaugoti'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -335,7 +351,7 @@ class _HabitCardState extends State<HabitCard> {
         );
       },
       child: Card(
-        color: Color(0xFFB388EB), // Kortelės fonas
+        color: Color(0xFFB388EB),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -404,7 +420,6 @@ class _HabitCardState extends State<HabitCard> {
 
     // Sukurkite objektą su įpročio duomenimis
     if (widget.isCustom) {
-      // Sukurkite objektą su įpročio duomenimis
       HabitType habitData = HabitType(
         id: _habitNameController.text
             .toLowerCase()
@@ -437,13 +452,12 @@ class _HabitCardState extends State<HabitCard> {
         }),
         title: _habitNameController.text,
         description: _habitDescriptionController.text,
-        type: "custom", // Jei tai yra vartotojo sukurtas įprotis
+        type: "custom",
       );
 
       try {
         await _habitTypeService.createHabitTypeEntry(habitData);
         print('Įprotis pridėtas! 🎉');
-        //showCustomSnackBar(context, message, true); // Naudokite funkciją
       } catch (e) {
         print("Klaida pridedant įprotį: $e");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -453,7 +467,7 @@ class _HabitCardState extends State<HabitCard> {
     }
 
     if (userUsername.isEmpty) {
-      await _fetchUserData(); // Palauk, kol gaus vartotojo vardą
+      await _fetchUserData();
     }
     String habitID =
         '${habitId}${userUsername[0].toUpperCase() + userUsername.substring(1)}$_startDate';
@@ -469,9 +483,13 @@ class _HabitCardState extends State<HabitCard> {
                   ? 14
                   : _selectedDuration == '1 mėnuo'
                       ? 30
-                      : _selectedDuration == '3 mėnesiai'
-                          ? 90
-                          : 180,
+                      : _selectedDuration == '1,5 menesio'
+                          ? 45
+                          : _selectedDuration == '2 mėnesiai'
+                              ? 60
+                              : _selectedDuration == '3 mėnesiai'
+                                  ? 90
+                                  : 180,
         ),
       ),
       points: 0,
@@ -511,16 +529,12 @@ class _HabitCardState extends State<HabitCard> {
     try {
       await _habitService.createHabitEntry(habitModel);
       String message = 'Įprotis pridėtas! 🎉';
-      showCustomSnackBar(context, message, true); // Naudokite funkciją
+      showCustomSnackBar(context, message, true);
     } catch (e) {
       print("Klaida pridedant įprotį: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Įvyko klaida!')),
       );
     }
-
-    // Čia įrašykite kodą, kuris įrašo duomenis į duomenų bazę
-    // Pavyzdžiui, naudojant Firebase, SQLite, ar kitą metodą
-    //print('Įrašyti į duomenų bazę: $habitData');
   }
 }

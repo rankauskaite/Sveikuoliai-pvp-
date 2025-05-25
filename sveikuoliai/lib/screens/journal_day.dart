@@ -33,6 +33,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   MoodType selectedMood = MoodType.neutrali;
   String journalText = '';
   late DateTime menstruationStart;
+  DateTime? _tempMenstruationStart; // Temporary menstrual start date
   int periodLength = 7; // Mėnesinių trukmė dienomis
   late DateTime selectedTempDay = selectedDay; // Laikinas pasirinkimas
   String userUsername = "";
@@ -128,6 +129,22 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
 
       await _journalService.createJournalEntry(journalModel);
 
+      // Save menstrual cycle data if a temporary date is set
+      if (_tempMenstruationStart != null) {
+        MenstrualCycle menstrualCycle = MenstrualCycle(
+          id: "${userUsername}_${widget.selectedDay.year}-${widget.selectedDay.month}-${widget.selectedDay.day}",
+          userId: userUsername,
+          startDate: _tempMenstruationStart!,
+          endDate: _tempMenstruationStart!
+              .add(Duration(days: periodLength - 1)), // Pridedame dienas
+        );
+        await _menstrualCycleService.createMenstrualCycleEntry(menstrualCycle);
+        setState(() {
+          menstruationStart = _tempMenstruationStart!;
+          _tempMenstruationStart = null; // Reset after saving
+        });
+      }
+
       // Patikrinkite, ar widget'as vis dar aktyvus, prieš rodydami pranešimą
       if (mounted) {
         String message = 'Įrašas išsaugotas! 🎉';
@@ -140,6 +157,9 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
         showCustomSnackBar(context, message, false);
       }
     }
+
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => JournalScreen()));
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -182,7 +202,6 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                       _selectDate(context); // Atidaryti kalendorių iš naujo
                     });
                   },
-
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {
                     CalendarFormat.month: 'Month',
@@ -204,20 +223,11 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                     child: Text('Atšaukti'),
                   ),
                   TextButton(
-                    onPressed: () async {
+                    onPressed: () {
                       setState(() {
-                        menstruationStart =
-                            selectedTempDay; // Išsaugome pasirinktą menstruacijų dieną
+                        _tempMenstruationStart =
+                            selectedTempDay; // Set temporary start date
                       });
-                      MenstrualCycle menstrualCycle = MenstrualCycle(
-                        id: "${userUsername}_${widget.selectedDay.year}-${widget.selectedDay.month}-${widget.selectedDay.day}",
-                        userId: userUsername,
-                        startDate: menstruationStart,
-                        endDate: menstruationStart.add(Duration(
-                            days: periodLength - 1)), // Pridedame dienas
-                      );
-                      await _menstrualCycleService
-                          .createMenstrualCycleEntry(menstrualCycle);
                       Navigator.pop(context); // Uždaryti modalą
                     },
                     child: Text('Gerai'),
@@ -232,27 +242,17 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   }
 
   int _getRowCountForMonth(DateTime date) {
-    //final firstDayOfMonth = DateTime(date.year, date.month, 1);
     final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
-
-    // Apskaičiuojame, kiek dienų yra šiame mėnesyje
     int totalDaysInMonth = lastDayOfMonth.day;
-
-    // Grąžiname eilučių skaičių
     return (totalDaysInMonth / 7).ceil();
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime currentDay = DateTime.now();
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFF8093F1),
@@ -263,10 +263,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Calculate the available height for the pink container
-          // Subtract topPadding, bottomPadding, and approximate BottomNavigation height
-          final double bottomNavigationHeight =
-              60.0; // Approximate height of BottomNavigation
+          final double bottomNavigationHeight = 60.0;
           final double availableHeight = constraints.maxHeight -
               topPadding -
               bottomPadding -
@@ -275,7 +272,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
           return Center(
             child: Column(
               children: [
-                SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+                SizedBox(height: topPadding),
                 Expanded(
                   child: Container(
                     margin: const EdgeInsets.symmetric(
@@ -337,9 +334,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                           children: [
                             SizedBox(
                               width: 80,
-                              // Set height to match the pink container's content area
-                              height: availableHeight -
-                                  140.0, // Subtract approximate height of header (day + month + divider)
+                              height: availableHeight - 140.0,
                               child: ListView(
                                 scrollDirection: Axis.vertical,
                                 children: [
@@ -372,9 +367,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                               ),
                             ),
                             Container(
-                              // Set divider height to match the mood ListView
-                              height: availableHeight -
-                                  140.0, // Same as ListView height
+                              height: availableHeight - 140.0,
                               width: 1,
                               color: Colors.grey,
                             ),
@@ -527,18 +520,29 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                     ),
                                   ),
                                   SizedBox(height: 10),
-                                  if (menstruationStart.year >
-                                              2000 && // Ensure valid start date
+                                  // Show menstrual status if a cycle is active or a temporary date is set
+                                  if ((_tempMenstruationStart != null &&
+                                          !selectedDay.isBefore(
+                                              _tempMenstruationStart!) &&
+                                          selectedDay.isBefore(
+                                              _tempMenstruationStart!.add(
+                                                  Duration(
+                                                      days: periodLength)))) ||
+                                      (_tempMenstruationStart != null &&
+                                          selectedDay ==
+                                              _tempMenstruationStart!.add(Duration(
+                                                  days: periodLength - 1))) ||
+                                      (menstruationStart.year > 2000 &&
                                           !selectedDay
                                               .isBefore(menstruationStart) &&
-                                          selectedDay.isBefore(
+                                          selectedDay.isBefore(menstruationStart.add(
+                                              Duration(days: periodLength)))) ||
+                                      (menstruationStart.year > 2000 &&
+                                          selectedDay ==
                                               menstruationStart.add(Duration(
-                                                  days: periodLength))) ||
-                                      selectedDay ==
-                                          menstruationStart.add(
-                                              Duration(days: periodLength - 1)))
+                                                  days: periodLength - 1))))
                                     Text(
-                                      'Šiandien yra ${selectedDay.difference(menstruationStart).inDays + 1} mėnesinių diena',
+                                      'Šiandien yra ${selectedDay.difference(_tempMenstruationStart ?? menstruationStart).inDays + 1} mėnesinių diena',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
@@ -585,11 +589,6 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                       onPressed: () {
                                         setState(() {});
                                         _saveJournalEntry();
-                                        Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    JournalScreen()));
                                       },
                                       child: Text(
                                         'Išsaugoti',
@@ -609,7 +608,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                   ),
                 ),
                 const BottomNavigation(),
-                SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+                SizedBox(height: bottomPadding),
               ],
             ),
           );

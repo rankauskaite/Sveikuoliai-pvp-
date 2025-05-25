@@ -565,6 +565,14 @@ class _GoalPageState extends State<GoalScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (goalTasks.isEmpty)
+                            Center(
+                              child: Text(
+                                'Jūs dar neturite užduočių šiam tikslui.',
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            ),
                           ...goalTasks
                               .where((task) => !task.isCompleted)
                               .map((task) => GoalTaskCard(
