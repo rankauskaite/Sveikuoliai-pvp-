@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/hello.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/screens/settings.dart';
 import 'package:sveikuoliai/screens/update_profile.dart';
-import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 
@@ -18,14 +16,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
-  final UserService _userService =
-      UserService(); // Sukuriame UserService instanciją
   String userName = "";
   String userUsername = "";
   String userEmail = "Kraunama...";
   DateTime userJoinDate = DateTime.now();
   String userVersion = "Gija NULIS";
   String userIcon = 'account_circle';
+  bool isDarkMode = false; // Temos būsena
 
   @override
   void initState() {
@@ -37,26 +34,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(
-        () {
-          userName = sessionData['name'] ?? "Nežinomas";
-          userUsername = sessionData['username'] ?? "Nežinomas";
-          userEmail = sessionData['email'] ?? "Nežinomas";
-          userIcon = sessionData['icon']?.isNotEmpty == true
-              ? sessionData['icon']!
-              : 'account_circle';
-        },
-      );
-      UserModel? userData = await _userService.getUserEntry(userUsername);
       setState(() {
-        //userIcon = userData!.iconUrl!;
-        userJoinDate = userData!.createdAt;
-        if (userData.version == "premium") {
-          userVersion = "Gija PLIUS";
-        }
-        if (userData.version == "free") {
-          userVersion = "Gija NULIS";
-        }
+        userName = sessionData['name'] ?? "Nežinomas";
+        userUsername = sessionData['username'] ?? "Nežinomas";
+        userEmail = sessionData['email'] ?? "Nežinomas";
+        userIcon = sessionData['icon']?.isNotEmpty == true
+            ? sessionData['icon']!
+            : 'account_circle';
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+        userVersion = sessionData['version'] ?? 'free';
       });
     } catch (e) {
       setState(() {
@@ -67,22 +54,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AuthService _authService = AuthService();
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
@@ -90,13 +71,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SizedBox(height: topPadding),
             Expanded(
               child: Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                ),
+                margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -109,13 +91,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      HomeScreen()), // Pakeiskite į jūsų prisijungimo ekraną
+                                  builder: (context) => HomeScreen()),
                             );
                           },
                           icon: Icon(
                             Icons.arrow_back_ios,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                         const Expanded(child: SizedBox()),
@@ -124,14 +106,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => UpdateProfileScreen(
-                                        version: userVersion,
-                                      )),
+                                builder: (context) => UpdateProfileScreen(
+                                  version: userVersion,
+                                ),
+                              ),
                             );
                           },
                           icon: Icon(
                             Icons.edit_outlined,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                         IconButton(
@@ -145,6 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icon(
                             Icons.settings_outlined,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
@@ -153,10 +138,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Center(
                           child: userIcon == 'account_circle'
-                              ? const Icon(
+                              ? Icon(
                                   Icons.account_circle,
                                   size: 250,
-                                  color: Color(0xFFD9D9D9),
+                                  color: isDarkMode
+                                      ? Colors.grey[400]
+                                      : const Color(0xFFD9D9D9),
                                 )
                               : Image.asset(
                                   userIcon,
@@ -180,6 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icon(
                               Icons.logout,
                               size: 30,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
                           ),
                         ),
@@ -195,7 +183,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Text(
                                 userName,
                                 style: TextStyle(
-                                    fontSize: 30, fontWeight: FontWeight.bold),
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -206,7 +198,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Text(
                                 userUsername,
                                 style: TextStyle(
-                                    fontSize: 15, color: Color(0xFF8093F1)),
+                                  fontSize: 15,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF8093F1),
+                                ),
                               ),
                             ],
                           ),
@@ -216,7 +212,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 'Mano duomenys',
-                                style: TextStyle(fontSize: 20),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
                               ),
                             ],
                           ),
@@ -225,7 +225,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 'El. paštas',
-                                style: TextStyle(fontSize: 12),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black,
+                                ),
                               ),
                             ],
                           ),
@@ -236,9 +241,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 userEmail,
                                 style: TextStyle(
                                   fontSize: 15,
-                                  color: Color(0xFFB388EB),
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFFB388EB),
                                   decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFFB388EB),
+                                  decorationColor: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFFB388EB),
                                 ),
                               ),
                             ],
@@ -248,7 +257,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 'Registracijos data',
-                                style: TextStyle(fontSize: 12),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black,
+                                ),
                               ),
                             ],
                           ),
@@ -259,7 +273,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 userJoinDate.toString().substring(0, 10),
                                 style: TextStyle(
                                   fontSize: 15,
-                                  color: Color(0xFFB388EB),
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFFB388EB),
                                 ),
                               ),
                             ],
@@ -270,17 +286,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 'Versija: ',
-                                style: TextStyle(fontSize: 15),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
                               ),
                               Text(
                                 userVersion,
                                 style: TextStyle(
-                                    fontSize: 15, color: Color(0xFF8093F1)),
-                              )
+                                  fontSize: 15,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF8093F1),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 30),
-                          if (userVersion == 'Gija PLIUS') ...[
+                          if (userVersion == 'premium') ...[
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
@@ -292,12 +316,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 minimumSize: Size(double.infinity, 50),
-                                iconColor:
-                                    const Color(0xFF8093F1), // Violetinė spalva
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Draugai',
-                                style: TextStyle(fontSize: 20),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                ),
                               ),
                             ),
                           ] else ...[
@@ -305,29 +329,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               onPressed: null,
                               style: ElevatedButton.styleFrom(
                                 minimumSize: Size(double.infinity, 50),
-                                iconColor:
-                                    const Color(0xFF8093F1), // Violetinė spalva
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Draugų funkcija - Gija PLIUS',
-                                style: TextStyle(fontSize: 16),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ],
-                          SizedBox(
-                            height: 5,
-                          ),
+                          const SizedBox(height: 5),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
-            SizedBox(
-              height: bottomPadding,
-            ),
+            const BottomNavigation(),
+            SizedBox(height: bottomPadding),
           ],
         ),
       ),

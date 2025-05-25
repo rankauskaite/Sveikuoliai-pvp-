@@ -4,6 +4,7 @@ import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/habit_progress_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
 import 'package:sveikuoliai/services/plant_services.dart';
@@ -27,7 +28,9 @@ class _HabitScreenState extends State<HabitScreen> {
   final PlantService _plantService = PlantService();
   final HabitService _habitService = HabitService();
   final HabitProgressService _habitProgressService = HabitProgressService();
+  final AuthService _authService = AuthService(); // Pridėtas AuthService
   bool notifications = true;
+  bool isDarkMode = false; // Temos būsena
   List<HabitProgress> progressList = [];
   HabitProgress habitProgress = HabitProgress(
       id: '',
@@ -51,12 +54,28 @@ class _HabitScreenState extends State<HabitScreen> {
 
   // Funkcija duomenims užkrauti
   Future<void> _loadData() async {
+    await _fetchUserData(); // Pridėta sesijos duomenų gavimas
     await _fetchPlantData();
     await _fetchHabitProgress();
     _loadProgress();
   }
 
   // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      if (!mounted) return; // Apsauga prieš setState
+      setState(() {
+        isDarkMode = sessionData['darkMode'] == 'true'; // Gauname darkMode
+      });
+    } catch (e) {
+      if (mounted) {
+        String message = 'Klaida gaunant duomenis ❌';
+        showCustomSnackBar(context, message, false);
+      }
+    }
+  }
+
   Future<void> _fetchPlantData() async {
     try {
       PlantModel? fetchedPlant =
@@ -169,21 +188,18 @@ class _HabitScreenState extends State<HabitScreen> {
   double _calculateProgress() {
     if (widget.habit.habitModel.endPoints == 0)
       return 0.0; // Apsauga nuo dalybos iš nulio
-    //print(habi)
     return widget.habit.habitModel.points / widget.habit.habitModel.endPoints;
   }
 
   Future<void> _deleteHabit() async {
     try {
       final habitService = HabitService();
-      await habitService.deleteHabitEntry(
-          widget.habit.habitModel.id); // Ištrinti įprotį iš serverio
-      // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
+      await habitService.deleteHabitEntry(widget.habit.habitModel.id);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
             builder: (context) => HabitsGoalsScreen(selectedIndex: 0)),
-      ); // Grįžti atgal į pagrindinį ekraną
+      );
       showCustomSnackBar(context, "Įprotis sėkmingai ištrintas ✅", true);
     } catch (e) {
       showCustomSnackBar(context, "Klaida trinant įprotį ❌", false);
@@ -200,39 +216,31 @@ class _HabitScreenState extends State<HabitScreen> {
     if (progress != null) {
       setState(() {
         _progressController.text = progress.description;
-// Išsaugome ID atnaujinimui
         pointss = lastProgress!.points;
         streakk = lastProgress.streak;
       });
     } else if (lastProgress != null) {
-      setState(
-        () {
-          pointss = lastProgress.points;
-          if (lastProgress.date.day == DateTime.now().day - 1) {
-            streakk = lastProgress.streak;
-          }
-        },
-      );
+      setState(() {
+        pointss = lastProgress.points;
+        if (lastProgress.date.day == DateTime.now().day - 1) {
+          streakk = lastProgress.streak;
+        }
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       resizeToAvoidBottomInset: false,
       body: Center(
@@ -244,9 +252,12 @@ class _HabitScreenState extends State<HabitScreen> {
                 margin:
                     const EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -264,9 +275,10 @@ class _HabitScreenState extends State<HabitScreen> {
                                         HabitsGoalsScreen(selectedIndex: 0)),
                               );
                             },
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.arrow_back_ios,
                               size: 30,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
                           ),
                           const Expanded(child: SizedBox()),
@@ -275,15 +287,20 @@ class _HabitScreenState extends State<HabitScreen> {
                             IconButton(
                               onPressed: () {
                                 CustomDialogs.showEditDialog(
-                                    context: context,
-                                    entityType: EntityType.habit,
-                                    entity: widget.habit,
-                                    accentColor: Color(0xFFB388EB),
-                                    onSave: () {});
+                                  context: context,
+                                  entityType: EntityType.habit,
+                                  entity: widget.habit,
+                                  accentColor: isDarkMode
+                                      ? Colors.purple[300]!
+                                      : Color(0xFFB388EB),
+                                  onSave: () {},
+                                );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.edit_outlined,
                                 size: 30,
+                                color:
+                                    isDarkMode ? Colors.white70 : Colors.black,
                               ),
                             ),
                           IconButton(
@@ -292,7 +309,9 @@ class _HabitScreenState extends State<HabitScreen> {
                                 context: context,
                                 entityType: EntityType.habit,
                                 entity: widget.habit,
-                                accentColor: Color(0xFFB388EB),
+                                accentColor: isDarkMode
+                                    ? Colors.purple[300]!
+                                    : Color(0xFFB388EB),
                                 onDelete: () {
                                   _deleteHabit();
                                 },
@@ -301,6 +320,7 @@ class _HabitScreenState extends State<HabitScreen> {
                             icon: Icon(
                               Icons.remove_circle_outline,
                               size: 30,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
                             ),
                           ),
                         ],
@@ -311,57 +331,70 @@ class _HabitScreenState extends State<HabitScreen> {
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFB388EB),
+                          color: isDarkMode
+                              ? Colors.purple[300]
+                              : Color(0xFFB388EB),
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Progreso indikatorius su procentais
                       buildProgressIndicator(
                         _calculateProgress(),
                         widget.habit.habitModel.plantId,
                         widget.habit.habitModel.points,
                         widget.habit.habitModel.isPlantDead,
+                        isDarkMode,
                       ),
-
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: widget.habit.habitModel.isCompleted
                             ? null
                             : () {
                                 CustomDialogs.showProgressDialog(
-                                    context: context,
-                                    habit: widget.habit,
-                                    accentColor: Color(0xFFB388EB),
-                                    onSave: () {},
-                                    progressController: _progressController,
-                                    points: pointss,
-                                    streak: streakk);
+                                  context: context,
+                                  habit: widget.habit,
+                                  accentColor: isDarkMode
+                                      ? Colors.purple[300]!
+                                      : Color(0xFFB388EB),
+                                  onSave: () {},
+                                  progressController: _progressController,
+                                  points: pointss,
+                                  streak: streakk,
+                                );
                               },
                         style: ElevatedButton.styleFrom(
                           minimumSize: Size(double.infinity, 50),
-                          iconColor:
-                              const Color(0xFFB388EB), // Violetinė spalva
                           backgroundColor: widget.habit.habitModel.isCompleted
-                              ? Colors.grey
-                              : null,
-                          //: Color(0xFFB388EB),
+                              ? (isDarkMode ? Colors.grey[700] : Colors.grey)
+                              : (isDarkMode ? Colors.white : null),
+                          foregroundColor: isDarkMode
+                              ? Colors.black
+                              : const Color(0xFFB388EB),
                         ),
                         child: Text(
                           widget.habit.habitModel.isCompleted
                               ? 'Įprotis baigtas'
                               : 'Žymėti progresą',
-                          style: const TextStyle(
-                              fontSize: 20, color: Colors.deepPurple),
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: isDarkMode
+                                ? (widget.habit.habitModel.isCompleted
+                                    ? Colors.white70
+                                    : Colors.deepPurple)
+                                : Colors.deepPurple,
+                          ),
                         ),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Streak: ',
                             style: TextStyle(
-                                fontSize: 15, color: Color(0xFFB388EB)),
+                              fontSize: 15,
+                              color: isDarkMode
+                                  ? Colors.purple[300]
+                                  : Color(0xFFB388EB),
+                            ),
                           ),
                           Text(
                             (habitProgress.date.day == DateTime.now().day ||
@@ -371,23 +404,32 @@ class _HabitScreenState extends State<HabitScreen> {
                                 : "0",
                             style: TextStyle(
                               fontSize: 15,
-                              color: Color(0xFF8093F1),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : Color(0xFF8093F1),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Apie įprotį',
-                        style:
-                            TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: isDarkMode
+                              ? Colors.purple[300]
+                              : Color(0xFFB388EB),
+                        ),
                       ),
                       Text(
                         widget.habit.habitType.description,
-                        style: const TextStyle(fontSize: 18),
-                        softWrap: true, // Leisti tekstui kelti į kitą eilutę
-                        overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
                       ),
                       const SizedBox(height: 10),
                       Row(
@@ -395,7 +437,10 @@ class _HabitScreenState extends State<HabitScreen> {
                         children: [
                           Text(
                             'Trukmė: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             widget.habit.habitModel.endPoints == 7
@@ -417,26 +462,35 @@ class _HabitScreenState extends State<HabitScreen> {
                                                     ? "3 mėnesiai"
                                                     : "6 mėnesiai",
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFB388EB)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.purple[300]
+                                  : Color(0xFFB388EB),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text(
                             'Pradžios data: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             DateFormat('yyyy MMMM d', 'lt')
                                 .format(widget.habit.habitModel.startDate),
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFB388EB)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.purple[300]
+                                  : Color(0xFFB388EB),
+                            ),
+                          ),
                         ],
                       ),
                       Row(
@@ -444,46 +498,68 @@ class _HabitScreenState extends State<HabitScreen> {
                         children: [
                           Text(
                             'Pabaigos data: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             DateFormat('yyyy MMMM d', 'lt')
                                 .format(widget.habit.habitModel.endDate),
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFB388EB)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.purple[300]
+                                  : Color(0xFFB388EB),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text(
                             'Augaliukas: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             plant.name,
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFB388EB)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.purple[300]
+                                  : Color(0xFFB388EB),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Statistika',
-                        style:
-                            TextStyle(fontSize: 25, color: Color(0xFFB388EB)),
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: isDarkMode
+                              ? Colors.purple[300]
+                              : Color(0xFFB388EB),
+                        ),
                       ),
                       const SizedBox(height: 10),
                       SizedBox(
                         height: 200,
                         child: progressList.isEmpty
-                            ? Text("Nėra progreso duomenų",
-                                style:
-                                    TextStyle(fontSize: 16, color: Colors.grey))
+                            ? Text(
+                                "Nėra progreso duomenų",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDarkMode
+                                      ? Colors.grey[600]
+                                      : Colors.grey,
+                                ),
+                              )
                             : HabitProgressChart(
                                 habit: widget.habit.habitModel,
                                 progressList: progressList,

@@ -8,6 +8,7 @@ class GoalTaskCard extends StatefulWidget {
   final int doneLength;
   final int type;
   final bool isDoneGoal;
+  final bool isDarkMode;
   final bool isMyTask; // <-- naujas laukas
   final int Function(bool isCompleted) calculatePoints;
   final void Function(String taskId)? onDelete;
@@ -20,6 +21,7 @@ class GoalTaskCard extends StatefulWidget {
     required this.isDoneGoal,
     required this.length,
     required this.doneLength,
+    required this.isDarkMode,
     required this.calculatePoints,
     required this.isMyTask, // <-- reikalingas konstruktoriuje
     this.onDelete,
@@ -49,9 +51,13 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
   Widget buildGoalItemTrue(GoalTask task) {
     // Pasirenkame spalvą pagal tipo reikšmę
     final checkboxColor = widget.type == 0
-        ? Colors.blue
+        ? widget.isDarkMode
+            ? Colors.blue.shade700
+            : Colors.blue
         : widget.type == 1
-            ? Colors.lightGreen
+            ? widget.isDarkMode
+                ? Colors.lightGreen.shade700
+                : Colors.lightGreen
             : const Color(0xFF72ddf7);
 
     return Container(
@@ -72,11 +78,17 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
               contentPadding: EdgeInsets.zero,
               title: Text(
                 task.title,
-                style: TextStyle(color: Colors.grey[300]),
+                style: TextStyle(
+                    color: widget.isDarkMode
+                        ? Colors.grey[600]
+                        : Colors.grey[500]),
               ),
               subtitle: Text(
                 task.description,
-                style: TextStyle(color: Colors.grey[300]),
+                style: TextStyle(
+                    color: widget.isDarkMode
+                        ? Colors.grey[600]
+                        : Colors.grey[400]),
               ),
               leading: Theme(
                 data: Theme.of(context).copyWith(
@@ -114,9 +126,13 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: widget.type == 0
-            ? const Color(0xFF72ddf7).withOpacity(0.2)
+            ? widget.isDarkMode
+                ? Colors.lightBlue.shade400.withOpacity(0.3)
+                : const Color(0xFF72ddf7).withOpacity(0.25)
             : widget.type == 1
-                ? const Color(0xFFbcd979).withOpacity(0.2)
+                ? widget.isDarkMode
+                    ? Colors.lightGreen.shade400.withOpacity(0.3)
+                    : const Color(0xFFbcd979).withOpacity(0.25)
                 : const Color(0xFF72ddf7).withOpacity(0.2),
         borderRadius: BorderRadius.circular(10),
       ),
@@ -125,8 +141,20 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
           Expanded(
             child: ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(task.title),
-              subtitle: Text(task.description),
+              title: Text(
+                task.title,
+                style: TextStyle(
+                    color: widget.isDarkMode
+                        ? Colors.grey[400]
+                        : Colors.grey[800]),
+              ),
+              subtitle: Text(
+                task.description,
+                style: TextStyle(
+                    color: widget.isDarkMode
+                        ? Colors.grey[500]
+                        : Colors.grey[700]),
+              ),
               leading: Checkbox(
                 value: task.isCompleted,
                 onChanged: widget.isMyTask && widget.isDoneGoal == false
@@ -140,10 +168,23 @@ class _GoalTaskCardState extends State<GoalTaskCard> {
                       }
                     : null,
                 activeColor: widget.type == 0
-                    ? Colors.blue
+                    ? widget.isDarkMode
+                        ? Colors.blue.shade700
+                        : Colors.blue
                     : widget.type == 1
                         ? Colors.lightGreen
                         : const Color(0xFF72ddf7),
+                fillColor: MaterialStateProperty.all(
+                  widget.type == 0
+                      ? widget.isDarkMode
+                          ? Colors.blue.shade800.withOpacity(0.5)
+                          : Colors.transparent
+                      : widget.type == 1
+                          ? widget.isDarkMode
+                              ? Colors.lightGreen.shade800.withOpacity(0.5)
+                              : Colors.transparent
+                          : const Color(0xFF72ddf7),
+                ),
               ),
             ),
           ),

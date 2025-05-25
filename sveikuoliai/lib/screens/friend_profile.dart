@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:sveikuoliai/models/friendship_model.dart';
+import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/garden.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
+import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 
 class FriendProfileScreen extends StatefulWidget {
   final String name;
@@ -22,8 +26,9 @@ class FriendProfileScreen extends StatefulWidget {
 }
 
 class _FriendProfileScreenState extends State<FriendProfileScreen> {
-  FriendshipService _friendshipService = FriendshipService();
-  UserService _userService = UserService();
+  final FriendshipService _friendshipService = FriendshipService();
+  final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
   UserModel userModel = UserModel(
       username: "",
       name: "",
@@ -35,6 +40,8 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
       email: "",
       createdAt: DateTime.now(),
       version: "free");
+  bool isDarkMode = false; // Temos būsena
+  String userUsername = '';
 
   @override
   void initState() {
@@ -44,6 +51,12 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
 
   Future<void> _fetchUser() async {
     try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(() {
+        userUsername = sessionData['username'] ?? "Nežinoma";
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+      });
       UserModel? model = await _userService.getUserEntry(widget.username);
       setState(() {
         userModel = model!;
@@ -53,8 +66,27 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
 
   Future<void> _deleteFriend(String friendshipID) async {
     try {
-      await _friendshipService.deleteFriendship(friendshipID);
-      showCustomSnackBar(context, "Draugas pašalintas ✅", true);
+      Friendship? friendship =
+          await _friendshipService.getFriendship(friendshipID);
+      String? otherUserId = friendship?.user1 == userUsername
+          ? friendship?.user2
+          : friendship?.user1;
+      await _friendshipService.deleteFriendship(friendship!.id);
+
+      final SharedGoalService _sharedGoalService = SharedGoalService();
+      List<SharedGoal> goals = await _sharedGoalService.getSharedGoalsForUsers(
+          userUsername, otherUserId!);
+
+      for (var goal in goals) {
+        await _sharedGoalService.deleteSharedGoalEntry(goal.id);
+      }
+
+      setState(() {
+        FocusScope.of(context).unfocus();
+      });
+
+      showCustomSnackBar(
+          context, "Draugas ir bendros užduotys pašalinti ✅", true);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => FriendsScreen()),
@@ -66,35 +98,32 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
           children: [
-            SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+            SizedBox(height: topPadding),
             Expanded(
-              // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
               child: Container(
                 margin:
                     const EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -109,79 +138,17 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                           icon: Icon(
                             Icons.arrow_back_ios,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                         const Expanded(child: SizedBox()),
                         ElevatedButton(
                           onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text.rich(
-                                    TextSpan(
-                                      text: "${widget.name}\n",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 22,
-                                        color: Colors.deepPurple,
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text:
-                                              "Ar tikrai norite pašalinti šį draugą?",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.normal,
-                                            color: Colors.black,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  content: Text(
-                                      "Draugo pašalinimas bus negrįžtamas."),
-                                  actions: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(
-                                                context); // Uždaro dialogą
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.deepPurple
-                                                .withOpacity(0.2),
-                                          ),
-                                          child: Text("Ne",
-                                              style: TextStyle(fontSize: 18)),
-                                        ),
-                                        SizedBox(width: 20),
-                                        TextButton(
-                                          onPressed: () async {
-                                            Navigator.pop(context);
-                                            await _deleteFriend(
-                                                widget.friendshipId);
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor:
-                                                Colors.red.withOpacity(0.2),
-                                          ),
-                                          child: Text("Taip",
-                                              style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 18)),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                            _deleteCustomSnackBar(userModel);
                           },
-                          child: Text('Ištrinti'),
+                          child: Text(
+                            'Ištrinti',
+                          ),
                         ),
                       ],
                     ),
@@ -190,10 +157,12 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                         Center(
                           child: (userModel.iconUrl == '' ||
                                   userModel.iconUrl == null)
-                              ? const Icon(
+                              ? Icon(
                                   Icons.account_circle,
                                   size: 250,
-                                  color: Color(0xFFD9D9D9),
+                                  color: isDarkMode
+                                      ? Colors.grey[400]
+                                      : const Color(0xFFD9D9D9),
                                 )
                               : Image.asset(
                                   userModel.iconUrl!,
@@ -204,7 +173,6 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                         ),
                       ],
                     ),
-                    // Vardas su stiliumi
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
@@ -212,23 +180,25 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    // Username su stiliumi
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         widget.username,
                         style: TextStyle(
                           fontSize: 18,
-                          color: Color(0xFF8093F1),
+                          color: isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF8093F1),
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
-                    // Karuselės efektas draugo augalams
+                    const SizedBox(height: 30),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -247,18 +217,24 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                             height: 160,
                             decoration: BoxDecoration(
                               border: Border.all(
-                                  color: Colors.green.shade700, width: 3),
+                                color: isDarkMode
+                                    ? Colors.green.shade600
+                                    : Colors.green.shade700,
+                                width: 3,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black26,
+                                  color: isDarkMode
+                                      ? Colors.black54
+                                      : Colors.black26,
                                   blurRadius: 8,
                                   offset: Offset(0, 5),
                                 ),
                               ],
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(9),
                               child: Image.asset(
                                 'assets/images/draugo_sodas.png',
                                 fit: BoxFit.fill,
@@ -273,10 +249,91 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
               ),
             ),
             const BottomNavigation(),
-            SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+            SizedBox(height: bottomPadding),
           ],
         ),
       ),
+    );
+  }
+
+  void _deleteCustomSnackBar(UserModel friend) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text.rich(
+            TextSpan(
+              text: "${friend.name}\n",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
+              ),
+              children: [
+                TextSpan(
+                  text: "Ar tikrai norite pašalinti šį draugą?",
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          content: Text(
+            "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
+            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: isDarkMode
+                        ? Colors.purple[500]!.withOpacity(0.2)
+                        : Colors.deepPurple.withOpacity(0.2),
+                  ),
+                  child: Text(
+                    "Ne",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDarkMode ? Colors.white70 : Colors.black,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 20),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _deleteFriend(widget.friendshipId);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: isDarkMode
+                        ? Colors.red[500]!.withOpacity(0.2)
+                        : Colors.red.withOpacity(0.2),
+                  ),
+                  child: Text(
+                    "Taip",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.red[300] : Colors.red,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

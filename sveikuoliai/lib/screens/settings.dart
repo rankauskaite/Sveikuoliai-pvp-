@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/models/user_model.dart';
+import 'package:sveikuoliai/screens/profile.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -34,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(
         () {
           userUsername = sessionData['username'] ?? "Nežinomas";
+          //isDarkMode = (sessionData['darkMode'] as bool?) ?? false;
         },
       );
       UserModel? userData = await _userService.getUserEntry(userUsername);
@@ -56,24 +58,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _saveSettings() async {
     try {
       bool success = await _userService.updateSettings(
-        userUsername, // Vartotojo vardas
-        notificationsEnabled, // Pranešimų būsena
-        isDarkMode, // Temos būsena
-        _selectedDays, // Mėnesinių trukmė
+        userUsername,
+        notificationsEnabled,
+        isDarkMode,
+        _selectedDays,
       );
 
-      if (success) {
-        String message = 'Nustatymai išsaugoti! 🎉';
-        showCustomSnackBar(context, message, success); // Naudokite funkciją
-      } else {
-        String message = 'Klaida išsaugant nustatymus! ❌';
-        showCustomSnackBar(context, message, success); // Naudokite funkciją
+      await _authService.updateUserSession('darkMode', isDarkMode.toString());
+
+      if (!mounted) return; // Patikriname, ar ekranas vis dar egzistuoja
+
+      // Uždaryk ekraną tik po to, kai išsaugojimas baigtas
+      if (mounted) {
+        if (success) {
+          String message = 'Nustatymai išsaugoti! 🎉';
+          showCustomSnackBar(context, message, success);
+        } else {
+          String message = 'Klaida išsaugant nustatymus! ❌';
+          showCustomSnackBar(context, message, success);
+        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileScreen()),
+        );
       }
     } catch (e) {
       print("Klaida išsaugant nustatymus: $e");
       if (mounted) {
         String message = 'Klaida išsaugant nustatymus! ❌';
-        showCustomSnackBar(context, message, false); // Naudokite funkciją
+        showCustomSnackBar(context, message, false);
       }
     }
   }

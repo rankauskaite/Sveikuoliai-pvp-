@@ -30,6 +30,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<UserModel> searchResults = [];
   bool isSearching = false;
+  bool isDarkMode = false; // Temos būsena
 
   @override
   void initState() {
@@ -49,6 +50,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           userUsername = sessionData['username'] ?? "Nežinomas";
           userName = sessionData['name'] ?? "Nežinomas";
           userIcon = sessionData['icon'] ?? "account_circle";
+          isDarkMode =
+              sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
         },
       );
       await _fetchUserFriends(userUsername);
@@ -80,7 +83,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
       return;
     }
 
-    // Gauk visus vartotojus ir filtruok (čia galėtum optimizuoti užklausą Firestore, jei didelė duomenų bazė)
     QuerySnapshot snapshot =
         await FirebaseFirestore.instance.collection('users').get();
 
@@ -102,7 +104,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
         final isFriend =
             friends.any((friend) => friend.friend.username == user.username);
 
-        // Rodyti tik tuos, kurie nėra pats naudotojas ir nėra draugų sąraše
         return !isSelf &&
             !isFriend &&
             (nameLower.contains(queryLower) ||
@@ -124,12 +125,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
       );
       await _friendshipService.createFriendship(friendship);
       showCustomSnackBar(context, "Draugas pridėtas ✅", true);
-      //_searchUsers(_searchController.text); // Atnaujina paiešką
       setState(() {
-        _searchController.clear(); // Išvalome paieškos laukelį
+        _searchController.clear();
         searchResults = [];
         isSearching = false;
-        FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+        FocusScope.of(context).unfocus();
       });
       DateTime now = DateTime.now();
       AppNotification notification = AppNotification(
@@ -140,7 +140,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           type: "friend_request",
           date: now);
       await _notificationService.createNotification(notification);
-      await _fetchUserFriends(userUsername); // Atnaujina draugų sąrašą
+      await _fetchUserFriends(userUsername);
     } catch (e) {
       showCustomSnackBar(context, "Nepavyko pridėti draugo ❌", false);
     }
@@ -152,31 +152,31 @@ class _FriendsScreenState extends State<FriendsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.center, // Centruojame horizontaliai
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 30, // Ikonos dydis
-                backgroundColor: Colors.grey[200], // Fono spalva
-                backgroundImage: (user.iconUrl != null &&
-                        user.iconUrl!.isNotEmpty)
-                    ? AssetImage(user
-                        .iconUrl!) // Naudojame AssetImage, jei iconUrl egzistuoja
-                    : null,
+                radius: 30,
+                backgroundColor:
+                    isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                backgroundImage:
+                    (user.iconUrl != null && user.iconUrl!.isNotEmpty)
+                        ? AssetImage(user.iconUrl!)
+                        : null,
                 child: (user.iconUrl == null || user.iconUrl!.isEmpty)
                     ? Icon(
                         Icons.account_circle,
                         size: 60,
-                        color: Colors.grey[600], // Ikonos spalva
+                        color: isDarkMode ? Colors.white70 : Colors.grey[600],
                       )
-                    : null, // Jei yra backgroundImage, child nenustatomas
+                    : null,
               ),
-              SizedBox(height: 10), // Tarpas tarp ikonos ir teksto
+              SizedBox(height: 10),
               Text(
                 "Pridėti draugą",
                 style: TextStyle(
                   fontWeight: FontWeight.normal,
                   fontSize: 16,
+                  color: isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
               Text(
@@ -184,17 +184,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
-                  color: Colors.deepPurple,
+                  color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
                 ),
               ),
             ],
           ),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
           content: Text.rich(
             TextSpan(
               text: "Ar tikrai norite pridėti ",
               style: TextStyle(
                 fontWeight: FontWeight.normal,
-                color: Colors.black,
+                color: isDarkMode ? Colors.white70 : Colors.black,
                 fontSize: 15,
               ),
               children: [
@@ -202,7 +203,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   text: "${user.name}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                    color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
                     fontSize: 15,
                   ),
                 ),
@@ -210,7 +211,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   text: " (${user.username})",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.pink[300],
+                    color: isDarkMode ? Colors.pink[200] : Colors.pink[300],
                     fontSize: 15,
                   ),
                 ),
@@ -218,7 +219,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   text: " kaip draugą?",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
                     fontSize: 15,
                   ),
                 ),
@@ -228,18 +229,30 @@ class _FriendsScreenState extends State<FriendsScreen> {
           actions: [
             TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                backgroundColor: isDarkMode
+                    ? Colors.purple[400]!.withOpacity(0.2)
+                    : Colors.deepPurple.withOpacity(0.2),
               ),
-              child: Text("Ne"),
+              child: Text(
+                "Ne",
+                style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                backgroundColor: isDarkMode
+                    ? Colors.purple[400]!.withOpacity(0.2)
+                    : Colors.deepPurple.withOpacity(0.2),
               ),
-              child: Text("Taip"),
+              child: Text(
+                "Taip",
+                style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
               onPressed: () async {
                 Navigator.of(context).pop();
                 await _addFriend(user);
@@ -259,9 +272,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
       await _friendshipService.updateFriendship(friendship.friendship);
       showCustomSnackBar(context, "Draugystė patvirtinta ✅", true);
       setState(() {
-        FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+        FocusScope.of(context).unfocus();
       });
-      await _fetchUserFriends(userUsername); // Atnaujina draugų sąrašą
+      await _fetchUserFriends(userUsername);
     } catch (e) {
       showCustomSnackBar(context, "Nepavyko patvirtinti draugystės ❌", false);
     }
@@ -269,14 +282,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _deleteFriend(FriendshipModel friendship) async {
     try {
-      // Gauti kito draugo ID iš draugystės
       String otherUserId = friendship.friendship.user1 == userUsername
           ? friendship.friendship.user2
           : friendship.friendship.user1;
-      // Pašalinti draugystę
       await _friendshipService.deleteFriendship(friendship.friendship.id);
 
-      // Pašalinti visas bendras užduotis
       final SharedGoalService _sharedGoalService = SharedGoalService();
       List<SharedGoal> goals = await _sharedGoalService.getSharedGoalsForUsers(
           userUsername, otherUserId);
@@ -286,12 +296,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       }
 
       setState(() {
-        FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+        FocusScope.of(context).unfocus();
       });
 
       showCustomSnackBar(
           context, "Draugas ir bendros užduotys pašalinti ✅", true);
-      await _fetchUserFriends(userUsername); // atnaujinti sąrašą
+      await _fetchUserFriends(userUsername);
     } catch (e) {
       showCustomSnackBar(context, "Nepavyko pašalinti draugo ❌", false);
     }
@@ -299,13 +309,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
-    // Split friends into pending and accepted
     List<FriendshipModel> pendingFriends = friends
         .where((friend) => friend.friendship.status == "pending")
         .toList();
@@ -314,27 +321,29 @@ class _FriendsScreenState extends State<FriendsScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
-      resizeToAvoidBottomInset: false, // Prevent resizing when keyboard appears
+      resizeToAvoidBottomInset: false,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+            SizedBox(height: topPadding),
             Expanded(
-              // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
               child: Container(
                 margin:
                     const EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -349,6 +358,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           icon: Icon(
                             Icons.arrow_back_ios,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
@@ -356,7 +366,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     SizedBox(height: 20),
                     Text(
                       'Draugai',
-                      style: TextStyle(fontSize: 35),
+                      style: TextStyle(
+                        fontSize: 35,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                     ),
                     SizedBox(height: 20),
                     Row(
@@ -364,21 +377,36 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       children: [
                         Text(
                           'Pridėti draugą:',
-                          style: TextStyle(fontSize: 20),
-                        )
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 10),
                     TextField(
                       controller: _searchController,
                       onChanged: _searchUsers,
+                      style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black),
                       decoration: InputDecoration(
                         hintText: 'Įveskite draugo slapyvardį',
+                        hintStyle: TextStyle(
+                            color: isDarkMode ? Colors.grey[500] : Colors.grey),
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: isDarkMode ? Colors.white70 : Colors.black,
+                        ),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: Icon(Icons.clear),
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() {
@@ -401,20 +429,40 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             return ListTile(
                               leading: (user.iconUrl == null ||
                                       user.iconUrl!.isEmpty)
-                                  ? Icon(Icons.account_circle, size: 40)
+                                  ? Icon(
+                                      Icons.account_circle,
+                                      size: 40,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : Colors.black,
+                                    )
                                   : CircleAvatar(
                                       backgroundImage:
                                           AssetImage(user.iconUrl!),
                                     ),
-                              title: Text(user.name),
+                              title: Text(
+                                user.name.length > 10
+                                    ? user.name.substring(0, 10) + '…'
+                                    : user.name,
+                                style: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
                               subtitle: Text(
                                 user.username,
-                                style: TextStyle(color: Color(0xFF8093F1)),
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF8093F1),
+                                ),
                               ),
                               trailing: IconButton(
                                 icon: Icon(
                                   Icons.person_add_alt_1,
-                                  color: Color(0xFFB388EB),
+                                  color: isDarkMode
+                                      ? Colors.purple[200]
+                                      : const Color(0xFFB388EB),
                                 ),
                                 onPressed: () {
                                   _showAddFriendDialog(user);
@@ -425,7 +473,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           },
                         ),
                       ),
-                    // Pending Friendships Section
                     if (pendingFriends.isNotEmpty) ...[
                       Container(
                         margin:
@@ -433,7 +480,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         padding:
                             EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -444,7 +493,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade700,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : Colors.grey.shade700,
                               ),
                             ),
                           ],
@@ -456,7 +507,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             "Nėra nepatvirtintų draugysčių",
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color:
+                                  isDarkMode ? Colors.grey[500] : Colors.grey,
+                            ),
                           ),
                         ),
                       Expanded(
@@ -470,11 +525,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                     vertical: 5, horizontal: 10),
                                 padding: EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Color(
-                                      0xFFF5F5F5), // Light grey background
+                                  color: isDarkMode
+                                      ? Colors.grey[800]
+                                      : const Color(0xFFF5F5F5),
                                   borderRadius: BorderRadius.circular(15),
                                   border: Border.all(
-                                    color: Colors.grey.shade300,
+                                    color: isDarkMode
+                                        ? Colors.grey[600]!
+                                        : Colors.grey.shade300,
                                     width: 1,
                                   ),
                                 ),
@@ -492,7 +550,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                                 .friend
                                                 .iconUrl!
                                                 .isEmpty)
-                                          Icon(Icons.account_circle, size: 40)
+                                          Icon(
+                                            Icons.account_circle,
+                                            size: 40,
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : Colors.black,
+                                          )
                                         else
                                           CircleAvatar(
                                             backgroundImage: AssetImage(
@@ -519,7 +583,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                                   : pendingFriends[index]
                                                       .friend
                                                       .name,
-                                              style: TextStyle(fontSize: 18),
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                              ),
                                             ),
                                             Text(
                                               pendingFriends[index]
@@ -527,7 +596,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                                   .username,
                                               style: TextStyle(
                                                 fontSize: 11,
-                                                color: Color(0xFF8093F1),
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : const Color(0xFF8093F1),
                                                 letterSpacing: 1,
                                                 fontWeight: FontWeight.w400,
                                               ),
@@ -543,11 +614,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                       Row(
                                         children: [
                                           Transform.translate(
-                                            offset: Offset(10,
-                                                0), // Shift the second button 10 pixels to the left
+                                            offset: Offset(10, 0),
                                             child: IconButton(
-                                              icon: Icon(Icons.cancel_outlined,
-                                                  color: Colors.red.shade300),
+                                              icon: Icon(
+                                                Icons.cancel_outlined,
+                                                color: isDarkMode
+                                                    ? Colors.red[300]
+                                                    : Colors.red.shade300,
+                                              ),
                                               onPressed: () {
                                                 _showDeclineFriendshipDialog(
                                                     pendingFriends[index]);
@@ -555,8 +629,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                             ),
                                           ),
                                           IconButton(
-                                            icon: Icon(Icons.check_circle,
-                                                color: Colors.green.shade400),
+                                            icon: Icon(
+                                              Icons.check_circle,
+                                              color: isDarkMode
+                                                  ? Colors.green[300]
+                                                  : Colors.green.shade400,
+                                            ),
                                             onPressed: () {
                                               _showConfirmFriendshipDialog(
                                                   pendingFriends[index]);
@@ -571,7 +649,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                             "Draugas dar",
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey.shade700,
+                                              color: isDarkMode
+                                                  ? Colors.grey[500]
+                                                  : Colors.grey.shade700,
                                               fontStyle: FontStyle.italic,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -580,7 +660,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                             "nepatvirtino",
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey.shade700,
+                                              color: isDarkMode
+                                                  ? Colors.grey[500]
+                                                  : Colors.grey.shade700,
                                               fontStyle: FontStyle.italic,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -594,23 +676,25 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           },
                         ),
                       ),
-                      // Divider between sections
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         child: Divider(
-                          color: Colors.grey.shade300,
+                          color: isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey.shade300,
                           thickness: 1,
                         ),
                       ),
                     ],
-                    // Accepted Friendships Section
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       padding:
                           EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Color(0xFFE9E3FB).withOpacity(0.7),
+                        color: isDarkMode
+                            ? Colors.purple[900]!.withOpacity(0.2)
+                            : Color(0xFFE9E3FB).withOpacity(0.7),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -621,7 +705,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFFB388EB),
+                              color: isDarkMode
+                                  ? Colors.purple[200]
+                                  : const Color(0xFFB388EB),
                             ),
                           ),
                         ],
@@ -633,7 +719,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           "Draugų sąrašas tuščias",
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: isDarkMode ? Colors.grey[500] : Colors.grey,
+                          ),
                         ),
                       ),
                     Expanded(
@@ -660,11 +749,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   vertical: 5, horizontal: 10),
                               padding: EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Color(
-                                    0xFFE9E3FB), // Light purple background
+                                color: isDarkMode
+                                    ? Colors.purple[900]!.withOpacity(0.1)
+                                    : const Color(0xFFE9E3FB),
                                 borderRadius: BorderRadius.circular(15),
                                 border: Border.all(
-                                  color: Color(0xFFB388EB),
+                                  color: isDarkMode
+                                      ? Colors.purple[700]!
+                                      : const Color(0xFFB388EB),
                                   width: 1,
                                 ),
                               ),
@@ -682,7 +774,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                               .friend
                                               .iconUrl!
                                               .isEmpty)
-                                        Icon(Icons.account_circle, size: 40)
+                                        Icon(
+                                          Icons.account_circle,
+                                          size: 40,
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : Colors.black,
+                                        )
                                       else
                                         CircleAvatar(
                                           backgroundImage: AssetImage(
@@ -696,8 +794,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            acceptedFriends[index].friend.name,
-                                            style: TextStyle(fontSize: 18),
+                                            acceptedFriends[index]
+                                                        .friend
+                                                        .name
+                                                        .length >
+                                                    10
+                                                ? '${acceptedFriends[index].friend.name.substring(0, 10)}…'
+                                                : acceptedFriends[index]
+                                                    .friend
+                                                    .name,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                            ),
                                           ),
                                           Text(
                                             acceptedFriends[index]
@@ -705,7 +816,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                                 .username,
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: Color(0xFF8093F1),
+                                              color: isDarkMode
+                                                  ? Colors.white70
+                                                  : const Color(0xFF8093F1),
                                               letterSpacing: 1,
                                               fontWeight: FontWeight.w400,
                                             ),
@@ -715,8 +828,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                     ],
                                   ),
                                   IconButton(
-                                    icon: Icon(Icons.remove_circle_outline,
-                                        color: Color(0xFFB388EB)),
+                                    icon: Icon(
+                                      Icons.remove_circle_outline,
+                                      color: isDarkMode
+                                          ? Colors.purple[200]
+                                          : const Color(0xFFB388EB),
+                                    ),
                                     onPressed: () {
                                       _deleteCustomSnackBar(
                                           index, acceptedFriends);
@@ -734,7 +851,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             const BottomNavigation(),
-            SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+            SizedBox(height: bottomPadding),
           ],
         ),
       ),
@@ -752,53 +869,74 @@ class _FriendsScreenState extends State<FriendsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
-                color: Colors.deepPurple,
+                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
               ),
               children: [
                 TextSpan(
                   text: "Draugystės atsisakymas",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
                     fontSize: 18,
                   ),
                 ),
               ],
             ),
           ),
-          content: Text("Ar tikrai norite atsisakyti šios draugystės?"),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          content: Text(
+            "Ar tikrai norite atsisakyti šios draugystės?",
+            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Uždaro dialogą
+                    Navigator.pop(context);
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                    });
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.purple[500]!.withOpacity(0.2)
+                        : Colors.deepPurple.withOpacity(0.2),
                   ),
-                  child: Text("Grįžti", style: TextStyle(fontSize: 18)),
+                  child: Text(
+                    "Grįžti",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDarkMode ? Colors.white70 : Colors.black,
+                    ),
+                  ),
                 ),
                 SizedBox(width: 20),
                 TextButton(
                   onPressed: () async {
                     await _friendshipService
                         .deleteFriendship(friendship.friendship.id);
-                    Navigator.of(context).pop(); // Uždaryti dialogą
+                    Navigator.of(context).pop();
                     showCustomSnackBar(
                         context, "Draugystės atsisakyta ✅", true);
                     setState(() {
-                      FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+                      FocusScope.of(context).unfocus();
                     });
-                    await _fetchUserFriends(
-                        userUsername); // Refresh the friends list
+                    await _fetchUserFriends(userUsername);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.red[500]!.withOpacity(0.2)
+                        : Colors.red.withOpacity(0.2),
                   ),
-                  child: Text("Atsisakyti",
-                      style: TextStyle(color: Colors.red, fontSize: 18)),
+                  child: Text(
+                    "Atsisakyti",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.red[300] : Colors.red,
+                      fontSize: 18,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -819,45 +957,67 @@ class _FriendsScreenState extends State<FriendsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
-                color: Colors.deepPurple,
+                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
               ),
               children: [
                 TextSpan(
                   text: "Draugystės patvirtinimas",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
                     fontSize: 18,
                   ),
                 ),
               ],
             ),
           ),
-          content: Text("Ar norite patvirtinti šią draugystę?"),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          content: Text(
+            "Ar norite patvirtinti šią draugystę?",
+            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Uždaro dialogą
+                    Navigator.pop(context);
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                    });
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.purple[500]!.withOpacity(0.2)
+                        : Colors.deepPurple.withOpacity(0.2),
                   ),
-                  child: Text("Grįžti", style: TextStyle(fontSize: 18)),
+                  child: Text(
+                    "Grįžti",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDarkMode ? Colors.white70 : Colors.black,
+                    ),
+                  ),
                 ),
                 SizedBox(width: 20),
                 TextButton(
                   onPressed: () async {
-                    Navigator.pop(context); // Uždaro dialogą
+                    Navigator.pop(context);
                     await _confirmFriendship(friendship);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.green.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.green[500]!.withOpacity(0.2)
+                        : Colors.green.withOpacity(0.2),
                   ),
-                  child: Text("Patvirtinti",
-                      style: TextStyle(color: Colors.green, fontSize: 18)),
+                  child: Text(
+                    "Patvirtinti",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.green[300] : Colors.green,
+                      fontSize: 18,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -879,34 +1039,48 @@ class _FriendsScreenState extends State<FriendsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
-                color: Colors.deepPurple,
+                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
               ),
               children: [
                 TextSpan(
                   text: "Ar tikrai norite pašalinti šį draugą?",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
                     fontSize: 18,
                   ),
                 ),
               ],
             ),
           ),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
           content: Text(
-              "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija."),
+            "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
+            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Uždaro dialogą
+                    Navigator.pop(context);
+                    setState(() {
+                      FocusScope.of(context).unfocus();
+                    });
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.purple[500]!.withOpacity(0.2)
+                        : Colors.deepPurple.withOpacity(0.2),
                   ),
-                  child: Text("Ne", style: TextStyle(fontSize: 18)),
+                  child: Text(
+                    "Ne",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDarkMode ? Colors.white70 : Colors.black,
+                    ),
+                  ),
                 ),
                 SizedBox(width: 20),
                 TextButton(
@@ -915,10 +1089,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     await _deleteFriend(friendsList[index]);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.red[500]!.withOpacity(0.2)
+                        : Colors.red.withOpacity(0.2),
                   ),
-                  child: Text("Taip",
-                      style: TextStyle(color: Colors.red, fontSize: 18)),
+                  child: Text(
+                    "Taip",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.red[300] : Colors.red,
+                      fontSize: 18,
+                    ),
+                  ),
                 ),
               ],
             ),

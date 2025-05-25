@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
 
 // Progreso indikatorius su procentais
-Widget buildProgressIndicator(
-    double progress, String plantId, int points, bool isPlantDead) {
+Widget buildProgressIndicator(double progress, String plantId, int points,
+    bool isPlantDead, bool isDarkMode) {
   String plantType = plantId;
   int userPoints = points;
   String imagePath = "";
@@ -28,14 +28,14 @@ Widget buildProgressIndicator(
           child: CircularProgressIndicator(
             value: progress,
             strokeWidth: 10,
-            backgroundColor: Colors.grey[100],
+            backgroundColor: isDarkMode ? Colors.grey[400] : Colors.grey[100],
             valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCDE499)),
           ),
         ),
       ),
       CustomPaint(
         size: Size(220, 220),
-        painter: PercentagePainter(progress),
+        painter: PercentagePainter(progress, isDarkMode),
       ),
       Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -54,8 +54,9 @@ Widget buildProgressIndicator(
 // CustomPainter klase, kuri piešia procentus
 class PercentagePainter extends CustomPainter {
   final double progress;
+  final bool isDarkMode;
 
-  PercentagePainter(this.progress);
+  PercentagePainter(this.progress, this.isDarkMode);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -63,7 +64,7 @@ class PercentagePainter extends CustomPainter {
       text: TextSpan(
         text: '${(progress * 100).toStringAsFixed(0)}%',
         style: TextStyle(
-          color: Colors.deepPurple,
+          color: isDarkMode ? Colors.deepPurple.shade300 : Colors.deepPurple,
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),

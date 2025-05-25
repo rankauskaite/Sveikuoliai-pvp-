@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class MeditationScreen extends StatefulWidget {
   const MeditationScreen({super.key});
@@ -14,7 +16,6 @@ class MeditationScreen extends StatefulWidget {
 class _MeditationScreenState extends State<MeditationScreen> {
   final PageController _pageController = PageController();
   final List<String> _videoPaths = [
-    //'assets/videos/meditation.mp4',
     'assets/videos/pearl.mp4',
     'assets/videos/sonhe.mp4',
     'assets/videos/dive.mp4',
@@ -23,9 +24,14 @@ class _MeditationScreenState extends State<MeditationScreen> {
   final List<VideoPlayerController> _videoControllers = [];
   final List<ChewieController> _chewieControllers = [];
 
+  // Sesijos ir vartotojo servisai
+  final AuthService _authService = AuthService();
+  bool isDarkMode = false; // Temos būsena
+
   @override
   void initState() {
     super.initState();
+    _fetchUserData(); // Gauname sesijos duomenis
 
     for (var path in _videoPaths) {
       final videoController = VideoPlayerController.asset(path);
@@ -44,6 +50,22 @@ class _MeditationScreenState extends State<MeditationScreen> {
     }
   }
 
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(() {
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+      });
+    } catch (e) {
+      if (mounted) {
+        String message = 'Klaida gaunant duomenis ❌';
+        showCustomSnackBar(context, message, false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     for (final c in _videoControllers) {
@@ -58,36 +80,33 @@ class _MeditationScreenState extends State<MeditationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+              SizedBox(height: topPadding),
               Expanded(
-                // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
                 child: Container(
                   margin:
                       const EdgeInsets.symmetric(horizontal: horizontalPadding),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.grey[900] : Colors.white,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white, width: 20),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                      width: 20,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -95,12 +114,22 @@ class _MeditationScreenState extends State<MeditationScreen> {
                         children: [
                           IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back_ios, size: 30),
+                            icon: Icon(
+                              Icons.arrow_back_ios,
+                              size: 30,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
-                      const Text('Meditacija', style: TextStyle(fontSize: 30)),
+                      Text(
+                        'Meditacija',
+                        style: TextStyle(
+                          fontSize: 30,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       Expanded(
                         child: PageView.builder(
@@ -115,8 +144,13 @@ class _MeditationScreenState extends State<MeditationScreen> {
                                     controller: _chewieControllers[index]),
                               );
                             } else {
-                              return const Center(
-                                  child: CircularProgressIndicator());
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.deepPurple,
+                                ),
+                              );
                             }
                           },
                         ),
@@ -125,9 +159,11 @@ class _MeditationScreenState extends State<MeditationScreen> {
                       SmoothPageIndicator(
                         controller: _pageController,
                         count: _videoPaths.length,
-                        effect: const WormEffect(
-                          dotColor: Colors.grey,
-                          activeDotColor: Colors.deepPurple,
+                        effect: WormEffect(
+                          dotColor:
+                              isDarkMode ? Colors.grey[700]! : Colors.grey,
+                          activeDotColor:
+                              isDarkMode ? Colors.white : Colors.deepPurple,
                           dotHeight: 10,
                           dotWidth: 10,
                         ),
@@ -138,7 +174,7 @@ class _MeditationScreenState extends State<MeditationScreen> {
                 ),
               ),
               const BottomNavigation(),
-              SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+              SizedBox(height: bottomPadding),
             ],
           ),
         ],

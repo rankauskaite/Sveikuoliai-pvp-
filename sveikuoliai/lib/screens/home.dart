@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String userName = "";
   String userUsername = "";
   String userVersion = "";
+  bool isDarkMode = false; // Pridėta būsena tamsiajam režimui
   final UserService _userService = UserService();
   UserModel userModel = UserModel(
     username: "",
@@ -169,6 +170,8 @@ class _HomeScreenState extends State<HomeScreen> {
           userName = sessionData['name'] ?? "Nežinomas";
           userUsername = sessionData['username'] ?? "Nežinomas";
           userVersion = sessionData['version'] ?? "Nežinoma";
+          isDarkMode =
+              sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
         });
         UserModel? model = await _userService.getUserEntry(userUsername);
         setState(() {
@@ -255,11 +258,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Stack(
         children: [
@@ -272,9 +275,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin:
                       const EdgeInsets.symmetric(horizontal: horizontalPadding),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.grey[900] : Colors.white,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white, width: 20),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                      width: 20,
+                    ),
                   ),
                   child: Column(
                     // Pakeista iš Column į ListView, kad turinys būtų slenkamas
@@ -292,7 +298,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               userName.length > 12
                                   ? '${userName.substring(0, 12)}...'
                                   : userName,
-                              style: const TextStyle(fontSize: 20),
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
                             ),
                           ),
                           const Spacer(),
@@ -306,8 +315,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(4.0),
-                                  child: Icon(Icons.notifications_outlined,
-                                      size: 35, color: Colors.grey.shade800),
+                                  child: Icon(
+                                    Icons.notifications_outlined,
+                                    size: 35,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.grey.shade800,
+                                  ),
                                 ),
                                 if (unreadNotificationsCount > 0)
                                   Positioned(
@@ -366,19 +380,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                     height: 150,
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                          color: Colors.green.shade700,
+                                          color: isDarkMode
+                                              ? Colors.green.shade400
+                                              : Colors.green.shade700,
                                           width: 3),
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black26,
+                                          color: isDarkMode
+                                              ? Colors.grey.shade700
+                                              : Colors.black26,
                                           blurRadius: 8,
                                           offset: Offset(0, 5),
                                         ),
                                       ],
                                     ),
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(9),
                                       child: Image.asset(
                                         'assets/images/mano_sodas.png',
                                         fit: BoxFit.fill,
@@ -410,12 +428,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       height: 150,
                                       decoration: BoxDecoration(
                                         border: Border.all(
-                                            color: Colors.deepPurple.shade700,
+                                            color: isDarkMode
+                                                ? Colors.deepPurple.shade400
+                                                : Colors.deepPurple.shade700,
                                             width: 3),
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black26,
+                                            color: isDarkMode
+                                                ? Colors.grey.shade700
+                                                : Colors.black26,
                                             blurRadius: 8,
                                             offset: Offset(0, 5),
                                           ),
@@ -442,7 +464,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         0.8,
                                     height: 100,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD9D9D9),
+                                      color: isDarkMode
+                                          ? Colors.grey[700]
+                                          : const Color(0xFFD9D9D9),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: PageView.builder(
@@ -479,11 +503,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   height: 300,
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                        color: Color(0xFF833EBD), width: 3),
+                                        color: isDarkMode
+                                            ? Colors.purple.shade400
+                                            : Color(0xFF833EBD),
+                                        width: 3),
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black26,
+                                        color: isDarkMode
+                                            ? Colors.grey.shade700
+                                            : Colors.black26,
                                         blurRadius: 8,
                                         offset: Offset(0, 5),
                                       ),
@@ -526,13 +555,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     width: screenSize.width * 0.75,
                     height: double.infinity,
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.grey[800] : Colors.white,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         AppBar(
-                          title: const Text('Pranešimai'),
-                          backgroundColor: const Color(0xFF8093F1),
+                          title: Text(
+                            'Pranešimai',
+                            style: TextStyle(
+                              color:
+                                  isDarkMode ? Colors.grey[400] : Colors.black,
+                            ),
+                          ),
+                          backgroundColor: isDarkMode
+                              ? Colors.black
+                              : const Color(0xFF8093F1),
                           automaticallyImplyLeading: false,
                           actions: [
                             IconButton(
@@ -569,8 +606,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   decoration: BoxDecoration(
                                     color: isUnread
                                         ? const Color(0xFFFFC0CB)
-                                        : const Color(0xFF8093F1)
-                                            .withOpacity(0.3),
+                                        : isDarkMode
+                                            ? Colors.grey[600]
+                                            : const Color(0xFF8093F1)
+                                                .withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(15),
                                     border: isUnread
                                         ? Border.all(
@@ -583,40 +622,67 @@ class _HomeScreenState extends State<HomeScreen> {
                                         Icons.notifications,
                                         color: isUnread
                                             ? Colors.pink
-                                            : Colors.deepPurple,
+                                            : isDarkMode
+                                                ? Colors.white
+                                                : Colors.deepPurple,
                                         size: 24,
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Text(
                                           notifications[index].text,
-                                          style: const TextStyle(
-                                              color: Colors.black,
+                                          style: TextStyle(
+                                              color: isDarkMode && !isUnread
+                                                  ? Colors.white
+                                                  : Colors.black,
                                               fontSize: 16),
                                         ),
                                       ),
                                       if (!isUnread)
                                         IconButton(
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.remove_circle_outline,
-                                            color: Colors.deepPurple,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.deepPurple,
                                             size: 20,
                                           ),
                                           onPressed: () {
                                             showDialog(
                                               context: context,
                                               builder: (context) => AlertDialog(
-                                                title: const Text(
-                                                    'Ištrinti pranešimą?'),
-                                                content: const Text(
-                                                    'Ar tikrai norite ištrinti šį pranešimą?'),
+                                                backgroundColor: isDarkMode
+                                                    ? Colors.grey[900]
+                                                    : Colors.white,
+                                                title: Text(
+                                                  'Ištrinti pranešimą?',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                                content: Text(
+                                                  'Ar tikrai norite ištrinti šį pranešimą?',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                  ),
+                                                ),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () =>
                                                         Navigator.of(context)
                                                             .pop(),
-                                                    child:
-                                                        const Text('Atšaukti'),
+                                                    child: Text(
+                                                      'Atšaukti',
+                                                      style: TextStyle(
+                                                        color: isDarkMode
+                                                            ? Colors.grey[400]
+                                                            : Colors.black,
+                                                      ),
+                                                    ),
                                                   ),
                                                   TextButton(
                                                     onPressed: () async {
@@ -688,17 +754,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
         switch (notification.type) {
           case 'friend_request':
-            title = const Text(
+            title = Text(
               'Nori draugauti?',
               style: TextStyle(
-                color: Colors.deepPurple,
+                color: isDarkMode ? Colors.white : Colors.deepPurple,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             );
             content = Text(
               notification.text,
-              style: const TextStyle(color: Colors.black, fontSize: 16),
+              style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontSize: 16),
             );
             actions = [
               TextButton(
@@ -711,10 +779,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Peržiūrėti',
                   style: TextStyle(
-                      color: Colors.deepPurple, fontWeight: FontWeight.bold),
+                      color: isDarkMode ? Colors.white : Colors.deepPurple,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
               TextButton(
@@ -722,25 +791,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Reject friend request logic
                   Navigator.of(context).pop();
                 },
-                child: const Text(
+                child: Text(
                   'Uždaryti',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey),
                 ),
               ),
             ];
             break;
           case 'shared_goal':
-            title = const Text(
+            title = Text(
               'Nori auginti augaliuką kartu?',
               style: TextStyle(
-                color: Colors.purple,
+                color: isDarkMode ? Colors.white : Colors.purple,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             );
             content = Text(
               notification.text,
-              style: const TextStyle(color: Colors.black, fontSize: 16),
+              style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontSize: 16),
             );
             actions = [
               TextButton(
@@ -754,39 +826,46 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Peržiūrėti',
-                  style: TextStyle(color: Colors.purple),
+                  style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.purple),
                 ),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text(
+                child: Text(
                   'Uždaryti',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey),
                 ),
               ),
             ];
             break;
           default: // Handles "generic" or any unrecognized type
-            title = const Text(
+            title = Text(
               'Pranešimas',
-              style: TextStyle(color: Colors.deepPurple, fontSize: 20),
+              style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.deepPurple,
+                  fontSize: 20),
             );
             content = Text(
               notification.text,
-              style: const TextStyle(color: Colors.black, fontSize: 16),
+              style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontSize: 16),
             );
             actions = [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text(
+                child: Text(
                   'Uždaryti',
-                  style: TextStyle(color: Colors.deepPurple),
+                  style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.deepPurple),
                 ),
               ),
             ];
@@ -797,7 +876,7 @@ class _HomeScreenState extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
           titlePadding: const EdgeInsets.only(left: 16, top: 16, right: 16),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
