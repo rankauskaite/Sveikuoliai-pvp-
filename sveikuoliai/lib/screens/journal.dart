@@ -35,6 +35,7 @@ class _JournalScreenState extends State<JournalScreen> {
   ];
   int _currentPage = 0;
   Timer? _timer;
+  bool isDarkMode = false; // Temos būsena
 
   @override
   void initState() {
@@ -71,11 +72,11 @@ class _JournalScreenState extends State<JournalScreen> {
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(
-        () {
-          userUsername = sessionData['username'] ?? "Nežinomas";
-        },
-      );
+      setState(() {
+        userUsername = sessionData['username'] ?? "Nežinomas";
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+      });
       await _loadMarkedDays(userUsername);
     } catch (e) {
       String message = 'Klaida gaunant duomenis ❌';
@@ -95,32 +96,23 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
           children: [
-            SizedBox(
-              height: topPadding,
-            ),
+            SizedBox(height: topPadding),
             _buildCalendarContainer(context),
-            const BottomNavigation(), // Apatinė navigacija
-            SizedBox(
-              height: bottomPadding,
-            ),
+            const BottomNavigation(),
+            SizedBox(height: bottomPadding),
           ],
         ),
       ),
@@ -128,17 +120,18 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Widget _buildCalendarContainer(BuildContext context) {
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
+    const double horizontalPadding = 20.0;
 
     return Expanded(
       child: Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: horizontalPadding,
-        ),
+        margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? Colors.grey[900] : Colors.white,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white, width: 20),
+          border: Border.all(
+            color: isDarkMode ? Colors.grey[800]! : Colors.white,
+            width: 20,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -157,16 +150,14 @@ class _JournalScreenState extends State<JournalScreen> {
                   },
                   icon: Icon(
                     Icons.self_improvement,
-                    color: Colors.grey.shade500, //Color(0xFFD9D9D5),
+                    color: isDarkMode ? Colors.white : Colors.grey.shade500,
                     size: 50,
                   ),
                 ),
               ],
             ),
             _buildBanner(),
-            SizedBox(
-              height: 20,
-            ),
+            SizedBox(height: 20),
             _buildCalendar(context),
           ],
         ),
@@ -207,9 +198,9 @@ class _JournalScreenState extends State<JournalScreen> {
         SmoothPageIndicator(
           controller: _pageController,
           count: images.length,
-          effect: const WormEffect(
-            dotColor: Colors.grey,
-            activeDotColor: Colors.deepPurple,
+          effect: WormEffect(
+            dotColor: isDarkMode ? Colors.grey[700]! : Colors.grey,
+            activeDotColor: isDarkMode ? Colors.white : Colors.deepPurple,
             dotHeight: 6,
             dotWidth: 6,
           ),
@@ -221,36 +212,68 @@ class _JournalScreenState extends State<JournalScreen> {
   Widget _buildCalendar(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFFFCE5FC), // Šviesiai rožinis fonas visam kalendoriui
-        borderRadius: BorderRadius.circular(15), // Užapvalinti kampai
+        color: isDarkMode ? Colors.grey[700] : Color(0xFFFCE5FC),
+        borderRadius: BorderRadius.circular(15),
       ),
-      padding: EdgeInsets.all(5), // Kad būtų tarpai nuo kraštų
+      padding: EdgeInsets.all(5),
       child: TableCalendar(
-        locale: 'lt_LT', // Kalendorius lietuviškai
+        locale: 'lt_LT',
         firstDay: DateTime.utc(2020, 01, 01),
         lastDay: DateTime.utc(2025, 12, 31),
         focusedDay: DateTime.now(),
-        startingDayOfWeek:
-            StartingDayOfWeek.monday, // Pirmadienis kaip savaitės pradžia
+        startingDayOfWeek: StartingDayOfWeek.monday,
         headerStyle: HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
           titleTextFormatter: (date, locale) =>
-              DateFormat.yMMMM('lt_LT').format(date), // Lietuviški mėnesiai
+              DateFormat.yMMMM('lt_LT').format(date),
+          titleTextStyle: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+          formatButtonTextStyle: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+          leftChevronIcon: Icon(
+            Icons.chevron_left,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+          rightChevronIcon: Icon(
+            Icons.chevron_right,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
         ),
-        daysOfWeekStyle: const DaysOfWeekStyle(
-          weekdayStyle: TextStyle(color: Colors.black),
-          weekendStyle: TextStyle(color: Colors.purple),
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekdayStyle:
+              TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+          weekendStyle: TextStyle(
+              color: isDarkMode ? Colors.purple[200]! : Colors.purple),
         ),
         calendarStyle: CalendarStyle(
-          outsideDaysVisible: false, // Paslepia kitų mėnesių dienas
-          tablePadding: EdgeInsets.all(10), // Papildomi tarpai lentelės viduje
+          outsideDaysVisible: false,
+          tablePadding: EdgeInsets.all(10),
           defaultTextStyle:
-              TextStyle(color: Colors.black), // Dienų skaičių spalva
-          weekendTextStyle:
-              TextStyle(color: Colors.purple), // Savaitgalių spalva
+              TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+          weekendTextStyle: TextStyle(
+              color: isDarkMode ? Colors.purple[200]! : Colors.purple),
+          todayDecoration: BoxDecoration(
+            color: isDarkMode
+                ? Colors.grey[500]
+                : Colors.deepPurple.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          selectedDecoration: BoxDecoration(
+            color:
+                isDarkMode ? Colors.white.withOpacity(0.3) : Colors.deepPurple,
+            shape: BoxShape.circle,
+          ),
+          markerDecoration: BoxDecoration(
+            color: isDarkMode
+                ? Colors.white.withOpacity(0.6)
+                : Colors.deepPurple.withOpacity(0.6),
+            shape: BoxShape.circle,
+          ),
         ),
-        rowHeight: 40, // Nustatykite mažesnį aukštį tarp savaičių
+        rowHeight: 40,
         enabledDayPredicate: (day) {
           return day.isBefore(DateTime.now());
         },
@@ -276,7 +299,9 @@ class _JournalScreenState extends State<JournalScreen> {
                 child: Text(
                   '✓',
                   style: TextStyle(
-                    color: Colors.deepPurple.withOpacity(0.6),
+                    color: isDarkMode
+                        ? Colors.white.withOpacity(0.6)
+                        : Colors.deepPurple.withOpacity(0.6),
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
                   ),

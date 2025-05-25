@@ -9,46 +9,66 @@ import 'package:sveikuoliai/services/habit_type_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-class NewHabitScreen extends StatelessWidget {
+class NewHabitScreen extends StatefulWidget {
   const NewHabitScreen({super.key});
 
+  @override
+  _NewHabitScreenState createState() => _NewHabitScreenState();
+}
+
+class _NewHabitScreenState extends State<NewHabitScreen> {
   static List<HabitType> defaultHabitTypes = HabitType.defaultHabitTypes;
   static Map<String, IconData> habitIcons = HabitType.habitIcons;
+  final AuthService _authService = AuthService();
+  bool isDarkMode = false; // Temos būsena
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(() {
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+      });
+    } catch (e) {
+      String message = 'Klaida gaunant duomenis ❌';
+      showCustomSnackBar(context, message, false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
-      resizeToAvoidBottomInset: false, // Prevent resizing when keyboard appears
+      resizeToAvoidBottomInset: false,
       body: Center(
         child: Column(
           children: [
-            SizedBox(
-              height: topPadding,
-            ),
+            SizedBox(height: topPadding),
             Expanded(
               child: Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                ),
+                margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -63,48 +83,43 @@ class NewHabitScreen extends StatelessWidget {
                           icon: Icon(
                             Icons.arrow_back_ios,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(
-                      height: 50,
-                    ),
-                    const Text(
+                    const SizedBox(height: 50),
+                    Text(
                       'Naujas įprotis',
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Karuselė su įpročiais
                     SizedBox(
-                      height: 350, // Aukštis karuselei
+                      height: 350,
                       child: PageView(
-                        scrollDirection:
-                            Axis.horizontal, // Horizontalus slinkimas
-                        controller: PageController(
-                            viewportFraction: 0.9), // Pagerins sklandumą
+                        scrollDirection: Axis.horizontal,
+                        controller: PageController(viewportFraction: 0.9),
                         children: [
                           ...defaultHabitTypes.map((habit) {
                             return HabitCard(
                               habitId: habit.id,
                               habitName: habit.title,
                               habitDescription: habit.description,
-                              habitIcon: habitIcons[habit.id] ??
-                                  Icons
-                                      .help, // Galite naudoti specifinį piktogramą pagal tipą
+                              habitIcon: habitIcons[habit.id] ?? Icons.help,
+                              isDarkMode: isDarkMode, // Perduodame isDarkMode
                             );
                           }).toList(),
-                          // Paskutinė kortelė su tikslu
                           HabitCard(
                             habitId: '',
                             habitName: 'Pridėti savo įprotį',
                             habitDescription: 'Sukurk ir pridėk savo įprotį',
                             habitIcon: Icons.add_circle,
-                            isCustom:
-                                true, // Nurodoma, kad ši kortelė yra paskutinė
+                            isCustom: true,
+                            isDarkMode: isDarkMode, // Perduodame isDarkMode
                           ),
                         ],
                       ),
@@ -113,10 +128,8 @@ class NewHabitScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const BottomNavigation(), // Įterpiama navigacija
-            const SizedBox(
-              height: bottomPadding,
-            ),
+            const BottomNavigation(),
+            const SizedBox(height: bottomPadding),
           ],
         ),
       ),
@@ -124,14 +137,13 @@ class NewHabitScreen extends StatelessWidget {
   }
 }
 
-// Atkuriama įpročio kortelė su piktograma, pavadinimu ir aprašymu
 class HabitCard extends StatefulWidget {
   final String habitId;
   final String habitName;
   final String habitDescription;
   final IconData habitIcon;
-  final bool
-      isCustom; // Naujas parametras, kad žinotume, ar tai paskutinė kortelė
+  final bool isCustom;
+  final bool isDarkMode; // Pridėtas isDarkMode parametras
 
   const HabitCard({
     super.key,
@@ -139,8 +151,8 @@ class HabitCard extends StatefulWidget {
     required this.habitName,
     required this.habitDescription,
     required this.habitIcon,
-    this.isCustom =
-        false, // Jei neapibrėžta, laikome, kad kortelė nėra paskutinė
+    this.isCustom = false,
+    required this.isDarkMode, // Pridėtas parametras
   });
 
   @override
@@ -151,15 +163,14 @@ class _HabitCardState extends State<HabitCard> {
   String userUsername = "";
   final HabitTypeService _habitTypeService = HabitTypeService();
   final HabitService _habitService = HabitService();
-  String? _selectedDuration = '1 mėnuo'; // Pasirinkta trukmė
-  DateTime _startDate = DateTime.now(); // Pradžios data
-
+  String? _selectedDuration = '1 mėnuo';
+  DateTime _startDate = DateTime.now();
   final TextEditingController _habitNameController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _habitDescriptionController =
       TextEditingController();
   final AuthService _authService = AuthService();
-  final _formKey = GlobalKey<FormState>(); // Add form key for validation
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -167,7 +178,6 @@ class _HabitCardState extends State<HabitCard> {
     _dateController.text = DateTime.now().toString().substring(0, 10);
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchUserData() async {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
@@ -184,21 +194,31 @@ class _HabitCardState extends State<HabitCard> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Paspaudus ant kortelės, atidarome formą
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
+              backgroundColor:
+                  widget.isDarkMode ? Colors.grey[800] : Colors.white,
               title: Stack(
                 children: [
-                  Text('Užpildykite įprotį:\n${widget.habitName}'),
+                  Text(
+                    'Užpildykite įprotį:\n${widget.habitName}',
+                    style: TextStyle(
+                      color: widget.isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
                   Positioned(
                     top: 0,
                     right: 0,
                     child: IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: Icon(
+                        Icons.close,
+                        color:
+                            widget.isDarkMode ? Colors.white70 : Colors.black,
+                      ),
                       onPressed: () {
-                        Navigator.pop(context); // Uždaryti dialogą
+                        Navigator.pop(context);
                       },
                     ),
                   ),
@@ -206,12 +226,17 @@ class _HabitCardState extends State<HabitCard> {
               ),
               content: SingleChildScrollView(
                 child: Form(
-                  key: _formKey, // Assign the form key
+                  key: _formKey,
                   child: Column(
                     children: [
-                      Text(widget.habitDescription),
+                      Text(
+                        widget.habitDescription,
+                        style: TextStyle(
+                          color:
+                              widget.isDarkMode ? Colors.white70 : Colors.black,
+                        ),
+                      ),
                       const SizedBox(height: 20),
-                      // Jei tai paskutinė kortelė, naudoti kitus laukus
                       if (widget.isCustom)
                         Column(
                           children: [
@@ -224,10 +249,22 @@ class _HabitCardState extends State<HabitCard> {
                                 contentPadding: const EdgeInsets.symmetric(
                                     vertical: 0, horizontal: 10),
                                 border: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Colors.transparent),
+                                  borderSide: BorderSide(
+                                      color: widget.isDarkMode
+                                          ? Colors.grey[700]!
+                                          : Colors.transparent),
+                                ),
+                                labelStyle: TextStyle(
+                                  color: widget.isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black,
                                 ),
                                 errorStyle: TextStyle(fontSize: 11),
+                              ),
+                              style: TextStyle(
+                                color: widget.isDarkMode
+                                    ? Colors.white
+                                    : Colors.black,
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -247,10 +284,22 @@ class _HabitCardState extends State<HabitCard> {
                                 contentPadding: const EdgeInsets.symmetric(
                                     vertical: 5, horizontal: 10),
                                 border: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Colors.transparent),
+                                  borderSide: BorderSide(
+                                      color: widget.isDarkMode
+                                          ? Colors.grey[700]!
+                                          : Colors.transparent),
+                                ),
+                                labelStyle: TextStyle(
+                                  color: widget.isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black,
                                 ),
                                 errorStyle: TextStyle(fontSize: 11),
+                              ),
+                              style: TextStyle(
+                                color: widget.isDarkMode
+                                    ? Colors.white
+                                    : Colors.black,
                               ),
                               maxLines: null,
                               minLines: 1,
@@ -265,7 +314,6 @@ class _HabitCardState extends State<HabitCard> {
                           ],
                         ),
                       const SizedBox(height: 10),
-                      // Trukmės pasirinkimas su dekoracija
                       DropdownButtonFormField<String>(
                         value: _selectedDuration,
                         onChanged: (String? newValue) {
@@ -278,9 +326,22 @@ class _HabitCardState extends State<HabitCard> {
                           contentPadding:
                               EdgeInsets.symmetric(vertical: 0, horizontal: 5),
                           border: OutlineInputBorder(
-                              borderSide:
-                                  BorderSide(color: Colors.transparent)),
+                              borderSide: BorderSide(
+                                  color: widget.isDarkMode
+                                      ? Colors.grey[700]!
+                                      : Colors.transparent)),
+                          labelStyle: TextStyle(
+                            color: widget.isDarkMode
+                                ? Colors.white70
+                                : Colors.black,
+                          ),
                         ),
+                        style: TextStyle(
+                          color:
+                              widget.isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        dropdownColor:
+                            widget.isDarkMode ? Colors.grey[800] : Colors.white,
                         isExpanded: true,
                         items: <String>[
                           '1 savaitė',
@@ -295,18 +356,39 @@ class _HabitCardState extends State<HabitCard> {
                             value: value,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 12),
-                              child: Text(value),
+                              child: Text(
+                                value,
+                                style: TextStyle(
+                                  color: widget.isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
                             ),
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 10),
-                      // Pradžios datos pasirinkimas
                       TextFormField(
                         controller: _dateController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Pradžios data',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: widget.isDarkMode
+                                  ? Colors.grey[700]!
+                                  : Colors.black,
+                            ),
+                          ),
+                          labelStyle: TextStyle(
+                            color: widget.isDarkMode
+                                ? Colors.white70
+                                : Colors.black,
+                          ),
+                        ),
+                        style: TextStyle(
+                          color:
+                              widget.isDarkMode ? Colors.white : Colors.black,
                         ),
                         readOnly: true,
                         onTap: () async {
@@ -330,7 +412,6 @@ class _HabitCardState extends State<HabitCard> {
                       ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            // Proceed only if the form is valid
                             _submitHabit();
                             Navigator.pushReplacement(
                               context,
@@ -340,7 +421,9 @@ class _HabitCardState extends State<HabitCard> {
                             );
                           }
                         },
-                        child: const Text('Išsaugoti'),
+                        child: Text(
+                          'Išsaugoti',
+                        ),
                       ),
                     ],
                   ),
@@ -351,7 +434,7 @@ class _HabitCardState extends State<HabitCard> {
         );
       },
       child: Card(
-        color: Color(0xFFB388EB),
+        color: widget.isDarkMode ? Colors.purple[300] : Color(0xFFB388EB),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -368,15 +451,19 @@ class _HabitCardState extends State<HabitCard> {
               widget.habitName,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               widget.habitDescription,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
@@ -384,7 +471,6 @@ class _HabitCardState extends State<HabitCard> {
     );
   }
 
-  // Funkcija įrašyti duomenis į duomenų bazę
   Future<void> _submitHabit() async {
     String habitId = widget.isCustom
         ? _habitNameController.text
@@ -418,7 +504,6 @@ class _HabitCardState extends State<HabitCard> {
           })
         : widget.habitId;
 
-    // Sukurkite objektą su įpročio duomenimis
     if (widget.isCustom) {
       HabitType habitData = HabitType(
         id: _habitNameController.text

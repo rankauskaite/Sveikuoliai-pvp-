@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
 class BreathingExcerciseScreen extends StatefulWidget {
   const BreathingExcerciseScreen({super.key});
@@ -15,11 +17,14 @@ class BreathingExcerciseScreen extends StatefulWidget {
 class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
   late RiveAnimationController _riveController;
   bool _isBreathing = false;
-  bool _isAnimationRunning =
-      false; // Naujas kintamasis, kad sekame animacijos būseną
+  bool _isAnimationRunning = false;
   int _breathStage = 0; // 0 = Inhale, 1 = Hold, 2 = Exhale
   int _elapsedTime = 0;
   int _counts = 0; // Kiek kartų atlikta ciklą
+
+  // Sesijos ir vartotojo servisai
+  final AuthService _authService = AuthService();
+  bool isDarkMode = false; // Temos būsena
 
   // Kvėpavimo etapo trukmės
   final int inhaleDuration = 3; // Įkvėpimas
@@ -29,13 +34,29 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
 
   String _breathingText = ""; // Kvėpavimo tekstas
   String _timerText = ""; // Atbulinio laikymo tekstas
-  // Removed this line as it is misplaced and causes errors
 
   @override
   void initState() {
     super.initState();
     _riveController = SimpleAnimation('Timeline 1', autoplay: false);
     _riveController.isActive = false; // Animacija pradžioje neaktyvi
+    _fetchUserData(); // Gauname sesijos duomenis
+  }
+
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(() {
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+      });
+    } catch (e) {
+      if (mounted) {
+        String message = 'Klaida gaunant duomenis ❌';
+        showCustomSnackBar(context, message, false);
+      }
+    }
   }
 
   void _startBreathing() {
@@ -130,36 +151,33 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+              SizedBox(height: topPadding),
               Expanded(
-                // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
                 child: Container(
                   margin:
                       const EdgeInsets.symmetric(horizontal: horizontalPadding),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.grey[900] : Colors.white,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white, width: 20),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                      width: 20,
+                    ),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -171,9 +189,10 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
                             onPressed: () {
                               Navigator.pop(context);
                             },
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.arrow_back_ios,
                               size: 30,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
                           ),
                         ],
@@ -181,14 +200,15 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
                       const SizedBox(height: 10),
                       Expanded(
                         child: Column(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center, // Center vertically
-                          crossAxisAlignment:
-                              CrossAxisAlignment.center, // Center horizontally
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Kvėpavimo pratimai',
-                              style: TextStyle(fontSize: 30),
+                              style: TextStyle(
+                                fontSize: 30,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 20),
@@ -207,7 +227,11 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
                             if (!_isBreathing) ...[
                               Text(
                                 'Kiek kartų noretum kvepuoti?',
-                                style: TextStyle(fontSize: 20),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               Row(
@@ -221,11 +245,21 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
                                         }
                                       });
                                     },
-                                    icon: Icon(Icons.remove),
+                                    icon: Icon(
+                                      Icons.remove,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                   ),
                                   Text(
                                     '$totalCycleRepetiton',
-                                    style: TextStyle(fontSize: 30),
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                   ),
                                   IconButton(
                                     onPressed: () {
@@ -233,39 +267,52 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
                                         totalCycleRepetiton++;
                                       });
                                     },
-                                    icon: Icon(Icons.add),
+                                    icon: Icon(
+                                      Icons.add,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                   ),
                                 ],
                               ),
                             ],
                             if (_isBreathing) ...[
                               Text(
-                                _breathingText, // Rodyti atitinkamą tekstą pagal kvėpavimo etapą
+                                _breathingText,
                                 style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.deepPurple,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               SizedBox(height: 10),
                               Text(
-                                _timerText, // Rodyti atbulinį laiką
+                                _timerText,
                                 style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.deepPurple,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],
                             SizedBox(height: 20),
                             ElevatedButton(
                               onPressed: _isBreathing ? null : _startBreathing,
-                              child:
-                                  Text(_isBreathing ? 'Kvėpuoti' : 'Pradėti'),
                               style: ElevatedButton.styleFrom(
+                                //backgroundColor: isDarkMode ? Colors.white : Colors.deepPurple,
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 100, vertical: 15),
                                 textStyle: TextStyle(fontSize: 20),
+                              ),
+                              child: Text(
+                                _isBreathing ? 'Kvėpuoti' : 'Pradėti',
                               ),
                             ),
                           ],
@@ -276,7 +323,7 @@ class _BreathingExcerciseScreenState extends State<BreathingExcerciseScreen> {
                 ),
               ),
               const BottomNavigation(),
-              SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+              SizedBox(height: bottomPadding),
             ],
           ),
         ],

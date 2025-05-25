@@ -25,6 +25,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   String userVersion = "";
   String selectedIconName = 'account_circle'; // Default to account_circle
   String? _nameError; // To store the error message
+  bool isDarkMode = false; // Temos būsena
 
   TextEditingController _userNameController = TextEditingController();
   TextEditingController _userEmailController = TextEditingController();
@@ -54,7 +55,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
         selectedIconName = sessionData['icon']?.isNotEmpty == true
             ? sessionData['icon']!
             : 'account_circle';
-
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
         _userNameController.text = userName;
         _userEmailController.text = userEmail;
       });
@@ -109,11 +111,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     final Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       resizeToAvoidBottomInset: false,
       body: Center(
@@ -124,9 +126,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -138,13 +143,18 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          icon: Icon(Icons.arrow_back_ios, size: 30),
+                          icon: Icon(
+                            Icons.arrow_back_ios,
+                            size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
                         ),
                         const Expanded(child: SizedBox()),
                         ElevatedButton(
-                          onPressed:
-                              _saveUserData, // Save button triggers validation
-                          child: Text('Išsaugoti'),
+                          onPressed: _saveUserData,
+                          child: Text(
+                            'Išsaugoti',
+                          ),
                         ),
                       ],
                     ),
@@ -159,7 +169,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                               ColorFiltered(
                                 colorFilter: ColorFilter.mode(
                                   selectedIconName == 'account_circle'
-                                      ? Color(0xFFD9D9D9)
+                                      ? (isDarkMode
+                                          ? Colors.grey[400]!
+                                          : const Color(0xFFD9D9D9))
                                       : Colors.transparent,
                                   selectedIconName == 'account_circle'
                                       ? BlendMode.srcIn
@@ -172,7 +184,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                       ? Icon(
                                           Icons.account_circle,
                                           size: 200,
-                                          color: Color(0xFFD9D9D9),
+                                          color: isDarkMode
+                                              ? Colors.grey[400]
+                                              : const Color(0xFFD9D9D9),
                                         )
                                       : Image.asset(
                                           selectedIconName,
@@ -182,7 +196,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                         ),
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 'Keisti profilio\nnuotrauką',
                                 style: TextStyle(
                                   fontSize: 24,
@@ -203,16 +217,36 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           TextField(
                             controller: _userNameController,
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                             decoration: InputDecoration(
                               border: OutlineInputBorder(),
                               labelText: 'Vardas',
+                              labelStyle: TextStyle(
+                                color:
+                                    isDarkMode ? Colors.white70 : Colors.black,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.grey[700]!
+                                      : Colors.black,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
                             ),
                             onChanged: (value) {
                               setState(() {
                                 _nameError = value.trim().isEmpty
                                     ? 'Vardas negali būti tuščias!'
-                                    : null; // Real-time validation
+                                    : null;
                               });
                             },
                           ),
@@ -223,7 +257,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                               child: Text(
                                 _nameError!,
                                 style: TextStyle(
-                                  color: Colors.red,
+                                  color:
+                                      isDarkMode ? Colors.red[300] : Colors.red,
                                   fontSize: 12,
                                 ),
                               ),
@@ -233,20 +268,37 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     ),
                     Text(
                       userUsername,
-                      style: TextStyle(fontSize: 15, color: Color(0xFF8093F1)),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF8093F1),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text('Mano duomenys', style: TextStyle(fontSize: 20)),
+                        Text(
+                          'Mano duomenys',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text('El. paštas', style: TextStyle(fontSize: 12)),
+                        Text(
+                          'El. paštas',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode ? Colors.white70 : Colors.black,
+                          ),
+                        ),
                       ],
                     ),
                     Row(
@@ -256,9 +308,13 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           userEmail,
                           style: TextStyle(
                             fontSize: 15,
-                            color: Color(0xFFB388EB),
+                            color: isDarkMode
+                                ? Colors.white70
+                                : const Color(0xFFB388EB),
                             decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFB388EB),
+                            decorationColor: isDarkMode
+                                ? Colors.white70
+                                : const Color(0xFFB388EB),
                           ),
                         ),
                       ],
@@ -272,8 +328,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      VersionScreen(username: userUsername)),
+                                builder: (context) =>
+                                    VersionScreen(username: userUsername),
+                              ),
                             );
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -283,11 +340,17 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                             height: 150,
                             decoration: BoxDecoration(
                               border: Border.all(
-                                  color: Colors.deepPurple.shade700, width: 3),
+                                color: isDarkMode
+                                    ? Colors.deepPurple.shade500
+                                    : Colors.deepPurple.shade700,
+                                width: 3,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black26,
+                                  color: isDarkMode
+                                      ? Colors.black54
+                                      : Colors.black26,
                                   blurRadius: 8,
                                   offset: Offset(0, 5),
                                 ),
@@ -321,14 +384,17 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Pasirink profilio ikoną'),
+          title: Text(
+            'Pasirink profilio ikoną',
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
           content: SizedBox(
             width: double.maxFinite,
             child: GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
               children: [
-                // "None" option (account_circle)
                 GestureDetector(
                   onTap: () {
                     Navigator.pop(context, 'account_circle');
@@ -339,12 +405,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       Icon(
                         Icons.block,
                         size: 50,
-                        color: Colors.deepPurple,
+                        color: isDarkMode ? Colors.white : Colors.deepPurple,
                       ),
                     ],
                   ),
                 ),
-                // Avatar images
                 ...availableIcons.map((entry) {
                   return GestureDetector(
                     onTap: () {

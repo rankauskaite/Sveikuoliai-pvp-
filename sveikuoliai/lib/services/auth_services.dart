@@ -175,6 +175,7 @@ class AuthService {
     await _storage.write(
         key: "date", value: DateTime.now().toIso8601String().split('T').first);
     await _storage.write(key: "icon", value: user.iconUrl);
+    await _storage.write(key: 'darkMode', value: user.darkMode.toString());
   }
 
   Future<void> updateUserSession(String key, String value) async {
@@ -189,6 +190,7 @@ class AuthService {
       "version": await _storage.read(key: "version"),
       "date": await _storage.read(key: "date"),
       "icon": await _storage.read(key: "icon"),
+      "darkMode": await _storage.read(key: "darkMode")
     };
   }
 }

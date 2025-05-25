@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:sveikuoliai/screens/breathing_excercise.dart';
 import 'package:sveikuoliai/screens/meditation.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
+import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
-class RelaxMenuScreen extends StatelessWidget {
+class RelaxMenuScreen extends StatefulWidget {
   const RelaxMenuScreen({super.key});
+
+  @override
+  _RelaxMenuScreenState createState() => _RelaxMenuScreenState();
+}
+
+class _RelaxMenuScreenState extends State<RelaxMenuScreen> {
+  final AuthService _authService = AuthService();
+  bool isDarkMode = false; // Temos būsena
 
   void _showStressDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Patiri stresą ar pyktį?'),
+          title: Text(
+            'Patiri stresą ar pyktį?',
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Šie patarimai tau gali padėti:'),
+              Text(
+                'Šie patarimai tau gali padėti:',
+                style:
+                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+              ),
               SizedBox(height: 10),
               _buildAdviceCard(
                   '1. Pasirink didelį, dviženklį ar net triženkli skaičių ir skaičiuok atbulomis.'),
@@ -29,7 +47,11 @@ class RelaxMenuScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context); // Uždaryti dialogą
               },
-              child: Text('Uždaryti'),
+              child: Text(
+                'Uždaryti',
+                style:
+                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+              ),
             ),
           ],
         );
@@ -43,11 +65,11 @@ class RelaxMenuScreen extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 10), // Tarpai tarp kortelių
       padding: EdgeInsets.all(15), // Padidintas užpildymas
       decoration: BoxDecoration(
-        color: Colors.pink.shade50, // Fono spalva
-        borderRadius: BorderRadius.circular(10), // Užapvalinti kampai
+        color: isDarkMode ? Colors.grey[800] : Colors.pink.shade50,
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black26,
+            color: isDarkMode ? Colors.black54 : Colors.black26,
             offset: Offset(0, 2),
             blurRadius: 4,
           ),
@@ -55,28 +77,46 @@ class RelaxMenuScreen extends StatelessWidget {
       ),
       child: Text(
         adviceText,
-        style: TextStyle(fontSize: 16, color: Colors.black),
+        style: TextStyle(
+            fontSize: 16, color: isDarkMode ? Colors.white : Colors.black),
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
 
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+  // Funkcija, kad gauti prisijungusio vartotojo duomenis
+  Future<void> _fetchUserData() async {
+    try {
+      Map<String, String?> sessionData = await _authService.getSessionUser();
+      setState(() {
+        isDarkMode =
+            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
+      });
+    } catch (e) {
+      if (mounted) {
+        String message = 'Klaida gaunant duomenis ❌';
+        showCustomSnackBar(context, message, false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
@@ -88,9 +128,12 @@ class RelaxMenuScreen extends StatelessWidget {
                   horizontal: horizontalPadding,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -102,43 +145,55 @@ class RelaxMenuScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.arrow_back_ios,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                         const Expanded(child: SizedBox()),
                         IconButton(
                           onPressed: () {
-                            _showStressDialog(
-                                context); // Užkrovimas pop-out lango
+                            _showStressDialog(context);
                           },
                           icon: Icon(
-                            Icons.add_alert, // Galite pasirinkti kitą ikoną
+                            Icons.add_alert,
                             size: 30,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Atsipalaiduok',
-                      style: TextStyle(fontSize: 35),
+                      style: TextStyle(
+                        fontSize: 35,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Column(
                           children: [
-                            const Text(
+                            Text(
                               'Pasirink nusiraminimo būdą',
                               style: TextStyle(
-                                  fontSize: 15, color: Colors.black54),
+                                fontSize: 15,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : Colors.black54,
+                              ),
                             ),
-                            const Text(
+                            Text(
                               'arba peržiūrėk pasiūlymus viršuje',
                               style: TextStyle(
-                                  fontSize: 15, color: Colors.black54),
+                                fontSize: 15,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : Colors.black54,
+                              ),
                             ),
                           ],
                         )
@@ -149,12 +204,15 @@ class RelaxMenuScreen extends StatelessWidget {
                       context: context,
                       title: 'Kvėpavimo\npratimai',
                       icon: Icons.air,
-                      color: Colors.deepPurple.shade50,
+                      color: isDarkMode
+                          ? Colors.deepPurple.shade300
+                          : Colors.deepPurple.shade50,
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => BreathingExcerciseScreen()),
+                            builder: (_) => BreathingExcerciseScreen(),
+                          ),
                         );
                       },
                     ),
@@ -163,7 +221,9 @@ class RelaxMenuScreen extends StatelessWidget {
                       context: context,
                       title: 'Meditacija',
                       icon: Icons.self_improvement,
-                      color: Colors.pink.shade50,
+                      color: isDarkMode
+                          ? Colors.pink.shade200
+                          : Colors.pink.shade50,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -176,7 +236,9 @@ class RelaxMenuScreen extends StatelessWidget {
                       context: context,
                       title: 'Mankšta',
                       icon: Icons.fitness_center,
-                      color: Colors.blue.shade50,
+                      color: isDarkMode
+                          ? Colors.blue.shade200
+                          : Colors.blue.shade50,
                       onTap: () {
                         // Čia galima pridėti navigaciją į mankštos ekraną
                       },
@@ -212,7 +274,7 @@ class RelaxMenuScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black26,
+              color: isDarkMode ? Colors.black54 : Colors.black26,
               blurRadius: 6,
               offset: Offset(0, 3),
             ),
@@ -221,11 +283,14 @@ class RelaxMenuScreen extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: 20),
-            Icon(icon, size: 40, color: Colors.deepPurple),
+            Icon(icon,
+                size: 40, color: isDarkMode ? Colors.white : Colors.deepPurple),
             const SizedBox(width: 20),
             Text(
               title,
-              style: const TextStyle(fontSize: 24, color: Colors.black87),
+              style: TextStyle(
+                  fontSize: 24,
+                  color: isDarkMode ? Colors.white : Colors.black87),
             ),
           ],
         ),

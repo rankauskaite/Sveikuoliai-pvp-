@@ -33,21 +33,22 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   final PlantService _plantService = PlantService();
   final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
-  final AuthService _authService = AuthService(); // Pridėta AuthService
-  final UserService _userService = UserService(); // Pridėta UserService
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
   List<GoalTask> goalTasksMine = [];
-  List<GoalTask> goalTasksFriend = []; // Užduočių sąrašas
-  int _currentPage = 0; // Puslapio indeksas
+  List<GoalTask> goalTasksFriend = [];
+  int _currentPage = 0;
   PageController _pageController = PageController();
   int lengthMine = 0;
-  int doneLengthMine = 0; // Užbaigtų užduočių skaičius
+  int doneLengthMine = 0;
   int lengthFriend = 0;
-  int doneLengthFriend = 0; // Užbaigtų užduočių skaičius
-  String friendUsername = ''; // Draugo vartotojo vardas
-  String friendName = ''; // Draugo vardas
-  String username = ''; // Vartotojo vardas
-  bool isPlantDeadMine = false; // Augalo būsena
-  bool isPlantDeadFriend = false; // Draugo augalo būsena
+  int doneLengthFriend = 0;
+  String friendUsername = '';
+  String friendName = '';
+  String username = '';
+  bool isDarkMode = false; // Temos būsena
+  bool isPlantDeadMine = false;
+  bool isPlantDeadFriend = false;
   late DateTime lastDoneDate;
   late DateTime lastDoneDateFriend;
 
@@ -59,16 +60,13 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     _loadData();
   }
 
-  // Funkcija duomenims užkrauti
   Future<void> _loadData() async {
-    await _fetchSessionUser(); // Gauti prisijungusio vartotojo duomenis
+    await _fetchSessionUser();
     await _fetchPlantData();
     await _fetchGoalTask();
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchSessionUser() async {
-    // Patikrinti, ar sesijoje jau yra duomenų
     if (username.isEmpty) {
       try {
         Map<String, String?> sessionData = await _authService.getSessionUser();
@@ -80,7 +78,6 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
             widget.goal.sharedGoalModel.user1Id == sessionData['username']
                 ? widget.goal.sharedGoalModel.isPlantDeadUser1
                 : widget.goal.sharedGoalModel.isPlantDeadUser2;
-
         bool isDeadFriend = widget.goal.sharedGoalModel.user1Id == userId
             ? widget.goal.sharedGoalModel.isPlantDeadUser2
             : widget.goal.sharedGoalModel.isPlantDeadUser1;
@@ -91,6 +88,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
           friendName = name?.name ?? "Nežinomas";
           isPlantDeadMine = isDead;
           isPlantDeadFriend = isDeadFriend;
+          isDarkMode = sessionData['darkMode'] == 'true'; // Gauname darkMode
         });
       } catch (e) {
         setState(() {
@@ -100,7 +98,6 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     }
   }
 
-  // Funkcija, kad gauti prisijungusio vartotojo duomenis
   Future<void> _fetchPlantData() async {
     try {
       PlantModel? fetchedPlant = await _plantService
@@ -189,16 +186,25 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         widget.goal.sharedGoalModel.points = _allPoints();
       });
 
-      // ✅ Patikriname, ar visos užduotys įvykdytos
       final allCompleted = goalTasksMine.every((task) => task.isCompleted);
       if (allCompleted) {
         if (mounted) {
           await showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text("Sveikiname! 🎉"),
-              content: const Text(
-                  "Įvykdėte visas užduotis. Ką norėtumėte daryti toliau?"),
+              backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+              title: Text(
+                "Sveikiname! 🎉",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+              content: Text(
+                "Įvykdėte visas užduotis. Ką norėtumėte daryti toliau?",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.black,
+                ),
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -216,7 +222,14 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                     showCustomSnackBar(
                         context, "Tikslas sėkmingai užbaigtas ✅", true);
                   },
-                  child: const Text("Užbaigti tikslą"),
+                  child: Text(
+                    "Užbaigti tikslą",
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? Colors.lightGreen[300]
+                          : Colors.lightGreen,
+                    ),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
@@ -226,10 +239,19 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       type: 1,
                       onSave: (newTask) => _createTask(newTask),
                       goal: widget.goal,
-                      accentColor: Colors.lightBlueAccent,
+                      accentColor: isDarkMode
+                          ? Colors.lightGreen[300]!
+                          : Colors.lightGreen[400]!,
                     );
                   },
-                  child: const Text("Pridėti užduotį"),
+                  child: Text(
+                    "Pridėti užduotį",
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? Colors.lightGreen[300]
+                          : Colors.lightGreen,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -330,7 +352,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     for (var task in goalTasksFriend) {
       sum += task.points;
     }
-    return (sum / 2).toInt(); // Grąžina bendrą taškų skaičių
+    return (sum / 2).toInt();
   }
 
   int _userPoints(List<GoalTask> goalTasks) {
@@ -342,9 +364,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   }
 
   double _calculateProgress(List<GoalTask> goalTasks, int flag) {
-    if (widget.goal.sharedGoalModel.endPoints == 0)
-      return 0.0; // Apsauga nuo dalybos iš nulio
-    //int sum = _userPoints();
+    if (widget.goal.sharedGoalModel.endPoints == 0) return 0.0;
     return flag == 0
         ? _userPoints(goalTasks) / widget.goal.sharedGoalModel.endPoints
         : _allPoints() / widget.goal.sharedGoalModel.endPoints;
@@ -354,13 +374,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     if (isCompleted) {
       return (widget.goal.sharedGoalModel.endPoints / goalTasks.length).toInt();
     } else {
-      return 0; // Jei užduotis nebaigta, grąžiname 0 taškų
+      return 0;
     }
   }
 
   Future<void> _recalculateGoalTaskPoints() async {
     try {
-      // Perkraunam užduotis
       List<GoalTask> updatedTasks = await _goalTaskService.getGoalTasksForUser(
           widget.goal.sharedGoalModel.id, username);
 
@@ -400,10 +419,10 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   Future<void> _createTask(GoalTask task) async {
     try {
       await _goalTaskService.createGoalTaskEntry(task);
-      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
+      await _recalculateGoalTaskPoints();
       showCustomSnackBar(
           context, "Draugų tikslo užduotis sėkmingai pridėta ✅", true);
-      Navigator.pop(context); // Grįžta atgal
+      Navigator.pop(context);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -420,14 +439,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   Future<void> _deleteGoal() async {
     try {
       final goalService = SharedGoalService();
-      await goalService.deleteSharedGoalEntry(
-          widget.goal.sharedGoalModel.id); // Ištrinti įprotį iš serverio
-      // Gali prireikti papildomų veiksmų, pvz., navigacija į kitą ekraną po ištrynimo
+      await goalService.deleteSharedGoalEntry(widget.goal.sharedGoalModel.id);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
             builder: (context) => HabitsGoalsScreen(selectedIndex: 2)),
-      ); // Grįžti atgal į pagrindinį ekraną
+      );
       showCustomSnackBar(context, "Draugų tikslas sėkmingai ištrintas ✅", true);
     } catch (e) {
       showCustomSnackBar(context, "Klaida trinant draugų tikslą ❌", false);
@@ -437,10 +454,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   Future<void> _deleteTask(String taskId) async {
     try {
       final taskService = GoalTaskService();
-      await taskService
-          .deleteGoalTaskEntry(taskId); // Ištrinti įprotį iš serverio
-      await _recalculateGoalTaskPoints(); // Perskaičiuojame taškus
-      //Navigator.pop(context); // Grįžta atgal
+      await taskService.deleteGoalTaskEntry(taskId);
+      await _recalculateGoalTaskPoints();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -456,21 +471,16 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       resizeToAvoidBottomInset: false,
       body: Center(
@@ -479,13 +489,15 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
             SizedBox(height: topPadding),
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                ),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 20),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    width: 20,
+                  ),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -503,9 +515,10 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                         HabitsGoalsScreen(selectedIndex: 2)),
                               );
                             },
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.arrow_back_ios,
                               size: 30,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
                           ),
                           const Expanded(child: SizedBox()),
@@ -515,16 +528,20 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                             IconButton(
                               onPressed: () {
                                 CustomDialogs.showEditDialog(
-                                    context: context,
-                                    entityType: EntityType.sharedGoal,
-                                    entity: widget.goal,
-                                    accentColor: Colors.lightGreen[400] ??
-                                        Colors.lightGreen,
-                                    onSave: () {});
+                                  context: context,
+                                  entityType: EntityType.sharedGoal,
+                                  entity: widget.goal,
+                                  accentColor: isDarkMode
+                                      ? Colors.lightGreen[300]!
+                                      : Colors.lightGreen[400]!,
+                                  onSave: () {},
+                                );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.edit_outlined,
                                 size: 30,
+                                color:
+                                    isDarkMode ? Colors.white70 : Colors.black,
                               ),
                             ),
                           IconButton(
@@ -533,15 +550,18 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                 context: context,
                                 entityType: EntityType.sharedGoal,
                                 entity: widget.goal,
-                                accentColor: Colors.lightGreen,
+                                accentColor: isDarkMode
+                                    ? Colors.lightGreen[300]!
+                                    : Colors.lightGreen,
                                 onDelete: () {
-                                  _deleteGoal(); // Ištrinti tikslą
+                                  _deleteGoal();
                                 },
                               );
                             },
                             icon: Icon(
                               Icons.remove_circle_outline,
                               size: 30,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
                             ),
                           ),
                         ],
@@ -552,32 +572,44 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFbcd979),
+                          color: isDarkMode
+                              ? Colors.lightGreen[300]
+                              : Color(0xFFbcd979),
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
                       _buildBanner(),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Apie tikslą',
-                        style:
-                            TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: isDarkMode
+                              ? Colors.lightGreen[300]
+                              : Color(0xFFbcd979),
+                        ),
                       ),
                       Text(
                         widget.goal.goalType.description,
-                        style: const TextStyle(fontSize: 18),
-                        softWrap: true, // Leisti tekstui kelti į kitą eilutę
-                        overflow: TextOverflow.visible, // Nesutrumpinti teksto
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Trukmė: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             widget.goal.sharedGoalModel.endPoints == 7
@@ -600,27 +632,36 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                                         90
                                                     ? "3 mėnesiai"
                                                     : "6 mėnesiai",
-                            style: const TextStyle(
-                                fontSize: 18, color: Color(0xFFbcd979)),
-                          )
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.lightGreen[300]
+                                  : Color(0xFFbcd979),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text(
                             'Pradžios data: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             DateFormat('yyyy MMMM d', 'lt')
                                 .format(widget.goal.sharedGoalModel.startDate),
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFbcd979)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.lightGreen[300]
+                                  : Color(0xFFbcd979),
+                            ),
+                          ),
                         ],
                       ),
                       Row(
@@ -628,44 +669,58 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                         children: [
                           Text(
                             'Pabaigos data: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             DateFormat('yyyy MMMM d', 'lt')
                                 .format(widget.goal.sharedGoalModel.endDate),
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFbcd979)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.lightGreen[300]
+                                  : Color(0xFFbcd979),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text(
                             'Augaliukas: ',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
                           ),
                           Text(
                             plant.name,
                             style: TextStyle(
-                                fontSize: 18, color: Color(0xFFbcd979)),
-                          )
+                              fontSize: 18,
+                              color: isDarkMode
+                                  ? Colors.lightGreen[300]
+                                  : Color(0xFFbcd979),
+                            ),
+                          ),
                         ],
                       ),
-                      SizedBox(
-                        height: 20,
-                      ),
+                      SizedBox(height: 20),
                       if (_currentPage != 2) ...[
                         Text(
                           'Užduotys',
-                          style:
-                              TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
+                          style: TextStyle(
+                            fontSize: 25,
+                            color: isDarkMode
+                                ? Colors.lightGreen[300]
+                                : Color(0xFFbcd979),
+                          ),
                         ),
                       ],
-                      if (_currentPage == 0) // Mano progresas
+                      if (_currentPage == 0)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -674,7 +729,11 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                 child: Text(
                                   'Jūs dar neturite užduočių šiam tikslui.',
                                   style: TextStyle(
-                                      fontSize: 16, color: Colors.grey),
+                                    fontSize: 16,
+                                    color: isDarkMode
+                                        ? Colors.grey[600]
+                                        : Colors.grey,
+                                  ),
                                 ),
                               ),
                             ...goalTasksMine
@@ -696,6 +755,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                         _calculatePoints(
                                             isCompleted, goalTasksMine),
                                     onDelete: _deleteTask,
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                             ...goalTasksMine
@@ -716,11 +776,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                     calculatePoints: (isCompleted) =>
                                         _calculatePoints(
                                             isCompleted, goalTasksMine),
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                           ],
                         )
-                      else if (_currentPage == 1) // Draugo progresas
+                      else if (_currentPage == 1)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -729,7 +790,11 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                 child: Text(
                                   '$friendName dar neturi užduočių šiam tikslui.',
                                   style: TextStyle(
-                                      fontSize: 16, color: Colors.grey),
+                                    fontSize: 16,
+                                    color: isDarkMode
+                                        ? Colors.grey[600]
+                                        : Colors.grey,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -751,8 +816,8 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                     calculatePoints: (isCompleted) =>
                                         _calculatePoints(
                                             isCompleted, goalTasksFriend),
-                                    onDelete:
-                                        null, // Draugo užduočių trinti negalima
+                                    onDelete: null,
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                             ...goalTasksFriend
@@ -773,19 +838,24 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                     calculatePoints: (isCompleted) =>
                                         _calculatePoints(
                                             isCompleted, goalTasksFriend),
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                           ],
                         )
-                      else // Bendras progresas
+                      else
                         const SizedBox.shrink(),
                       if (_currentPage == 2 &&
                           widget.goal.sharedGoalModel.isCompletedUser1 &&
                           widget.goal.sharedGoalModel.isCompletedUser2) ...[
-                        const Text(
+                        Text(
                           'Įvykdėte bendrą tikslą!',
-                          style:
-                              TextStyle(fontSize: 25, color: Colors.lightGreen),
+                          style: TextStyle(
+                            fontSize: 25,
+                            color: isDarkMode
+                                ? Colors.lightGreen[300]
+                                : Colors.lightGreen,
+                          ),
                         ),
                       ],
                       if (_currentPage == 0) ...[
@@ -796,36 +866,42 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              if (goalTasksMine
-                                  .isNotEmpty) // Patikriname, ar yra užduočių
+                              if (goalTasksMine.isNotEmpty)
                                 ElevatedButton(
                                   onPressed: () async {
-                                    await _saveGoalStates(); // Pirma išsaugome duomenis
+                                    await _saveGoalStates();
                                     if (mounted) {
-                                      setState(
-                                          () {}); // Tada atnaujiname ekraną
+                                      setState(() {});
                                     }
                                   },
                                   style: ButtonStyle(
                                     backgroundColor: MaterialStateProperty
                                         .resolveWith<Color>(
                                       (Set<MaterialState> states) {
-                                        return const Color(0xFFECFFC5);
+                                        return isDarkMode
+                                            ? Colors.grey[800]!
+                                            : const Color(0xFFECFFC5);
                                       },
                                     ),
                                     foregroundColor: MaterialStateProperty.all(
-                                        Colors.lightGreen),
+                                      isDarkMode
+                                          ? Colors.white
+                                          : Colors.lightGreen,
+                                    ),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Išsaugoti',
-                                    style: TextStyle(fontSize: 15),
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.lightGreen,
+                                    ),
                                   ),
                                 ),
                             ],
                           ),
-                          const SizedBox(
-                            height: 10,
-                          ),
+                          const SizedBox(height: 10),
                           ElevatedButton(
                             onPressed: (widget.goal.sharedGoalModel.user1Id ==
                                     username)
@@ -835,8 +911,9 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                         CustomDialogs.showNewTaskDialog(
                                           context: context,
                                           goal: widget.goal,
-                                          accentColor: Colors.lightGreen[400] ??
-                                              Colors.lightGreen,
+                                          accentColor: isDarkMode
+                                              ? Colors.lightGreen[300]!
+                                              : Colors.lightGreen[400]!,
                                           onSave: (GoalTask task) {
                                             _createTask(task);
                                           },
@@ -848,8 +925,9 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                         CustomDialogs.showNewTaskDialog(
                                           context: context,
                                           goal: widget.goal,
-                                          accentColor: Colors.lightGreen[400] ??
-                                              Colors.lightGreen,
+                                          accentColor: isDarkMode
+                                              ? Colors.lightGreen[300]!
+                                              : Colors.lightGreen[400]!,
                                           onSave: (GoalTask task) {
                                             _createTask(task);
                                           },
@@ -857,10 +935,20 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                       },
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: const Color(
-                                  0xFFE4F7B4), // Šviesi mėlyna spalva
+                              backgroundColor: isDarkMode
+                                  ? (widget.goal.sharedGoalModel.user1Id ==
+                                          username
+                                      ? (widget.goal.sharedGoalModel
+                                              .isCompletedUser1
+                                          ? Colors.grey[700]
+                                          : Colors.white)
+                                      : (widget.goal.sharedGoalModel
+                                              .isCompletedUser2
+                                          ? Colors.grey[700]
+                                          : Colors.white))
+                                  : const Color(0xFFE4F7B4),
                               foregroundColor:
-                                  Colors.lightGreen, // Teksto ir ikonos spalva
+                                  isDarkMode ? Colors.black : Colors.lightGreen,
                             ),
                             child: Text(
                               widget.goal.sharedGoalModel.user1Id == username
@@ -873,26 +961,48 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                                       ? 'Pridėti užduotį'
                                       : 'Tikslas įvykdytas'),
                               style: TextStyle(
-                                  fontSize: 20, color: Colors.lightGreen),
+                                fontSize: 20,
+                                color: isDarkMode
+                                    ? (widget.goal.sharedGoalModel.user1Id ==
+                                            username
+                                        ? (!widget.goal.sharedGoalModel
+                                                .isCompletedUser1
+                                            ? Colors.lightGreen
+                                            : Colors.white70)
+                                        : (!widget.goal.sharedGoalModel
+                                                .isCompletedUser2
+                                            ? Colors.lightGreen
+                                            : Colors.white70))
+                                    : Colors.lightGreen,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
                         ],
                       ],
-                      const Text(
+                      Text(
                         'Statistika',
-                        style:
-                            TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: isDarkMode
+                              ? Colors.lightGreen[300]
+                              : Color(0xFFbcd979),
+                        ),
                       ),
                       const SizedBox(height: 10),
-                      //SizedBox(height: 200, child: _buildChart()),
                       if (_currentPage == 0) ...[
                         SizedBox(
                           height: 200,
                           child: goalTasksMine.isEmpty
-                              ? Text("Nėra progreso duomenų",
+                              ? Text(
+                                  "Nėra progreso duomenų",
                                   style: TextStyle(
-                                      fontSize: 16, color: Colors.grey))
+                                    fontSize: 16,
+                                    color: isDarkMode
+                                        ? Colors.grey[600]
+                                        : Colors.grey,
+                                  ),
+                                )
                               : GoalProgressChart(
                                   goal: widget.goal.sharedGoalModel,
                                   goalTasks: goalTasksMine,
@@ -902,9 +1012,15 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                         SizedBox(
                           height: 200,
                           child: goalTasksFriend.isEmpty
-                              ? Text("Nėra progreso duomenų",
+                              ? Text(
+                                  "Nėra progreso duomenų",
                                   style: TextStyle(
-                                      fontSize: 16, color: Colors.grey))
+                                    fontSize: 16,
+                                    color: isDarkMode
+                                        ? Colors.grey[600]
+                                        : Colors.grey,
+                                  ),
+                                )
                               : GoalProgressChart(
                                   goal: widget.goal.sharedGoalModel,
                                   goalTasks: goalTasksFriend,
@@ -915,9 +1031,15 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                           height: 200,
                           child:
                               (goalTasksMine.isEmpty && goalTasksFriend.isEmpty)
-                                  ? Text("Nėra progreso duomenų",
+                                  ? Text(
+                                      "Nėra progreso duomenų",
                                       style: TextStyle(
-                                          fontSize: 16, color: Colors.grey))
+                                        fontSize: 16,
+                                        color: isDarkMode
+                                            ? Colors.grey[600]
+                                            : Colors.grey,
+                                      ),
+                                    )
                                   : SharedGoalProgressChart(
                                       goal: widget.goal.sharedGoalModel,
                                       goalTasksMine: goalTasksMine,
@@ -941,7 +1063,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
   Widget _buildBanner() {
     List<String> titles = [
       'Mano progresas',
-      '${friendName} progresas', // friendName yra tavo draugo vardas
+      '${friendName} progresas',
       'Bendras progresas',
     ];
 
@@ -951,34 +1073,35 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
         widget.goal.sharedGoalModel.plantId,
         _userPoints(goalTasksMine),
         isPlantDeadMine,
+        isDarkMode,
       ),
       buildProgressIndicator(
         _calculateProgress(goalTasksFriend, 0),
         widget.goal.sharedGoalModel.plantId,
         _userPoints(goalTasksFriend),
         isPlantDeadFriend,
+        isDarkMode,
       ),
       buildProgressIndicator(
         _calculateProgress(goalTasksMine, 1),
         widget.goal.sharedGoalModel.plantId,
         _allPoints(),
         (isPlantDeadMine && isPlantDeadFriend) ? true : false,
+        isDarkMode,
       ),
     ];
 
     return Column(
       children: [
-        // Dinamiškas tekstas pagal pasirinktą puslapį
         Text(
           titles[_currentPage],
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF9CBF6E), // Slightly darker green
+            color: isDarkMode ? Colors.lightGreen[300] : Color(0xFF9CBF6E),
           ),
         ),
         SizedBox(height: 10),
-        // Progreso slankiklis (karuselė)
         Container(
           height: 270,
           width: double.infinity,
@@ -1001,13 +1124,14 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
           ),
         ),
         SizedBox(height: 10),
-        // Indikatoriai (taškai)
         SmoothPageIndicator(
           controller: _pageController,
           count: progressWidgets.length,
           effect: WormEffect(
-            dotColor: Colors.grey.shade400,
-            activeDotColor: Colors.lightGreen.shade600,
+            dotColor: isDarkMode ? Colors.grey[700]! : Colors.grey.shade400,
+            activeDotColor: isDarkMode
+                ? Colors.lightGreen[400]!
+                : Colors.lightGreen.shade600,
             dotHeight: 8,
             dotWidth: 8,
           ),

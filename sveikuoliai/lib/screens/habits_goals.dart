@@ -42,6 +42,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   final GoalService _goalService = GoalService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
   final FriendshipService _friendshipService = FriendshipService();
+  bool isDarkMode = false; // Temos būsena
 
   @override
   void initState() {
@@ -60,6 +61,8 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
           userVersion = sessionData['version'] ?? "Nežinoma";
           date = sessionData['date'] ??
               DateTime.now().toIso8601String().split('T').first;
+          isDarkMode =
+              sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
         },
       );
       await _fetchUserHabits(userUsername);
@@ -81,7 +84,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
 
   Future<void> _fetchUserHabits(String username) async {
     try {
-      // Gaukime vartotojo įpročius
       List<HabitInformation> habits =
           await _habitService.getUserHabits(username);
 
@@ -94,7 +96,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         }
       }
 
-      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userHabits = habits;
       });
@@ -105,7 +106,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
 
   Future<void> _fetchUserGoals(String username) async {
     try {
-      // Gaukime vartotojo įpročius
       List<GoalInformation> goals = await _goalService.getUserGoals(username);
 
       if (date != DateTime.now().toIso8601String().split('T').first) {
@@ -117,7 +117,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         }
       }
 
-      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userGoals = goals;
       });
@@ -128,7 +127,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
 
   Future<void> _fetchUserSharedGoals(String username) async {
     try {
-      // Gaukime vartotojo įpročius
       List<SharedGoalInformation> goals =
           await _sharedGoalService.getSharedUserGoals(username);
 
@@ -143,7 +141,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         }
       }
 
-      // Surikiuojame taip, kad patvirtinti būtų viršuje
       goals.sort((a, b) {
         if (a.sharedGoalModel.isApproved == b.sharedGoalModel.isApproved) {
           return 0;
@@ -151,7 +148,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         return a.sharedGoalModel.isApproved ? -1 : 1;
       });
 
-      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userSharedGoals = goals;
       });
@@ -194,34 +190,30 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight:
-            0, // Nustatome nulinį aukštį, nes tarpą valdysime topPadding
-        backgroundColor: const Color(0xFF8093F1),
+        toolbarHeight: 0,
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Column(
         children: [
-          SizedBox(height: topPadding), // Fiksuotas tarpas nuo viršaus
+          SizedBox(height: topPadding),
           Expanded(
-            // Balta sritis užpildo likusį plotą tarp fiksuotų tarpų
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: horizontalPadding),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDarkMode ? Colors.grey[900] : Colors.white,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white, width: 20),
+                border: Border.all(
+                  color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                  width: 20,
+                ),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -245,8 +237,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             padding: EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: selectedIndex == 0
-                                  ? Color(0xFFB388EB)
-                                  : Color(0xFFD9D9D9),
+                                  ? (isDarkMode
+                                      ? Colors.purple[500]
+                                      : Color(0xFFB388EB))
+                                  : (isDarkMode
+                                      ? Colors.grey[700]
+                                      : Color(0xFFD9D9D9)),
                               borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(30),
                                 bottomLeft: Radius.circular(30),
@@ -254,7 +250,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                               border: selectedIndex == 2
                                   ? Border(
                                       right: BorderSide(
-                                        color: Colors.grey[400] ?? Colors.grey,
+                                        color: isDarkMode
+                                            ? Colors.grey[600]!
+                                            : (Colors.grey[400] ?? Colors.grey),
                                         width: 1,
                                       ),
                                     )
@@ -266,8 +264,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: selectedIndex == 0
-                                      ? Colors.white
-                                      : Colors.black,
+                                      ? (isDarkMode
+                                          ? Colors.white
+                                          : Colors.white)
+                                      : (isDarkMode
+                                          ? Colors.grey[300]
+                                          : Colors.black),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -286,8 +288,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             padding: EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: selectedIndex == 1
-                                  ? Color(0xFF72ddf7)
-                                  : Color(0xFFD9D9D9),
+                                  ? (isDarkMode
+                                      ? Colors.lightBlue[600]
+                                      : Color(0xFF72ddf7))
+                                  : (isDarkMode
+                                      ? Colors.grey[700]
+                                      : Color(0xFFD9D9D9)),
                               borderRadius: BorderRadius.only(
                                 topRight: Radius.circular(30),
                                 bottomRight: Radius.circular(30),
@@ -295,7 +301,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                               border: selectedIndex == 2
                                   ? Border(
                                       left: BorderSide(
-                                        color: Colors.grey[400] ?? Colors.grey,
+                                        color: isDarkMode
+                                            ? Colors.grey[600]!
+                                            : (Colors.grey[400] ?? Colors.grey),
                                         width: 1,
                                       ),
                                     )
@@ -307,8 +315,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: selectedIndex == 1
-                                      ? Colors.white
-                                      : Colors.black,
+                                      ? (isDarkMode
+                                          ? Colors.white
+                                          : Colors.white)
+                                      : (isDarkMode
+                                          ? Colors.grey[300]
+                                          : Colors.black),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -332,8 +344,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         padding: EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: selectedIndex == 2
-                              ? Color(0xFFbcd979)
-                              : Color(0xFFD9D9D9),
+                              ? (isDarkMode
+                                  ? Colors.lightGreen[600]
+                                  : Color(0xFFbcd979))
+                              : (isDarkMode
+                                  ? Colors.grey[700]
+                                  : Color(0xFFD9D9D9)),
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Center(
@@ -342,8 +358,10 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               color: selectedIndex == 2
-                                  ? Colors.white
-                                  : Colors.black,
+                                  ? (isDarkMode ? Colors.white : Colors.white)
+                                  : (isDarkMode
+                                      ? Colors.grey[300]
+                                      : Colors.black),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -364,14 +382,13 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             ),
           ),
           const BottomNavigation(),
-          SizedBox(height: bottomPadding), // Fiksuotas tarpas nuo apačios
+          SizedBox(height: bottomPadding),
         ],
       ),
     );
   }
 
   Widget _buildHabits() {
-    // Atskiriame įpročius
     final activeHabits =
         userHabits.where((h) => !h.habitModel.isCompleted).toList();
     final completedHabits =
@@ -380,7 +397,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
-        // Viršutinė dalis su mygtuku
         Column(
           children: [
             Padding(
@@ -396,8 +412,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         child: Container(
                           color:
                               userVersion == 'free' && activeHabits.length >= 3
-                                  ? Colors.grey[600]
-                                  : Color(0xFFB388EB),
+                                  ? (isDarkMode
+                                      ? Colors.grey[800]
+                                      : Colors.grey[600])
+                                  : (isDarkMode
+                                      ? Colors.purple[700]
+                                      : Color(0xFFB388EB)),
                           height: 60,
                           width: 60,
                         ),
@@ -423,8 +443,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                               size: 80,
                               color: userVersion == 'free' &&
                                       activeHabits.length >= 3
-                                  ? Colors.grey[300]
-                                  : Color(0xFFEEE2FB)),
+                                  ? (isDarkMode
+                                      ? Colors.grey[600]
+                                      : Colors.grey[300])
+                                  : (isDarkMode
+                                      ? Colors.purple[200]
+                                      : Color(0xFFEEE2FB))),
                         ),
                       ),
                     ],
@@ -439,16 +463,20 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             'Pasiektas įpročių limitas',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             'Nori neribotų įpročių? Užsisakyk Gija PLIUS!',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: Colors.black54),
+                                color: isDarkMode
+                                    ? Colors.grey[500]
+                                    : Colors.black54),
                           ),
                         ],
                       ),
@@ -460,9 +488,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         children: [
                           Text(
                             'Pridėti naują',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
-                              color: Color(0xFFB388EB),
+                              color: isDarkMode
+                                  ? Colors.purple[200]
+                                  : const Color(0xFFB388EB),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -476,19 +506,15 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             const Divider(color: Color(0xFFD9D9D9), thickness: 1),
           ],
         ),
-
-        // Aktyvūs įpročiai
         ...activeHabits.map((habit) => _habitItem(habit)),
-
-        // Jeigu yra bent vienas užbaigtas įprotis, rodom sekciją
         if (completedHabits.isNotEmpty) ...[
-          const Center(
+          Center(
             child: Text(
               'Baigti įpročiai',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF7E5BB5), // A slightly darker shade
+                color: isDarkMode ? Colors.purple : Color(0xFF7E5BB5),
               ),
             ),
           ),
@@ -508,7 +534,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             builder: (context) => HabitScreen(habit: habit),
           ),
         );
-        ;
       },
       child: Column(
         children: [
@@ -517,22 +542,20 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Ikona / Paveikslėlis kairėje
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Apskritimo ikona fone
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: Colors.white,
+                      backgroundColor:
+                          isDarkMode ? Colors.purple[100] : Color(0xFFF4EDFC),
                       child: Icon(
                         Icons.circle,
-                        size: 80, // Ikonos dydis
-                        color: Color(0xFFF4EDFC), // Ikonos spalva
+                        size: 80,
+                        color:
+                            isDarkMode ? Colors.purple[100] : Color(0xFFF4EDFC),
                       ),
                     ),
-
-                    // Augalo paveiksliukas ant viršaus
                     ClipRRect(
                       borderRadius: BorderRadius.circular(50),
                       child: Image.asset(
@@ -550,7 +573,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                   ],
                 ),
                 const SizedBox(width: 10),
-                // Teksto dalis
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,16 +582,22 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           color: habit.habitModel.isCompleted
-                              ? Color(0xFF7E5BB5)
-                              : Color(0xFFB388EB),
+                              ? (isDarkMode
+                                  ? Colors.purple[400]
+                                  : Color(0xFF7E5BB5))
+                              : (isDarkMode
+                                  ? Colors.purple[200]
+                                  : Color(0xFFB388EB)),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         habit.habitType.description,
-                        style: const TextStyle(
-                            fontStyle: FontStyle.italic, color: Colors.black54),
+                        style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color:
+                                isDarkMode ? Colors.grey[400] : Colors.black54),
                       ),
                     ],
                   ),
@@ -577,19 +605,16 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               ],
             ),
           ),
-          // Linija po Row
           const Divider(
             color: Color(0xFFD9D9D9),
-            thickness: 1, // Linijos storis
+            thickness: 1,
           ),
         ],
       ),
     );
   }
 
-  // Tikslų turinys
   Widget _buildGoals() {
-    // Atskiriame įpročius
     final activeGoals =
         userGoals.where((g) => !g.goalModel.isCompleted).toList();
     final completedGoals =
@@ -605,31 +630,29 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Ikona / Paveikslėlis kairėje
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Fonas su apvaliais kampais
                       ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(50), // Mažesni apvalūs kampai
+                        borderRadius: BorderRadius.circular(50),
                         child: Container(
                           color:
                               userVersion == 'free' && activeGoals.length >= 3
-                                  ? Colors.grey[600]
-                                  : Color(0xFF72ddf7), // Pasirinkta spalva
-                          height: 60, // Fono aukštis
-                          width: 60, // Fono plotis
+                                  ? (isDarkMode
+                                      ? Colors.grey[800]
+                                      : Colors.grey[600])
+                                  : (isDarkMode
+                                      ? Colors.lightBlue[700]
+                                      : Color(0xFF72ddf7)),
+                          height: 60,
+                          width: 60,
                         ),
                       ),
-                      // Mygtukas
                       Material(
-                        color: Colors
-                            .transparent, // Nustatome, kad mygtuko fonas būtų skaidrus
-                        shape: CircleBorder(), // Apvalus mygtukas
+                        color: Colors.transparent,
+                        shape: CircleBorder(),
                         child: InkWell(
-                          borderRadius:
-                              BorderRadius.circular(50), // Apvalūs kampai
+                          borderRadius: BorderRadius.circular(50),
                           onTap:
                               userVersion == 'free' && activeGoals.length >= 3
                                   ? null
@@ -642,20 +665,21 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                                         ),
                                       );
                                     },
-                          child: Icon(
-                            Icons.add_circle,
-                            size: 80,
-                            color:
-                                userVersion == 'free' && activeGoals.length >= 3
-                                    ? Colors.grey[300]
-                                    : Color(0xFFD5F8FD), // Ikonos spalva
-                          ),
+                          child: Icon(Icons.add_circle,
+                              size: 80,
+                              color: userVersion == 'free' &&
+                                      activeGoals.length >= 3
+                                  ? (isDarkMode
+                                      ? Colors.grey[600]
+                                      : Colors.grey[300])
+                                  : (isDarkMode
+                                      ? Colors.lightBlue[200]
+                                      : Color(0xFFD5F8FD))),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(width: 10),
-                  // Teksto dalis
                   if (userVersion == 'free' && activeGoals.length >= 3) ...[
                     Expanded(
                       child: Column(
@@ -665,16 +689,20 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             'Pasiektas tikslų limitas',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             'Nori neribotų tikslų? Užsisakyk Gija PLIUS!',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: Colors.black54),
+                                color: isDarkMode
+                                    ? Colors.grey[500]
+                                    : Colors.black54),
                           ),
                         ],
                       ),
@@ -686,9 +714,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         children: [
                           Text(
                             'Pridėti naują',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
-                              color: Color(0xFF72ddf7),
+                              color: isDarkMode
+                                  ? Colors.lightBlue[200]
+                                  : const Color(0xFF72ddf7),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -699,24 +729,19 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 ],
               ),
             ),
-            // Linija po Row
-            const Divider(
-              color: Color(0xFFD9D9D9),
-              thickness: 1, // Linijos storis
-            ),
+            const Divider(color: Color(0xFFD9D9D9), thickness: 1),
           ],
         ),
         ...activeGoals.map((goal) => _goalItem(goal)),
-
-        // Jeigu yra bent vienas užbaigtas įprotis, rodom sekciją
         if (completedGoals.isNotEmpty) ...[
-          const Center(
+          Center(
             child: Text(
               'Baigti tikslai',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF3a8398), // A slightly darker shade
+                color:
+                    isDarkMode ? Colors.lightBlue.shade600 : Color(0xFF3a8398),
               ),
             ),
           ),
@@ -733,8 +758,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                GoalScreen(goal: goal), // Pakeisk į tinkamą puslapį
+            builder: (context) => GoalScreen(goal: goal),
           ),
         );
       },
@@ -745,22 +769,22 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Ikona / Paveikslėlis kairėje
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Apskritimo ikona fone
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: Colors.white,
+                      backgroundColor: isDarkMode
+                          ? Colors.lightBlue[100]
+                          : Color(0xFFE5FAFE),
                       child: Icon(
                         Icons.circle,
-                        size: 80, // Ikonos dydis
-                        color: Color(0xFFE5FAFE), // Ikonos spalva
+                        size: 80,
+                        color: isDarkMode
+                            ? Colors.lightBlue[100]
+                            : Color(0xFFE5FAFE),
                       ),
                     ),
-
-                    // Augalo paveiksliukas ant viršaus
                     ClipRRect(
                       borderRadius: BorderRadius.circular(50),
                       child: Image.asset(
@@ -776,7 +800,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                   ],
                 ),
                 const SizedBox(width: 10),
-                // Teksto dalis
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,8 +809,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           color: goal.goalModel.isCompleted
-                              ? Color(0xFF3a8398)
-                              : Color(0xFF72ddf7),
+                              ? (isDarkMode
+                                  ? Colors.lightBlue[400]
+                                  : Color(0xFF3a8398))
+                              : (isDarkMode
+                                  ? Colors.lightBlue[200]
+                                  : Color(0xFF72ddf7)),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -795,7 +822,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                       Text(
                         goal.goalType.description,
                         style: TextStyle(
-                            fontStyle: FontStyle.italic, color: Colors.black54),
+                            fontStyle: FontStyle.italic,
+                            color:
+                                isDarkMode ? Colors.grey[400] : Colors.black54),
                       ),
                     ],
                   ),
@@ -803,10 +832,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               ],
             ),
           ),
-          // Linija po Row
           const Divider(
             color: Color(0xFFD9D9D9),
-            thickness: 1, // Linijos storis
+            thickness: 1,
           ),
         ],
       ),
@@ -814,7 +842,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   }
 
   Widget _buildFriendsGoals(String username) {
-    // Atskiriame įpročius
     final activeSharedGoals = userSharedGoals
         .where((g) =>
             !g.sharedGoalModel.isCompletedUser1 &&
@@ -845,30 +872,28 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Ikona / Paveikslėlis kairėje
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Fonas su apvaliais kampais
                       ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(50), // Mažesni apvalūs kampai
+                        borderRadius: BorderRadius.circular(50),
                         child: Container(
                           color: friends.isEmpty
-                              ? Colors.grey[600]
-                              : Color(0xFFbcd979), // Pasirinkta spalva
-                          height: 60, // Fono aukštis
-                          width: 60, // Fono plotis
+                              ? (isDarkMode
+                                  ? Colors.grey[800]
+                                  : Colors.grey[600])
+                              : (isDarkMode
+                                  ? Colors.lightGreen[700]
+                                  : Color(0xFFbcd979)),
+                          height: 60,
+                          width: 60,
                         ),
                       ),
-                      // Mygtukas
                       Material(
-                        color: Colors
-                            .transparent, // Nustatome, kad mygtuko fonas būtų skaidrus
-                        shape: CircleBorder(), // Apvalus mygtukas
+                        color: Colors.transparent,
+                        shape: CircleBorder(),
                         child: InkWell(
-                          borderRadius:
-                              BorderRadius.circular(50), // Apvalūs kampai
+                          borderRadius: BorderRadius.circular(50),
                           onTap: friends.isEmpty
                               ? null
                               : () {
@@ -880,20 +905,23 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                                               username: username,
                                             )),
                                   );
-                                }, // Veiksmas paspaudus
+                                },
                           child: Icon(
                             Icons.add_circle,
-                            size: 80, // Ikonos dydis
+                            size: 80,
                             color: friends.isEmpty
-                                ? Colors.grey[300]
-                                : Color(0xFFE4F7B4), // Ikonos spalva
+                                ? (isDarkMode
+                                    ? Colors.grey[600]
+                                    : Colors.grey[300])
+                                : (isDarkMode
+                                    ? Colors.lightGreen[200]
+                                    : Color(0xFFE4F7B4)),
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(width: 10),
-                  // Teksto dalis
                   if (friends.isEmpty) ...[
                     Expanded(
                       child: Column(
@@ -903,16 +931,20 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                             'Pridėk draugą',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600],
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             'Pridėk draugą, kad galėtum sukurti bendrą tikslą!',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: Colors.black54),
+                                color: isDarkMode
+                                    ? Colors.grey[500]
+                                    : Colors.black54),
                           ),
                         ],
                       ),
@@ -924,9 +956,11 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         children: [
                           Text(
                             'Pridėti naują',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
-                              color: Color(0xFFbcd979),
+                              color: isDarkMode
+                                  ? Colors.lightGreen[200]
+                                  : const Color(0xFFbcd979),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -937,40 +971,34 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 ],
               ),
             ),
-            // Linija po Row
-            const Divider(
-              color: Color(0xFFD9D9D9),
-              thickness: 1, // Linijos storis
-            ),
+            const Divider(color: Color(0xFFD9D9D9), thickness: 1),
           ],
         ),
         ...activeSharedGoals.map((goal) => _friendsGoalItem(goal)),
-
-        // Jeigu yra bent vienas užbaigtas įprotis, rodom sekciją
         if (mineCompletedSharedGoals.isNotEmpty) ...[
-          const Center(
+          Center(
             child: Text(
               'Tik mano baigti tikslai su draugais',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF6E8F4A), // A slightly darker shade
+                color:
+                    isDarkMode ? Colors.lightGreen.shade600 : Color(0xFF6E8F4A),
               ),
             ),
           ),
           const Divider(color: Color(0xFFD9D9D9), thickness: 1),
           ...mineCompletedSharedGoals.map((goal) => _friendsGoalItem(goal)),
         ],
-
-        // Jeigu yra bent vienas užbaigtas įprotis, rodom sekciją
         if (completedSharedGoals.isNotEmpty) ...[
-          const Center(
+          Center(
             child: Text(
               'Baigti tikslai su draugais',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF6E8F4A), // A slightly darker shade
+                color:
+                    isDarkMode ? Colors.lightGreen.shade600 : Color(0xFF6E8F4A),
               ),
             ),
           ),
@@ -982,7 +1010,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   }
 
   Widget _friendsGoalItem(SharedGoalInformation goal) {
-    bool isApproved = goal.sharedGoalModel.isApproved; // Tavo tikrinama reikšmė
+    bool isApproved = goal.sharedGoalModel.isApproved;
 
     return GestureDetector(
       onTap: isApproved
@@ -994,7 +1022,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 ),
               );
             }
-          : null, // Jeigu isApproved false, negalima spustelėti
+          : null,
       child: Column(
         children: [
           Padding(
@@ -1002,24 +1030,28 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Ikona / Paveikslėlis kairėje
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Apskritimo ikona fone
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: Colors.white,
+                      backgroundColor: isApproved
+                          ? (isDarkMode
+                              ? Colors.lightGreen[100]
+                              : Color(0xFFECFFC5))
+                          : (isDarkMode ? Colors.grey[600] : Colors.grey[300]),
                       child: Icon(
                         Icons.circle,
-                        size: 80, // Ikonos dydis
+                        size: 80,
                         color: isApproved
-                            ? Color(0xFFECFFC5) // Jei patvirtinta, spalva kita
-                            : Colors
-                                .grey[300], // Jei nepatvirtinta, pilka spalva
+                            ? (isDarkMode
+                                ? Colors.lightGreen[100]
+                                : Color(0xFFECFFC5))
+                            : (isDarkMode
+                                ? Colors.grey[600]
+                                : Colors.grey[300]),
                       ),
                     ),
-                    // Augalo paveiksliukas ant viršaus
                     if (isApproved)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(50),
@@ -1039,7 +1071,6 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                   ],
                 ),
                 const SizedBox(width: 10),
-                // Teksto dalis
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1050,12 +1081,16 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                           fontSize: 18,
                           color: goal.sharedGoalModel.isCompletedUser1 ||
                                   goal.sharedGoalModel.isCompletedUser2
-                              ? Color(0xFF6E8F4A)
-                              : isApproved
-                                  ? Color(
-                                      0xFFbcd979) // Jei patvirtinta, spalva kita
-                                  : Colors
-                                      .grey, // Jei nepatvirtinta, pilka spalva
+                              ? (isDarkMode
+                                  ? Colors.lightGreen[400]
+                                  : Color(0xFF6E8F4A))
+                              : (isApproved
+                                  ? (isDarkMode
+                                      ? Colors.lightGreen[200]
+                                      : Color(0xFFbcd979))
+                                  : (isDarkMode
+                                      ? Colors.grey[400]
+                                      : Colors.grey)),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1065,8 +1100,8 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: isApproved
-                              ? Colors.black54
-                              : Colors.grey, // Jei nepatvirtinta, pilka spalva
+                              ? (isDarkMode ? Colors.grey[400] : Colors.black54)
+                              : (isDarkMode ? Colors.grey[500] : Colors.grey),
                         ),
                       ),
                       if (!isApproved) ...[
@@ -1074,11 +1109,12 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                           Row(
                             children: [
                               Transform.translate(
-                                offset: Offset(10,
-                                    0), // Shift the second button 10 pixels to the left
+                                offset: Offset(10, 0),
                                 child: IconButton(
                                   icon: Icon(Icons.cancel_outlined,
-                                      color: Colors.red.shade300),
+                                      color: isDarkMode
+                                          ? Colors.red[300]
+                                          : Colors.red.shade300),
                                   onPressed: () {
                                     _showDeclineSharedGoalDialog(goal);
                                   },
@@ -1086,7 +1122,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                               ),
                               IconButton(
                                 icon: Icon(Icons.check_circle,
-                                    color: Colors.green.shade400),
+                                    color: isDarkMode
+                                        ? Colors.lightGreen[300]
+                                        : Colors.lightGreen.shade400),
                                 onPressed: () {
                                   _showConfirmSharedGoalDialog(goal);
                                 },
@@ -1097,7 +1135,8 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                           Text(
                             'Draugas dar nepatvirtino',
                             style: TextStyle(
-                                color: Colors.grey,
+                                color:
+                                    isDarkMode ? Colors.grey[500] : Colors.grey,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold),
                           ),
@@ -1109,10 +1148,9 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               ],
             ),
           ),
-          // Linija po Row
           const Divider(
             color: Color(0xFFD9D9D9),
-            thickness: 1, // Linijos storis
+            thickness: 1,
           ),
         ],
       ),
@@ -1130,54 +1168,71 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
-                color: Color(0xFF6E8F4A),
+                color: isDarkMode ? Colors.lightGreen[200] : Color(0xFF6E8F4A),
               ),
               children: [
                 TextSpan(
                   text: "Bendro tikslo atsisakymas",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
                     fontSize: 18,
                   ),
                 ),
               ],
             ),
           ),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
           content: Text(
-              "Ar tikrai nenorite siekti šio tikslo kartu su draugu @${goal.sharedGoalModel.user1Id}?\nJei atsisakysite tikslas bus panaikintas."),
+              "Ar tikrai nenorite siekti šio tikslo kartu su draugu @${goal.sharedGoalModel.user1Id}?\nJei atsisakysite tikslas bus panaikintas.",
+              style:
+                  TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Uždaro dialogą
+                    Navigator.pop(context);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.purple[500]!.withOpacity(0.2)
+                        : Colors.deepPurple.withOpacity(0.2),
                   ),
-                  child: Text("Grįžti", style: TextStyle(fontSize: 18)),
+                  child: Text(
+                    "Grįžti",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDarkMode ? Colors.white70 : Colors.black,
+                    ),
+                  ),
                 ),
                 SizedBox(width: 20),
                 TextButton(
                   onPressed: () async {
-                    await _sharedGoalService.deleteSharedGoalEntry(
-                        goal.sharedGoalModel.id); // Ištrinti bendrą tikslą
-                    Navigator.of(context).pop(); // Uždaryti dialogą
+                    await _sharedGoalService
+                        .deleteSharedGoalEntry(goal.sharedGoalModel.id);
+                    Navigator.of(context).pop();
                     showCustomSnackBar(
                         context, "Bendro tikslo atsisakyta ✅", true);
                     setState(() {
-                      FocusScope.of(context).unfocus(); // Uždaro klaviatūrą
+                      FocusScope.of(context).unfocus();
                     });
-                    await _fetchUserFriends(
-                        userUsername); // Refresh the friends list
+                    await _fetchUserFriends(userUsername);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.red[500]!.withOpacity(0.2)
+                        : Colors.red.withOpacity(0.2),
                   ),
-                  child: Text("Atsisakyti",
-                      style: TextStyle(color: Colors.red, fontSize: 18)),
+                  child: Text(
+                    "Atsisakyti",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.red[300] : Colors.red,
+                      fontSize: 18,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1198,47 +1253,64 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
-                color: Color(0xFF6E8F4A),
+                color: isDarkMode ? Colors.green[200] : Color(0xFF6E8F4A),
               ),
               children: [
                 TextSpan(
                   text: "Bendro tikslo patvirtinimas",
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
                     fontSize: 18,
                   ),
                 ),
               ],
             ),
           ),
+          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
           content: Text(
-              "Ar norite vykdyti šį tikslą kartu su draugu @${goal.sharedGoalModel.user1Id}?"),
+              "Ar norite vykdyti šį tikslą kartu su draugu @${goal.sharedGoalModel.user1Id}?",
+              style:
+                  TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Uždaro dialogą
+                    Navigator.pop(context);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.purple[500]!.withOpacity(0.2)
+                        : Colors.deepPurple.withOpacity(0.2),
                   ),
-                  child: Text("Grįžti", style: TextStyle(fontSize: 18)),
+                  child: Text(
+                    "Grįžti",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDarkMode ? Colors.white70 : Colors.black,
+                    ),
+                  ),
                 ),
                 SizedBox(width: 20),
                 TextButton(
                   onPressed: () async {
-                    Navigator.pop(context); // Uždaro dialogą
-                    await _confirmSharedGoal(
-                        goal.sharedGoalModel); // Patvirtinti bendrą tikslą
+                    Navigator.pop(context);
+                    await _confirmSharedGoal(goal.sharedGoalModel);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Color(0xFF6E8F4A).withOpacity(0.2),
+                    backgroundColor: isDarkMode
+                        ? Colors.green[500]!.withOpacity(0.2)
+                        : Color(0xFF6E8F4A).withOpacity(0.2),
                   ),
-                  child: Text("Patvirtinti",
-                      style: TextStyle(color: Color(0xFF6E8F4A), fontSize: 18)),
+                  child: Text(
+                    "Patvirtinti",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.green[300] : Color(0xFF6E8F4A),
+                      fontSize: 18,
+                    ),
+                  ),
                 ),
               ],
             ),
