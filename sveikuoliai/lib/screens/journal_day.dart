@@ -474,43 +474,43 @@ Future<void> _saveJournalEntry() async {
                             //   ),
                             // ),
                             GestureDetector(
-/////rugiles
-                            onTap: () async {
-                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+// /////rugiles
+//                             onTap: () async {
+//                               final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
-                              if (pickedFile != null) {
-                                setState(() {
-                                  _selectedImage = File(pickedFile.path);  // Laikyti pasirinktą nuotrauką
-                                });
+//                               if (pickedFile != null) {
+//                                 setState(() {
+//                                   _selectedImage = File(pickedFile.path);  // Laikyti pasirinktą nuotrauką
+//                                 });
 
-                                // Jei reikia, galite įkelti nuotrauką į Firebase arba Drive
-                                final fileId = await DriveService().uploadImageAndGetFileId();
-                                if (fileId != null) {
-                                  // Galite saugoti fileId į Firestore arba naudoti toliau
-                                  print('Nuotrauka įkelta su ID: $fileId');
-                                }
-                              }
-                            },
-                            child: _selectedImage == null  // Jei nuotrauka nepasirinkta
-                                ? Container(
-                                    width: 200,
-                                    height: 150,
-                                    color: const Color(0xFFD9D9D9),
-                                    child: Center(
-                                      child: Text(
-                                        'Įkelti nuotrauką',
-                                        style: TextStyle(fontSize: 37, color: Colors.black),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  )
-                                : Image.file(
-                                    _selectedImage!,  // Rodyti įkeltą nuotrauką
-                                    fit: BoxFit.cover,
-                                    width: 200,
-                                    height: 150,
-                                  ),
-                          ),
+//                                 // Jei reikia, galite įkelti nuotrauką į Firebase arba Drive
+//                                 final fileId = await DriveService().uploadImageAndGetFileId();
+//                                 if (fileId != null) {
+//                                   // Galite saugoti fileId į Firestore arba naudoti toliau
+//                                   print('Nuotrauka įkelta su ID: $fileId');
+//                                 }
+//                               }
+//                             },
+//                             child: _selectedImage == null  // Jei nuotrauka nepasirinkta
+//                                 ? Container(
+//                                     width: 200,
+//                                     height: 150,
+//                                     color: const Color(0xFFD9D9D9),
+//                                     child: Center(
+//                                       child: Text(
+//                                         'Įkelti nuotrauką',
+//                                         style: TextStyle(fontSize: 37, color: Colors.black),
+//                                         textAlign: TextAlign.center,
+//                                       ),
+//                                     ),
+//                                   )
+//                                 : Image.file(
+//                                     _selectedImage!,  // Rodyti įkeltą nuotrauką
+//                                     fit: BoxFit.cover,
+//                                     width: 200,
+//                                     height: 150,
+//                                   ),
+//                           ),
 /////main
                               onTap: () async {
                                 await uploadJournalEntry(

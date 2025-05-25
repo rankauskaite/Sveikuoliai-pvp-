@@ -17,6 +17,8 @@ import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/goal_task_card.dart';
 import 'package:sveikuoliai/widgets/progress_indicator.dart';
+import 'package:sveikuoliai/widgets/sharedgoal_progress_graph.dart';
+
 
 class SharedGoalScreen extends StatefulWidget {
   final SharedGoalInformation goal;
@@ -703,7 +705,16 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
                       style: TextStyle(fontSize: 25, color: Color(0xFFbcd979)),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(height: 200, child: _buildChart()),
+                    // SizedBox(height: 200, child: _buildChart()),
+                    SizedBox(
+                      height: 200,
+                      child: goalTasksMine.isEmpty
+                          ? const Text("Nėra progreso duomenų")
+                          : SharedGoalProgressChart(
+                              sharedGoal: widget.goal.sharedGoalModel,
+                              goalTasks: goalTasksMine,
+                            ),
+                    ),
                   ],
                 ),
               ),
@@ -825,4 +836,11 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       ),
     );
   }
+
+//   Widget _buildSharedGoalProgressChart() {
+//   return GoalProgressChart(
+//     goal: widget.goal.sharedGoalModel, 
+//     goalTasks: goalTasks, 
+//   );
+// }
 }
