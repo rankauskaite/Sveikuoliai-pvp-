@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pay/pay.dart';
 import 'package:sveikuoliai/screens/home.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
@@ -9,6 +11,7 @@ class VersionScreen extends StatefulWidget {
   final String? screenName;
   const VersionScreen({Key? key, required this.username, this.screenName})
       : super(key: key);
+
   @override
   _VersionScreenState createState() => _VersionScreenState();
 }
@@ -18,23 +21,62 @@ class _VersionScreenState extends State<VersionScreen> {
   final UserService _userService = UserService();
   final AuthService _authService = AuthService();
   int currentPage = 0;
+  PaymentConfiguration? _paymentConfiguration; // Store the loaded configuration
 
   final List<double> cardHeights = [
     400, // Gija NULIS
     480, // Gija PLIUS
   ];
 
-  Future<void> saveSelectedPlan(String plan) async {
+  // Google Pay payment items
+  final _paymentItems = [
+    const PaymentItem(
+      label: 'Gija PLIUS',
+      amount: '5.00',
+      status: PaymentItemStatus.final_price,
+    )
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Load PaymentConfiguration asynchronously
+    _loadPaymentConfiguration();
+  }
+
+  Future<void> _loadPaymentConfiguration() async {
     try {
+      final config = await PaymentConfiguration.fromAsset('gpay_config.json');
+      setState(() {
+        _paymentConfiguration = config;
+      });
+    } catch (e) {
+      print('Error loading payment configuration: $e');
+      showCustomSnackBar(
+          context, '❌ Nepavyko įkelti mokėjimo konfigūracijos', false);
+    }
+  }
+
+  Future<void> saveSelectedPlan(String plan,
+      {Map<String, dynamic>? paymentResult}) async {
+    try {
+      if (plan == 'premium' && paymentResult != null) {
+        // Save payment information to Firestore
+        await FirebaseFirestore.instance.collection('payments').add({
+          'userId': widget.username,
+          'planId': plan,
+          'status': 'succeeded',
+          'amount': 5.00,
+          'timestamp': FieldValue.serverTimestamp(),
+          'paymentData': paymentResult,
+        });
+      }
       await _userService.updateUserVersion(widget.username, plan);
       _authService.updateUserSession('version', plan);
-      if (widget.screenName == 'Signup') {
-        String message = '✅ Registracija sėkminga!';
-        showCustomSnackBar(context, message, true);
-      } else {
-        String message = '✅ Planas pasirinktas sėkmingai!';
-        showCustomSnackBar(context, message, true);
-      }
+      String message = widget.screenName == 'Signup'
+          ? '✅ Registracija sėkminga!'
+          : '✅ Planas pasirinktas sėkmingai!';
+      showCustomSnackBar(context, message, true);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -125,7 +167,6 @@ Bendrauk
                 itemCount: 2,
                 itemBuilder: (context, index) {
                   return Align(
-                    alignment: Alignment.center,
                     child: buildDynamicCard(index),
                   );
                 },
@@ -280,26 +321,55 @@ Bendrauk
                     ],
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: buttonColor,
-                        shape: const StadiumBorder(),
-                        elevation: 3,
+                  if (planId == 'free')
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: buttonColor,
+                          shape: const StadiumBorder(),
+                          elevation: 3,
+                        ),
+                        onPressed: () async {
+                          setState(() {
+                            selectedPlan = planId;
+                          });
+                          await saveSelectedPlan(planId);
+                        },
+                        child: const Text(
+                          "Gauti",
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
                       ),
-                      onPressed: () async {
-                        setState(() {
-                          selectedPlan = planId;
-                        });
-                        await saveSelectedPlan(planId);
-                        // Gali naviguoti į kitą ekraną arba rodyti pranešimą
-                      },
-                      child: const Text("Gauti",
-                          style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
-                  ),
+                  if (planId == 'premium')
+                    _paymentConfiguration == null
+                        ? const Center(child: CircularProgressIndicator())
+                        : SizedBox(
+                            width: double.infinity,
+                            child: GooglePayButton(
+                              paymentConfiguration: _paymentConfiguration!,
+                              paymentItems: _paymentItems,
+                              type: GooglePayButtonType.buy,
+                              onPaymentResult:
+                                  (Map<String, dynamic> result) async {
+                                if (result['paymentMethodData'] != null) {
+                                  setState(() {
+                                    selectedPlan = planId;
+                                  });
+                                  await saveSelectedPlan(planId,
+                                      paymentResult: result);
+                                } else {
+                                  showCustomSnackBar(
+                                      context, '❌ Mokėjimas nepavyko', false);
+                                }
+                              },
+                              loadingIndicator: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          ),
                 ],
               ),
             ),

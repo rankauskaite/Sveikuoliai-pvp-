@@ -1,0 +1,33 @@
+{
+  "provider": "google_pay",
+  "data": {
+    "environment": "TEST",
+    "apiVersion": 2,
+    "apiVersionMinor": 0,
+    "merchantInfo": {
+      "merchantId": "BCR2DN7TRDQ7HXCR",
+      "merchantName": "Gija"
+    },
+    "allowedPaymentMethods": [
+      {
+        "type": "CARD",
+        "parameters": {
+          "allowedAuthMethods": ["PAN_ONLY", "CRYPTOGRAM_3DS"],
+          "allowedCardNetworks": ["VISA", "MASTERCARD"]
+        },
+        "tokenizationSpecification": {
+          "type": "PAYMENT_GATEWAY",
+          "parameters": {
+            "gateway": "example",
+            "gatewayMerchantId": "exampleGatewayMerchantId"
+          }
+        }
+      }
+    ],
+    "transactionInfo": {
+      "totalPriceStatus": "FINAL",
+      "totalPrice": "5.00",
+      "currencyCode": "EUR"
+    }
+  }
+}

@@ -65,6 +65,8 @@ dependencies:
   video_player: ^2.7.2
   smooth_page_indicator: ^1.1.0
   flutter_svg: ^2.0.7
+  crypto: ^3.0.3
+  pay: ^3.2.1
 
 dev_dependencies:
   flutter_test:
@@ -124,6 +126,7 @@ flutter:
     - assets/images/versijos_keitimas.jpg
     - assets/videos/
     - assets/icons/google_logo.svg
+    - assets/gpay_config.json
     
   # To add assets to your application, add an assets section, like this:
   # assets:
