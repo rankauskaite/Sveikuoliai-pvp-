@@ -41,6 +41,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     'assets/images/avatarai/8.png',
     'assets/images/avatarai/9.png',
     'assets/images/avatarai/10.png',
+    'assets/images/avatarai/11.png',
+    'assets/images/avatarai/12.png',
+    'assets/images/avatarai/13.png',
+    'assets/images/avatarai/14.png',
   ];
 
   @override
@@ -202,7 +206,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                 ),
                               ),
                               Text(
-                                'Keisti profilio\nnuotrauką',
+                                'Keisti profilio\navatarą',
                                 style: TextStyle(
                                   fontSize: 24,
                                   color: Colors.black,
@@ -390,7 +394,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(
-            'Pasirink profilio ikoną',
+            'Pasirink profilio avatarą',
             style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
           ),
           backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
