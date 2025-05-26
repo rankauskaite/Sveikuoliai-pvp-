@@ -1,85 +1,43 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sveikuoliai/services/firebase_storage_service.dart';
+import 'package:sveikuoliai/services/backblaze_service.dart';
 import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/models/journal_model.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
-import 'package:sveikuoliai/services/drive_services.dart';
-import 'package:sveikuoliai/services/firebase_storage_service.dart';
 
-// Future<void> uploadJournalEntry() async {
-//   final user = FirebaseAuth.instance.currentUser;
-//   if (user == null) {
-//     print('Vartotojas neprisijungęs.');
-//     return;
-//   }
-
-//   String? photoUrl;
-
-//   final providers = user.providerData.map((e) => e.providerId).toList();
-//   if (providers.contains('google.com')) {
-//     final fileId = await DriveService().uploadImageAndGetFileId();
-//     if (fileId != null) {
-//       photoUrl = 'https://drive.google.com/uc?export=view&id=$fileId';
-//     }
-//   } else {
-//     photoUrl = await FirebaseStorageService().uploadImageAndGetUrl();
-//   }
-
-//   if (photoUrl == null) {
-//     print('Nepavyko įkelti nuotraukos.');
-//     return;
-//   }
-
-//   final journalEntry = JournalModel(
-//     id: FirebaseFirestore.instance.collection('journal').doc().id,
-//     userId: user.uid,
-//     note: '', // gali keisti pagal UI
-//     mood: MoodType.neutrali, // keisi pagal vartotojo pasirinkimą
-//     photoUrl: photoUrl,
-//     date: DateTime.now(),
-//   );
-
-//   await JournalService().createJournalEntry(journalEntry);
-//   print('Įrašas sukurtas su nuotrauka.');
-// }
-Future<void> uploadJournalEntry({
+Future<String?> uploadJournalEntry({
+  required String id,
+  required String username,
   required DateTime date,
   required String note,
   required MoodType mood,
+  File? photoFile,
 }) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) {
     print('Vartotojas neprisijungęs.');
-    return;
+    return null;
   }
 
   String? photoUrl;
-
-  final providers = user.providerData.map((e) => e.providerId).toList();
-  if (providers.contains('google.com')) {
-    final fileId = await DriveService().uploadImageAndGetFileId();
-    if (fileId != null) {
-      photoUrl = 'https://drive.google.com/uc?export=view&id=$fileId';
+  if (photoFile != null) {
+    photoUrl = await BackblazeService().uploadImageAndGetUrl(photoFile, username);
+    if (photoUrl == null) {
+      print('Nepavyko įkelti nuotraukos.');
+      return null;
     }
-  } else {
-    photoUrl = await FirebaseStorageService().uploadImageAndGetUrl();
-  }
-
-  if (photoUrl == null) {
-    print('Nepavyko įkelti nuotraukos.');
-    return;
   }
 
   final journalEntry = JournalModel(
-    id: FirebaseFirestore.instance.collection('journal').doc().id,
+    id: id,
     userId: user.uid,
     note: note,
     mood: mood,
-    photoUrl: photoUrl,
+    photoUrl: photoUrl ?? '',
     date: date,
   );
 
   await JournalService().createJournalEntry(journalEntry);
-  print('Įrašas sukurtas su nuotrauka.');
+  print('Įrašas sukurtas su nuotrauka: $photoUrl');
+  return photoUrl; // Grąžiname photoUrl
 }
