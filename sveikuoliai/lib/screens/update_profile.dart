@@ -36,6 +36,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     'assets/images/avatarai/3.png',
     'assets/images/avatarai/4.png',
     'assets/images/avatarai/5.png',
+    'assets/images/avatarai/6.png',
+    'assets/images/avatarai/7.png',
+    'assets/images/avatarai/8.png',
+    'assets/images/avatarai/9.png',
+    'assets/images/avatarai/10.png',
   ];
 
   @override
