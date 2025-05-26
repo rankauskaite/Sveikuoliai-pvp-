@@ -261,31 +261,52 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text.rich(
-            TextSpan(
-              text: "${friend.name}\n",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
-              ),
-              children: [
+          contentPadding: EdgeInsets.all(16.0), // Standartinis padding
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              (friend.iconUrl == null || friend.iconUrl!.isEmpty)
+                  ? Icon(
+                      Icons.account_circle,
+                      size: 100,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[800],
+                    )
+                  : Image.asset(
+                      friend.iconUrl!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+              SizedBox(height: 10),
+              Text.rich(
                 TextSpan(
-                  text: "Ar tikrai norite pašalinti šį draugą?",
+                  text: "${friend.name}\n",
                   style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    color: isDarkMode ? Colors.white70 : Colors.black,
-                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
                   ),
+                  children: [
+                    TextSpan(
+                      text: "Ar tikrai norite pašalinti šį draugą?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        color: isDarkMode ? Colors.white70 : Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
+                style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ],
           ),
           backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-          content: Text(
-            "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
-            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -306,7 +327,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     "Ne",
                     style: TextStyle(
                       fontSize: 18,
-                      color: isDarkMode ? Colors.white70 : Colors.black,
+                      color: isDarkMode ? Colors.white70 : Colors.deepPurple,
                     ),
                   ),
                 ),

@@ -863,31 +863,53 @@ class _FriendsScreenState extends State<FriendsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text.rich(
-            TextSpan(
-              text: "${friendship.friend.name}\n",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
-              ),
-              children: [
+          contentPadding: EdgeInsets.all(16.0), // Standartinis padding
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              (friendship.friend.iconUrl == null ||
+                      friendship.friend.iconUrl!.isEmpty)
+                  ? Icon(
+                      Icons.account_circle,
+                      size: 100,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[800],
+                    )
+                  : Image.asset(
+                      friendship.friend.iconUrl!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+              SizedBox(height: 10),
+              Text.rich(
                 TextSpan(
-                  text: "Draugystės atsisakymas",
+                  text: "${friendship.friend.name}\n",
                   style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    color: isDarkMode ? Colors.white70 : Colors.black,
-                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
                   ),
+                  children: [
+                    TextSpan(
+                      text: "Draugystės atsisakymas",
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        color: isDarkMode ? Colors.white70 : Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Ar tikrai norite atsisakyti šios draugystės?",
+                style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ],
           ),
           backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-          content: Text(
-            "Ar tikrai norite atsisakyti šios draugystės?",
-            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -908,7 +930,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     "Grįžti",
                     style: TextStyle(
                       fontSize: 18,
-                      color: isDarkMode ? Colors.white70 : Colors.black,
+                      color: isDarkMode ? Colors.white70 : Colors.deepPurple,
                     ),
                   ),
                 ),
@@ -951,31 +973,53 @@ class _FriendsScreenState extends State<FriendsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text.rich(
-            TextSpan(
-              text: "${friendship.friend.name}\n",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
-              ),
-              children: [
+          contentPadding: EdgeInsets.all(16.0), // Standartinis padding
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              (friendship.friend.iconUrl == null ||
+                      friendship.friend.iconUrl!.isEmpty)
+                  ? Icon(
+                      Icons.account_circle,
+                      size: 100,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[800],
+                    )
+                  : Image.asset(
+                      friendship.friend.iconUrl!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+              SizedBox(height: 10),
+              Text.rich(
                 TextSpan(
-                  text: "Draugystės patvirtinimas",
+                  text: "${friendship.friend.name}\n",
                   style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    color: isDarkMode ? Colors.white70 : Colors.black,
-                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
                   ),
+                  children: [
+                    TextSpan(
+                      text: "Draugystės patvirtinimas",
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        color: isDarkMode ? Colors.white70 : Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Ar norite patvirtinti šią draugystę?",
+                style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ],
           ),
           backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-          content: Text(
-            "Ar norite patvirtinti šią draugystę?",
-            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -996,7 +1040,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     "Grįžti",
                     style: TextStyle(
                       fontSize: 18,
-                      color: isDarkMode ? Colors.white70 : Colors.black,
+                      color: isDarkMode ? Colors.white70 : Colors.deepPurple,
                     ),
                   ),
                 ),
@@ -1033,31 +1077,53 @@ class _FriendsScreenState extends State<FriendsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text.rich(
-            TextSpan(
-              text: "${friendsList[index].friend.name}\n",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
-              ),
-              children: [
+          contentPadding: EdgeInsets.all(16.0), // Standartinis padding
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              (friendsList[index].friend.iconUrl == null ||
+                      friendsList[index].friend.iconUrl!.isEmpty)
+                  ? Icon(
+                      Icons.account_circle,
+                      size: 100,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[800],
+                    )
+                  : Image.asset(
+                      friendsList[index].friend.iconUrl!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+              SizedBox(height: 10),
+              Text.rich(
                 TextSpan(
-                  text: "Ar tikrai norite pašalinti šį draugą?",
+                  text: "${friendsList[index].friend.name}\n",
                   style: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    color: isDarkMode ? Colors.white70 : Colors.black,
-                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
                   ),
+                  children: [
+                    TextSpan(
+                      text: "Ar tikrai norite pašalinti šį draugą?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        color: isDarkMode ? Colors.white70 : Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
+                style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black),
+              ),
+            ],
           ),
           backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-          content: Text(
-            "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
-            style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-          ),
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1078,7 +1144,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     "Ne",
                     style: TextStyle(
                       fontSize: 18,
-                      color: isDarkMode ? Colors.white70 : Colors.black,
+                      color: isDarkMode ? Colors.white70 : Colors.deepPurple,
                     ),
                   ),
                 ),
