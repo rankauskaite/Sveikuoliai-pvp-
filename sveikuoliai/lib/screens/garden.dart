@@ -24,6 +24,7 @@ class GardenScreen extends StatefulWidget {
 class _GardenScreenState extends State<GardenScreen> {
   final AuthService _authService = AuthService();
   bool friendFlag = false;
+  bool isDarkMode = false; // Temos būsena
   List<Map<String, dynamic>> userHabits = [];
   List<Map<String, dynamic>> userGoals = [];
   List<Map<String, dynamic>> userSharedGoals = [];
@@ -49,9 +50,14 @@ class _GardenScreenState extends State<GardenScreen> {
     'assets/images/salos/sala_draugu.png',
   ];
   final List<Color> backgroundColors = [
-    Color(0xFFB388EB), // Spalva pirmam puslapiui
-    Color(0xFF27B1D2), // Spalva antram puslapiui
-    Color(0xFF5A741E), // Spalva trečiam puslapiui
+    Color(0xFFB388EB),
+    Color(0xFF27B1D2),
+    Color(0xFF5A741E),
+  ];
+  final List<Color> backgroundColorsDark = [
+    Color(0xFF8A4AF3),
+    Color(0xFF1A91C0),
+    Color(0xFF7CA942),
   ];
 
   List<Positioned> _generatePlants(List<Map<String, dynamic>> sourceList) {
@@ -124,6 +130,7 @@ class _GardenScreenState extends State<GardenScreen> {
       }
       setState(() {
         friendFlag = flag;
+        isDarkMode = sessionData['darkMode'] == 'true'; // Gauname darkMode
         if (flag) {
           subtitles = [
             'Draugo ${widget.user.name}\nįpročių sodą puošia\naugaliukai',
@@ -142,14 +149,8 @@ class _GardenScreenState extends State<GardenScreen> {
 
   Future<void> _fetchUserHabits(String username) async {
     try {
-      // Gaukime vartotojo įpročius
       List<HabitInformation> habits =
           await _habitService.getUserHabits(username);
-
-      //List<HabitInformation> activeHabits =
-      //habits.where((habit) => !habit.habitModel.isCompleted).toList();
-
-      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userHabits = habits
             .map((habit) => {
@@ -166,12 +167,7 @@ class _GardenScreenState extends State<GardenScreen> {
 
   Future<void> _fetchUserGoals(String username) async {
     try {
-      // Gaukime vartotojo įpročius
       List<GoalInformation> goals = await _goalService.getUserGoals(username);
-      // List<GoalInformation> activeGoals =
-      //     goals.where((goal) => !goal.goalModel.isCompleted).toList();
-
-      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userGoals = goals
             .map((goal) => {
@@ -188,13 +184,10 @@ class _GardenScreenState extends State<GardenScreen> {
 
   Future<void> _fetchUserSharedGoals(String username) async {
     try {
-      // Gaukime vartotojo įpročius
       List<SharedGoalInformation> goals =
           await _sharedGoalService.getSharedUserGoals(username);
       List<SharedGoalInformation> activeGoals =
           goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
-
-      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userSharedGoals = activeGoals
             .map((goal) => {
@@ -214,21 +207,16 @@ class _GardenScreenState extends State<GardenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Fiksuoti tarpai
-    const double topPadding = 25.0; // Tarpas nuo viršaus
-    const double horizontalPadding = 20.0; // Tarpai iš šonų
-    const double bottomPadding =
-        20.0; // Tarpas nuo apačios (virš BottomNavigation)
-
-    // Gauname ekrano matmenis
-    //final Size screenSize = MediaQuery.of(context).size;
+    const double topPadding = 25.0;
+    const double horizontalPadding = 20.0;
+    const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8093F1),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: const Color(0xFF8093F1),
+        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Stack(
         children: [
@@ -241,9 +229,13 @@ class _GardenScreenState extends State<GardenScreen> {
                     margin: const EdgeInsets.symmetric(
                         horizontal: horizontalPadding),
                     decoration: BoxDecoration(
-                      color: Color(0xFFE7EDD9),
+                      color: isDarkMode ? Colors.grey[600] : Color(0xFFE7EDD9),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Color(0xFFE7EDD9), width: 20),
+                      border: Border.all(
+                        color:
+                            isDarkMode ? Colors.grey[800]! : Color(0xFFE7EDD9),
+                        width: 20,
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -254,16 +246,22 @@ class _GardenScreenState extends State<GardenScreen> {
                               onPressed: () {
                                 Navigator.pop(context);
                               },
-                              icon: const Icon(Icons.arrow_back_ios, size: 30),
+                              icon: Icon(
+                                Icons.arrow_back_ios,
+                                size: 30,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Container(
-                          width: 250, // fiksuotas plotis
-                          height: 120, // fiksuotas aukštis
+                          width: 250,
+                          height: 120,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFC2DD84),
+                            color: isDarkMode
+                                ? Colors.grey[800]
+                                : const Color(0xFFC2DD84),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Column(
@@ -277,25 +275,27 @@ class _GardenScreenState extends State<GardenScreen> {
                                       style: TextStyle(
                                         fontSize: 45,
                                         fontWeight: FontWeight.bold,
-                                        color: backgroundColors[_currentPage],
-                                        height:
-                                            1.2, // sumažintas tarpas tarp eilučių
+                                        color: isDarkMode
+                                            ? backgroundColorsDark[_currentPage]
+                                            : backgroundColors[_currentPage],
+                                        height: 1.2,
                                       ),
                                     ),
                                     TextSpan(
                                       text: titlesBottom[_currentPage],
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 45,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        height:
-                                            1.0, // dar mažesnis tarpas šiai eilutei, jei norisi
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : Colors.white,
+                                        height: 1.0,
                                       ),
                                     ),
                                   ],
                                 ),
                                 textAlign: TextAlign.center,
-                              )
+                              ),
                             ],
                           ),
                         ),
@@ -307,9 +307,12 @@ class _GardenScreenState extends State<GardenScreen> {
                               child: Text(
                                 subtitles[_currentPage],
                                 textAlign: TextAlign.right,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black,
                                 ),
                               ),
                             ),
@@ -318,7 +321,9 @@ class _GardenScreenState extends State<GardenScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC2DD84),
+                                color: isDarkMode
+                                    ? Colors.grey[800]
+                                    : const Color(0xFFC2DD84),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
@@ -326,7 +331,9 @@ class _GardenScreenState extends State<GardenScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 35,
-                                  color: backgroundColors[_currentPage],
+                                  color: isDarkMode
+                                      ? backgroundColorsDark[_currentPage]
+                                      : backgroundColors[_currentPage],
                                 ),
                               ),
                             ),
@@ -336,19 +343,18 @@ class _GardenScreenState extends State<GardenScreen> {
                         const SizedBox(height: 50),
                         Stack(
                           children: [
-                            // Kiti Stack elementai (pvz., fonas)
                             Align(
                               alignment: Alignment.bottomCenter,
                               child: SizedBox(
-                                width: 300, // page view plotis
-                                height: 250, // page view aukštis
+                                width: 300,
+                                height: 250,
                                 child: PageView.builder(
                                   controller: _pageController,
                                   itemCount:
                                       widget.user.version == 'premium' ? 3 : 2,
                                   onPageChanged: (index) {
                                     if (widget.user.version == 'free' &&
-                                        index == 2) return; // ignoruok
+                                        index == 2) return;
                                     setState(() {
                                       _currentPage = index;
                                     });
@@ -363,7 +369,7 @@ class _GardenScreenState extends State<GardenScreen> {
                                         'premium') {
                                       currentData = userSharedGoals;
                                     } else {
-                                      return const SizedBox(); // tuščias widget, jei free bando pasiekti 2 puslapį
+                                      return const SizedBox();
                                     }
 
                                     return Stack(
@@ -386,9 +392,12 @@ class _GardenScreenState extends State<GardenScreen> {
                         SmoothPageIndicator(
                           controller: _pageController,
                           count: widget.user.version == 'premium' ? 3 : 2,
-                          effect: const WormEffect(
-                            dotColor: Colors.grey,
-                            activeDotColor: Colors.deepPurple,
+                          effect: WormEffect(
+                            dotColor:
+                                isDarkMode ? Colors.grey[700]! : Colors.grey,
+                            activeDotColor: isDarkMode
+                                ? Colors.purple[300]!
+                                : Colors.deepPurple,
                             dotHeight: 10,
                             dotWidth: 10,
                           ),
