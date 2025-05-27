@@ -8,7 +8,6 @@ import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
-import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -29,8 +28,12 @@ class SharedGoalScreen extends StatefulWidget {
 
 class _SharedGoalPageState extends State<SharedGoalScreen> {
   PlantModel plant = PlantModel(
-      id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
-  final PlantService _plantService = PlantService();
+    id: '',
+    name: '',
+    points: 0,
+    photoUrl: '',
+    duration: 0,
+  );
   final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
   final AuthService _authService = AuthService();
@@ -100,15 +103,13 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
 
   Future<void> _fetchPlantData() async {
     try {
-      PlantModel? fetchedPlant = await _plantService
-          .getPlantEntry(widget.goal.sharedGoalModel.plantId);
-      if (fetchedPlant != null) {
-        setState(() {
-          plant = fetchedPlant;
-        });
-      } else {
-        throw Exception("Gautas `null` augalo objektas");
-      }
+      List<PlantModel> plants = await _authService.getPlantsFromSession();
+      PlantModel? fetchedPlant = plants.firstWhere(
+        (p) => p.id == widget.goal.sharedGoalModel.plantId,
+      );
+      setState(() {
+        plant = fetchedPlant;
+      });
     } catch (e) {
       String message = 'Klaida gaunant augalo duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -157,6 +158,17 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       });
       await _sharedGoalService
           .updateSharedGoalEntry(widget.goal.sharedGoalModel);
+      // Atnaujiname sesiją su naujausiais duomenimis
+      List<SharedGoalInformation> goals =
+          await _authService.getSharedGoalsFromSession();
+      int goalIndex = goals.indexWhere(
+          (g) => g.sharedGoalModel.id == widget.goal.sharedGoalModel.id);
+      if (goalIndex != -1) {
+        goals[goalIndex] = widget.goal; // Atnaujiname esamą tikslą
+      } else {
+        goals.add(widget.goal); // Jei tikslo dar nėra, pridedame
+      }
+      await _authService.saveSharedGoalsToSession(goals);
       bool isDeadFriend = isPlantDead(lastDoneDateFriend, false);
       setState(() {
         widget.goal.sharedGoalModel.isPlantDeadUser2 = isDeadFriend;
@@ -164,6 +176,12 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
       });
       await _sharedGoalService
           .updateSharedGoalEntry(widget.goal.sharedGoalModel);
+      if (goalIndex != -1) {
+        goals[goalIndex] = widget.goal; // Atnaujiname esamą tikslą
+      } else {
+        goals.add(widget.goal); // Jei tikslo dar nėra, pridedame
+      }
+      await _authService.saveSharedGoalsToSession(goals);
     } catch (e) {
       showCustomSnackBar(
           context, 'Klaida kraunant draugų tikslo užduotis ❌', false);
@@ -440,6 +458,7 @@ class _SharedGoalPageState extends State<SharedGoalScreen> {
     try {
       final goalService = SharedGoalService();
       await goalService.deleteSharedGoalEntry(widget.goal.sharedGoalModel.id);
+      await _authService.removeSharedGoalFromSession(widget.goal);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

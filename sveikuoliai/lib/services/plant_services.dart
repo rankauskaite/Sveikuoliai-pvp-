@@ -36,7 +36,7 @@ class PlantService {
     try {
       DocumentSnapshot doc = await plantCollection.doc(id).get();
       if (!doc.exists || doc.data() == null) return null;
-      return PlantModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+      return PlantModel.fromJson(doc.data() as Map<String, dynamic>);
     } catch (e) {
       print("klaida: $e");
       return null;
@@ -47,11 +47,17 @@ class PlantService {
   Future<List<PlantModel>> getAllPlants() async {
     try {
       QuerySnapshot snapshot = await plantCollection.get();
-      return snapshot.docs.map((doc) {
-        return PlantModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+      List<PlantModel> plants = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return PlantModel.fromJson({
+          'id': doc.id, // Priskiriame Firestore dokumento ID
+          ...data,
+        });
       }).toList();
+
+      return plants;
     } catch (e) {
-      print("klaida: $e");
+      print("Klaida gaunant augalus: $e");
       return [];
     }
   }
@@ -90,18 +96,18 @@ class PlantService {
   }
 
   // Įrašau į database
-  Future<void> fillDefaultPlants() async {
-    try {
-      for (var plant in PlantModel.defaultPlants) {
-        bool exists = await doesPlantExist(plant.id);
-        if (!exists) {
-          await createPlantEntry(plant);
-          print("Pridėtas augalas: ${plant.name}");
-        }
-      }
-      print("augalai pridėti");
-    } catch (e) {
-      print("klaida: $e");
-    }
-  }
+  // Future<void> fillDefaultPlants() async {
+  //   try {
+  //     for (var plant in PlantModel.defaultPlants) {
+  //       bool exists = await doesPlantExist(plant.id);
+  //       if (!exists) {
+  //         await createPlantEntry(plant);
+  //         print("Pridėtas augalas: ${plant.name}");
+  //       }
+  //     }
+  //     print("augalai pridėti");
+  //   } catch (e) {
+  //     print("klaida: $e");
+  //   }
+  // }
 }

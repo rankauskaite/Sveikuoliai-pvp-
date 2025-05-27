@@ -30,6 +30,7 @@ class UserModel {
   /// Konvertuoja į JSON formatą Firestore išsaugojimui
   Map<String, dynamic> toJson() {
     return {
+      'username': username,
       'name': name,
       'email': email,
       'version': version,
@@ -39,7 +40,7 @@ class UserModel {
       'darkMode': darkMode,
       'menstrualLength': menstrualLength,
       'iconUrl': iconUrl,
-      'createdAt': Timestamp.fromDate(createdAt), // Firestore Timestamp
+      'createdAt': createdAt.toIso8601String(), // Konvertuojame į String
     };
   }
 
@@ -53,7 +54,8 @@ class UserModel {
       version: json['version'] ?? '',
       createdAt: json['createdAt'] is Timestamp
           ? (json['createdAt'] as Timestamp).toDate()
-          : DateTime.now(), // Apsauga nuo null
+          : DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+              DateTime.now(),
       role: json['role'] ?? '',
       notifications: json['notifications'] ?? false,
       darkMode: json['darkMode'] ?? false,

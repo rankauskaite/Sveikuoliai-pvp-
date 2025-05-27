@@ -61,39 +61,59 @@ class FriendshipService {
   }
 
   Future<List<FriendshipModel>> getUserFriendshipModels(String userId) async {
-    List<FriendshipModel> friendshipModels = [];
+    try {
+      List<FriendshipModel> friendshipModels = [];
 
-    // 1. Gaunam visas draugystes kur user1 == userId
-    QuerySnapshot querySnapshot =
-        await friendshipCollection.where('user1', isEqualTo: userId).get();
+      // 1. Gaunam visas draugystes kur user1 == userId
+      QuerySnapshot querySnapshot =
+          await friendshipCollection.where('user1', isEqualTo: userId).get();
 
-    // 2. Ir visas kur user2 == userId
-    QuerySnapshot querySnapshot2 =
-        await friendshipCollection.where('user2', isEqualTo: userId).get();
+      // 2. Ir visas kur user2 == userId
+      QuerySnapshot querySnapshot2 =
+          await friendshipCollection.where('user2', isEqualTo: userId).get();
 
-    List<QueryDocumentSnapshot> allDocs = [
-      ...querySnapshot.docs,
-      ...querySnapshot2.docs
-    ];
+      List<QueryDocumentSnapshot> allDocs = [
+        ...querySnapshot.docs,
+        ...querySnapshot2.docs
+      ];
 
-    for (var doc in allDocs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final friendship = Friendship.fromJson(doc.id, data);
+      for (var doc in allDocs) {
+        final data = doc.data();
+        if (data == null) {
+          continue;
+        }
 
-      // Nustatom kuris iš jų yra draugas (ne tu)
-      String friendId =
-          friendship.user1 == userId ? friendship.user2 : friendship.user1;
+        // Konvertuojame Map<dynamic, dynamic> į Map<String, dynamic>
+        final Map<String, dynamic> convertedData = data is Map
+            ? data.map((key, value) => MapEntry(key.toString(), value))
+            : {};
 
-      // Gaunam draugo UserModel naudodami UserService
-      UserModel? friend = await userService.getUserEntry(friendId);
+        try {
+          final friendship = Friendship.fromJson(doc.id, convertedData);
 
-      if (friend != null) {
-        friendshipModels
-            .add(FriendshipModel(friendship: friendship, friend: friend));
+          // Nustatom kuris iš jų yra draugas (ne tu)
+          String friendId =
+              friendship.user1 == userId ? friendship.user2 : friendship.user1;
+
+          // Gaunam draugo UserModel naudodami UserService
+          UserModel? friend = await userService.getUserEntry(friendId);
+          if (friend == null) {
+            continue;
+          }
+
+          friendshipModels
+              .add(FriendshipModel(friendship: friendship, friend: friend));
+        } catch (e) {
+          continue;
+        }
       }
-    }
 
-    return friendshipModels;
+      print('Friendship models loaded: ${friendshipModels.length}');
+      return friendshipModels;
+    } catch (e) {
+      print('Klaida gaunant draugystes: $e');
+      return []; // Grąžiname tuščią sąrašą, jei įvyksta klaida
+    }
   }
 
   // update status - idk ar reikia

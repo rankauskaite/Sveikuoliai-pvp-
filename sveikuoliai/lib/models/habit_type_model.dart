@@ -13,7 +13,6 @@ class HabitType {
     required this.description,
   });
 
-  // Konvertuoja objektą į JSON Firestore saugojimui
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -23,7 +22,6 @@ class HabitType {
     };
   }
 
-  // Sukuria objektą iš Firestore JSON
   factory HabitType.fromJson(String id, Map<String, dynamic> json) {
     return HabitType(
       id: id,
@@ -49,7 +47,6 @@ class HabitType {
     'music': Icons.music_note,
   };
 
-  /// **Numatytieji įpročiai** – tai pagrindiniai įpročiai, kuriuos vartotojai gali pasirinkti.
   static List<HabitType> defaultHabitTypes = [
     HabitType(
       id: "exercise",

@@ -21,48 +21,83 @@ class SharedGoalService {
   Future<SharedGoal?> getSharedGoalEntry(String id) async {
     DocumentSnapshot doc = await sharedGoalCollection.doc(id).get();
     if (!doc.exists || doc.data() == null) return null;
-    return SharedGoal.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    return SharedGoal.fromJson(doc.data() as Map<String, dynamic>);
   }
 
   // read all user's goals
   Future<List<SharedGoalInformation>> getSharedUserGoals(
       String username) async {
-    // 1. Gaunam visas draugystes kur user1 == userId
-    QuerySnapshot querySnapshot =
-        await sharedGoalCollection.where('user1Id', isEqualTo: username).get();
+    try {
+      // 1. Gaunam visas draugystes kur user1 == userId
+      QuerySnapshot querySnapshot = await sharedGoalCollection
+          .where('user1Id', isEqualTo: username)
+          .get();
+      print(
+          'SharedGoal snapshot (user1): ${querySnapshot.docs.length} for user: $username');
 
-    // 2. Ir visas kur user2 == userId
-    QuerySnapshot querySnapshot2 =
-        await sharedGoalCollection.where('user2Id', isEqualTo: username).get();
+      // 2. Ir visas kur user2 == userId
+      QuerySnapshot querySnapshot2 = await sharedGoalCollection
+          .where('user2Id', isEqualTo: username)
+          .get();
+      print(
+          'SharedGoal snapshot (user2): ${querySnapshot2.docs.length} for user: $username');
 
-    List<QueryDocumentSnapshot> allDocs = [
-      ...querySnapshot.docs,
-      ...querySnapshot2.docs
-    ];
+      List<QueryDocumentSnapshot> allDocs = [
+        ...querySnapshot.docs,
+        ...querySnapshot2.docs
+      ];
 
-    // Sukuriame sąrašą HabitInformation, užpildytą HabitType duomenimis
-    List<SharedGoalInformation> goalsWithTypes = [];
+      // Sukuriame sąrašą SharedGoalInformation, užpildytą GoalType duomenimis
+      List<SharedGoalInformation> goalsWithTypes = [];
 
-    for (var doc in allDocs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final sharedGoal = SharedGoal.fromJson(doc.id, data);
-      final goalTypeId = sharedGoal.goalTypeId;
+      for (var doc in allDocs) {
+        final data = doc.data();
+        if (data == null) {
+          print(
+              'Warning: SharedGoal document ${doc.id} has no data, skipping...');
+          continue;
+        }
 
-      // Gaukime HabitType pagal habitTypeId
-      GoalType? goalType = await _goalTypeService.getGoalTypeEntry(goalTypeId);
+        // Konvertuojame Map<dynamic, dynamic> į Map<String, dynamic>
+        final Map<String, dynamic> convertedData = data is Map
+            ? data.map((key, value) => MapEntry(key.toString(), value))
+            : {};
+        print('SharedGoal document ${doc.id} data: $convertedData');
 
-      // Galite pridėti patikrinimą, jei habitType yra null
-      if (goalType == null) {
-        // Galite užfiksuoti klaidą arba atlikti kitą veiksmą
-        continue; // Tęsiame su kitais įpročiais
+        try {
+          final sharedGoal = SharedGoal.fromJson(convertedData);
+          final goalTypeId = sharedGoal.goalTypeId;
+
+          // Gaukime GoalType pagal goalTypeId
+          GoalType? goalType =
+              await _goalTypeService.getGoalTypeEntry(goalTypeId);
+          if (goalType == null) {
+            print(
+                'Warning: No GoalType found for goalTypeId: $goalTypeId, skipping shared goal ${sharedGoal.id}');
+            continue;
+          }
+
+          // Sukurkime SharedGoalInformation su sujungtu GoalType
+          var goalInfo = SharedGoalInformation.fromJson({
+            'id': sharedGoal.id,
+            'sharedGoalModel': sharedGoal.toJson(),
+            'goalType': goalType.toJson(),
+          });
+
+          goalsWithTypes.add(goalInfo);
+        } catch (e) {
+          print(
+              'Failed to parse SharedGoalInformation for document ${doc.id}: $e');
+          continue;
+        }
       }
-      // Sukurkime HabitInformation su sujungtu HabitType
-      var goalInfo = SharedGoalInformation.fromJson(sharedGoal, goalType);
 
-      goalsWithTypes.add(goalInfo);
+      print('Shared goals with types loaded: ${goalsWithTypes.length}');
+      return goalsWithTypes;
+    } catch (e) {
+      print('Klaida gaunant bendrus tikslus: $e');
+      return []; // Grąžiname tuščią sąrašą, jei įvyksta klaida
     }
-
-    return goalsWithTypes;
   }
 
   Future<List<SharedGoal>> getSharedGoalsForUsers(
@@ -87,7 +122,7 @@ class SharedGoalService {
     // Map the documents to SharedGoal objects
     return allDocs
         .map((doc) =>
-            SharedGoal.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+            SharedGoal.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
   }
 
@@ -130,10 +165,9 @@ class SharedGoalService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) =>
-                SharedGoal.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+                SharedGoal.fromJson(doc.data() as Map<String, dynamic>))
             .toList());
   }
-
 
   // jeigu getSharedGoalsForUser() negrazina nieko, bandyti naudoti sita koda:
 //   Stream<List<SharedGoal>> getSharedGoalsForUser(String userId) async* {
@@ -153,5 +187,4 @@ class SharedGoalService {
 //         .toList();
 //   }
 // }
-
 }

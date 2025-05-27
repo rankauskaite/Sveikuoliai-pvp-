@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
 import 'package:sveikuoliai/models/journal_model.dart';
@@ -52,9 +53,13 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     super.initState();
     selectedDay = widget.selectedDay;
     menstruationStart = DateTime(2000, 1, 1);
-    _fetchUserData().then((_) {
-      _fetchJournalEntry(selectedDay);
-    });
+    _fetchUserData();
+  }
+
+  @override
+  void dispose() {
+    _selectedImage = null; // Išvalykite nuotrauką
+    super.dispose();
   }
 
   Future<void> _fetchUserData() async {
@@ -64,6 +69,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
         userUsername = sessionData['username'] ?? "Nežinomas";
         isDarkMode = sessionData['darkMode'] == 'true'; // Gauname darkMode
       });
+      await _fetchJournalEntry(selectedDay);
       UserModel? userModel = await _userService.getUserEntry(userUsername);
       if (userModel != null) {
         setState(() {
@@ -80,34 +86,62 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
 
   Future<void> _fetchJournalEntry(DateTime date) async {
     try {
-      JournalModel? entry =
-          await _journalService.getJournalEntryByDay(userUsername, date);
-      if (entry != null) {
-        String? photoUrl = entry.photoUrl!.isNotEmpty ? entry.photoUrl : null;
-        if (photoUrl != null) {
-          final uri = Uri.parse(photoUrl);
-          final filePath = uri.pathSegments.skip(2).join('/');
-          photoUrl = await _backblazeService.getAuthorizedDownloadUrl(filePath);
-          if (photoUrl == null) {
-            print('Nepavyko gauti autorizuoto URL nuotraukai: $filePath');
-          }
-        }
-
-        setState(() {
-          journalText = entry.note;
-          selectedMood = entry.mood;
-          _photoUrl = photoUrl;
-        });
-        print('Nuotraukos URL: $_photoUrl');
-      } else {
+      // Gauname visus žurnalo įrašus iš sesijos
+      List<JournalModel> journalEntries =
+          await _authService.getJournalEntriesFromSession();
+      if (journalEntries.isEmpty) {
+        // Jei sesija tuščia, rodome pranešimą ir nustatome numatytas reikšmes
         setState(() {
           journalText = '';
           selectedMood = MoodType.neutrali;
           _photoUrl = null;
         });
+        showCustomSnackBar(context,
+            'Nėra žurnalo įrašų sesijoje, klaida gaunant duomenis ❌', false);
+        return;
       }
+
+      // Filtruojame įrašą pagal datą (ignoruojame laiką)
+      DateTime targetDate = DateTime.utc(date.year, date.month, date.day);
+      JournalModel? entry = journalEntries.firstWhere(
+        (e) =>
+            DateTime.utc(e.date.year, e.date.month, e.date.day) == targetDate,
+        orElse: () => JournalModel(
+          id: '',
+          userId: userUsername,
+          note: '',
+          mood: MoodType.neutrali,
+          date: targetDate,
+        ),
+      );
+
+      // Apdorojame photoUrl, jei jis egzistuoja
+      String? photoUrl =
+          entry.photoUrl?.isNotEmpty == true ? entry.photoUrl : null;
+      if (photoUrl != null) {
+        final uri = Uri.parse(photoUrl);
+        final filePath = uri.pathSegments.skip(2).join('/');
+        photoUrl = await _backblazeService.getAuthorizedDownloadUrl(filePath);
+        if (photoUrl == null) {
+          print('Nepavyko gauti autorizuoto URL nuotraukai: $filePath');
+        }
+      }
+
+      // Atnaujiname būsena
+      setState(() {
+        journalText = entry.note;
+        selectedMood = entry.mood;
+        _photoUrl = photoUrl;
+      });
+      print('Nuotraukos URL: $_photoUrl');
     } catch (e) {
       showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+      setState(() {
+        journalText = '';
+        selectedMood = MoodType.neutrali;
+        _photoUrl = null;
+      });
+      print('Klaida _fetchJournalEntry: $e');
     }
   }
 
@@ -160,6 +194,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
       );
 
       await _journalService.createJournalEntry(journalModel);
+      await _authService.addJournalentryToSession(journalModel);
 
       if (_tempMenstruationStart != null) {
         MenstrualCycle menstrualCycle = MenstrualCycle(
@@ -622,34 +657,31 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                                       );
                                                     },
                                                   )
-                                                : Image.network(
-                                                    _photoUrl!,
+                                                : CachedNetworkImage(
+                                                    imageUrl: _photoUrl!,
                                                     fit: BoxFit.cover,
-                                                    loadingBuilder: (context,
-                                                        child, progress) {
-                                                      if (progress == null)
-                                                        return child;
-                                                      return Center(
-                                                        child: CircularProgressIndicator(
+                                                    placeholder:
+                                                        (context, url) =>
+                                                            Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        color: isDarkMode
+                                                            ? Colors.purple[300]
+                                                            : null,
+                                                      ),
+                                                    ),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            Center(
+                                                      child: Text(
+                                                        'Klaida įkeliant nuotrauką',
+                                                        style: TextStyle(
                                                             color: isDarkMode
                                                                 ? Colors
-                                                                    .purple[300]
-                                                                : null),
-                                                      );
-                                                    },
-                                                    errorBuilder: (context,
-                                                        error, stackTrace) {
-                                                      return Center(
-                                                        child: Text(
-                                                          'Klaida įkeliant nuotrauką',
-                                                          style: TextStyle(
-                                                              color: isDarkMode
-                                                                  ? Colors
-                                                                      .red[300]
-                                                                  : Colors.red),
-                                                        ),
-                                                      );
-                                                    },
+                                                                    .red[300]
+                                                                : Colors.red),
+                                                      ),
+                                                    ),
                                                   ),
                                           ),
                                         )

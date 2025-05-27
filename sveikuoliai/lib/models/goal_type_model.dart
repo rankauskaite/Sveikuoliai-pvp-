@@ -15,14 +15,13 @@ class GoalType {
     required this.title,
     required this.description,
     required this.isCountable,
-    this.tikUser =
-        true, // Default reikšmė, kadangi jau yra sukurtu defaultiniu goals,
-    // tai kad nereiktu perkurt
+    this.tikUser = true,
     this.tikFriends = false,
   });
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       'description': description,
       'type': type,
@@ -39,7 +38,7 @@ class GoalType {
       description: json['description'] ?? '',
       type: json['type'] ?? '',
       isCountable: json['isCountable'] ?? false,
-      tikUser: json['tikUser'] ?? true, // by default bus true
+      tikUser: json['tikUser'] ?? true,
       tikFriends: json['tikFriends'] ?? false,
     );
   }

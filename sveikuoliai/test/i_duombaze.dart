@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
-import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:flutter/widgets.dart';
 
 Future<void> main() async {
@@ -17,7 +16,6 @@ Future<void> main() async {
     points: 0,
     isCompletedUser1: false,
     isCompletedUser2: false,
-    category: CategoryType.bekategorijos, // naudok tinkamą enum reikšmę
     endPoints: 21,
     user1Id: 'test2',
     user2Id: 'test3',

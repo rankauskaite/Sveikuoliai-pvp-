@@ -33,38 +33,54 @@ class PlantImageService {
   }
 
   static String getPlantImagegervuoge(int points) {
-    int stage = (points / 3.913).floor() + 1;
-    if (stage > 24) stage = 24;
+    int maxPoints = 90; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 24).floor(); // Proporcingas etapas iki 24
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 24) stage = 24; // Maksimalus etapas 24
     return 'assets/images/augalai/gervuoge/$stage.png';
   }
 
   static String getPlantImageorchideja(int points) {
-    int stage = (points / 4).floor() + 1;
-    if (stage > 16) stage = 16;
+    int maxPoints = 60; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 16).floor(); // Proporcingas etapas iki 16
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 16) stage = 16; // Maksimalus etapas 16
     return 'assets/images/augalai/orchideja/$stage.png';
   }
 
   static String getPlantImageramuneles(int points) {
-    int stage = (points / 3).floor() + 1;
-    if (stage > 6) stage = 6;
+    int maxPoints = 14; // Maksimalus taškų skaičius
+    int stage = ((points / maxPoints) * 6).floor(); // Proporcingas etapas iki 6
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 6) stage = 6; // Maksimalus etapas 6
     return 'assets/images/augalai/ramuneles/$stage.png';
   }
 
   static String getPlantImagesaulegraza(int points) {
-    int stage = (points / 4).floor() + 1;
-    if (stage > 12) stage = 12;
+    int maxPoints = 45; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 12).floor(); // Proporcingas etapas iki 12
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 12) stage = 12; // Maksimalus etapas 12
     return 'assets/images/augalai/saulegraza/$stage.png';
   }
 
   static String getPlantImagevysnia(int points) {
-    int stage = (points / 5).floor() + 1;
-    if (stage > 36) stage = 36;
+    int maxPoints = 180; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 36).floor(); // Proporcingas etapas iki 36
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 36) stage = 36; // Maksimalus etapas 36
     return 'assets/images/augalai/vysnia/$stage.png';
   }
 
   static String getPlantImagezibuokle(int points) {
-    int stage = (points / 4).floor() + 1;
-    if (stage > 8) stage = 8;
+    int maxPoints = 30; // Maksimalus taškų skaičius
+    int stage = ((points / maxPoints) * 8).floor(); // Proporcingas etapas iki 8
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 8) stage = 8; // Maksimalus etapas 8
     return 'assets/images/augalai/zibuokle/$stage.png';
   }
 }
@@ -104,38 +120,54 @@ class DeadPlantImageService {
   }
 
   static String getPlantImagegervuoge(int points) {
-    int stage = (points / 3.913).floor() + 1;
-    if (stage > 24) stage = 24;
+    int maxPoints = 90; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 24).floor(); // Proporcingas etapas iki 24
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 24) stage = 24; // Maksimalus etapas 24
     return 'assets/images/augalai_vytimas/gervuoge/$stage.png';
   }
 
   static String getPlantImageorchideja(int points) {
-    int stage = (points / 4).floor() + 1;
-    if (stage > 16) stage = 16;
+    int maxPoints = 60; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 16).floor(); // Proporcingas etapas iki 16
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 16) stage = 16; // Maksimalus etapas 16
     return 'assets/images/augalai_vytimas/orchideja/$stage.png';
   }
 
   static String getPlantImageramuneles(int points) {
-    int stage = (points / 3).floor() + 1;
-    if (stage > 6) stage = 6;
+    int maxPoints = 14; // Maksimalus taškų skaičius
+    int stage = ((points / maxPoints) * 6).floor(); // Proporcingas etapas iki 6
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 6) stage = 6; // Maksimalus etapas 6
     return 'assets/images/augalai_vytimas/ramuneles/$stage.png';
   }
 
   static String getPlantImagesaulegraza(int points) {
-    int stage = (points / 4).floor() + 1;
-    if (stage > 12) stage = 12;
+    int maxPoints = 45; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 12).floor(); // Proporcingas etapas iki 12
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 12) stage = 12; // Maksimalus etapas 12
     return 'assets/images/augalai_vytimas/saulegraza/$stage.png';
   }
 
   static String getPlantImagevysnia(int points) {
-    int stage = (points / 5).floor() + 1;
-    if (stage > 36) stage = 36;
+    int maxPoints = 180; // Maksimalus taškų skaičius
+    int stage =
+        ((points / maxPoints) * 36).floor(); // Proporcingas etapas iki 36
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 36) stage = 36; // Maksimalus etapas 36
     return 'assets/images/augalai_vytimas/vysnia/$stage.png';
   }
 
   static String getPlantImagezibuokle(int points) {
-    int stage = (points / 4).floor() + 1;
-    if (stage > 8) stage = 8;
+    int maxPoints = 30; // Maksimalus taškų skaičius
+    int stage = ((points / maxPoints) * 8).floor(); // Proporcingas etapas iki 8
+    if (stage < 1) stage = 1; // Minimalus etapas 1
+    if (stage > 8) stage = 8; // Maksimalus etapas 8
     return 'assets/images/augalai_vytimas/zibuokle/$stage.png';
   }
 }
