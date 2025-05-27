@@ -35,6 +35,7 @@ class CatchUserService {
 
 // Bendras dialogų valdymo klasė
 class CustomDialogs {
+  static final AuthService _authService = AuthService();
   // 1. Redagavimo dialogas (Custom Goal, Custom Task, Habit)
   static void showEditDialog({
     required BuildContext context,
@@ -169,6 +170,18 @@ class CustomDialogs {
                       entity.habitType.description = descriptionController.text;
                       await habitTypeService
                           .updateHabitTypeEntry(entity.habitType);
+                      List<HabitInformation> habits =
+                          await _authService.getHabitsFromSession();
+                      int habitIndex = habits.indexWhere(
+                          (g) => g.habitModel.id == entity.habitModel.id);
+                      if (habitIndex != -1) {
+                        habits[habitIndex] = entity;
+                      } else {
+                        habits.add(entity);
+                      }
+                      await _authService.saveHabitsToSession(habits);
+                      print(
+                          'Habit updated in session: ${entity.habitModel.id}, habits count: ${habits.length}');
                     } else if (entityType == EntityType.goal ||
                         entityType == EntityType.sharedGoal) {
                       final goalTypeService = GoalTypeService();
@@ -176,11 +189,39 @@ class CustomDialogs {
                       entity.goalType.description = descriptionController.text;
                       await goalTypeService
                           .updateGoalTypeEntry(entity.goalType);
+                      if (entityType == EntityType.goal) {
+                        List<GoalInformation> goals =
+                            await _authService.getGoalsFromSession();
+                        int goalIndex = goals.indexWhere(
+                            (g) => g.goalModel.id == entity.goalModel.id);
+                        if (goalIndex != -1) {
+                          goals[goalIndex] = entity; // Atnaujiname esamą tikslą
+                        } else {
+                          goals.add(entity); // Jei tikslo dar nėra, pridedame
+                        }
+                        await _authService.saveGoalsToSession(goals);
+                        print(
+                            'Goal updated in session: ${entity.goalModel.id}, goals count: ${goals.length}');
+                      } else if (entityType == EntityType.sharedGoal) {
+                        List<SharedGoalInformation> goals =
+                            await _authService.getSharedGoalsFromSession();
+                        int goalIndex = goals.indexWhere((g) =>
+                            g.sharedGoalModel.id == entity.sharedGoalModel.id);
+                        if (goalIndex != -1) {
+                          goals[goalIndex] = entity; // Atnaujiname esamą tikslą
+                        } else {
+                          goals.add(entity); // Jei tikslo dar nėra, pridedame
+                        }
+                        await _authService.saveSharedGoalsToSession(goals);
+                        print(
+                            'SharedGoal updated in session: ${entity.sharedGoalModel.id}, goals count: ${goals.length}');
+                      }
                     } else if (entityType == EntityType.task) {
                       final goalTaskService = GoalTaskService();
                       entity.title = titleController.text;
                       entity.description = descriptionController.text;
                       await goalTaskService.updateGoalTaskEntry(entity);
+                      print('Task updated: ${entity.id}');
                     }
 
                     onSave();
@@ -349,6 +390,7 @@ class CustomDialogs {
     required int streak,
   }) {
     String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    DateTime date = DateTime.now();
     final _formKey = GlobalKey<FormState>(); // Add form key for validation
 
     showDialog(
@@ -423,26 +465,27 @@ class CustomDialogs {
 
                   HabitProgress newProgress = HabitProgress(
                     id: currentProgressId ??
-                        '${habit.habitModel.habitTypeId}${habit.habitModel.userId[0].toUpperCase() + habit.habitModel.userId.substring(1)}${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
+                        '${habit.habitModel.habitTypeId}${habit.habitModel.userId[0].toUpperCase() + habit.habitModel.userId.substring(1)}${date.year}-${date.month}-${date.day}',
                     habitId: habit.habitModel.id,
                     description: progressController.text,
                     points: currentProgressId != null ? points : points + 1,
                     streak: currentProgressId != null ? streak : streak + 1,
                     plantUrl: PlantImageService.getPlantImage(
                         habit.habitModel.plantId, habit.habitModel.points + 1),
-                    date: DateTime.now(),
+                    date: date,
                     isCompleted: true,
                   );
 
                   await habitProgressService
                       .createHabitProgressEntry(newProgress);
+                  await _authService.addHabitProgressToSession(
+                      habit.habitModel.id, newProgress);
 
                   HabitModel updatedHabit = HabitModel(
                     id: habit.habitModel.id,
                     startDate: habit.habitModel.startDate,
                     endDate: habit.habitModel.endDate,
                     points: newProgress.points,
-                    category: habit.habitModel.category,
                     endPoints: habit.habitModel.endPoints,
                     isCompleted: habit.habitModel.isCompleted,
                     userId: habit.habitModel.userId,
@@ -452,6 +495,16 @@ class CustomDialogs {
                   );
 
                   await habitService.updateHabitEntry(updatedHabit);
+                  List<HabitInformation> habits =
+                      await _authService.getHabitsFromSession();
+                  int habitIndex = habits.indexWhere(
+                      (g) => g.habitModel.id == habit.habitModel.id);
+                  if (habitIndex != -1) {
+                    habits[habitIndex] = habit; // Atnaujiname esamą tikslą
+                  } else {
+                    habits.add(habit); // Jei tikslo dar nėra, pridedame
+                  }
+                  await _authService.saveHabitsToSession(habits);
 
                   habit.habitModel =
                       updatedHabit; // Atstatome atnaujintą įprotį

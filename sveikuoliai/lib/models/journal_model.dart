@@ -3,7 +3,7 @@ import 'package:sveikuoliai/enums/mood_enum.dart';
 
 class JournalModel {
   String id;
-  String userId; 
+  String userId;
   String note;
   MoodType mood;
   String? photoUrl;
@@ -20,22 +20,25 @@ class JournalModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'userId': userId,
       'note': note,
       'mood': mood.toJson(),
       'photoUrl': photoUrl,
-      'date': Timestamp.fromDate(DateTime(date.year, date.month, date.day)), //saugau tik datas, be laiko
+      'date': date.toIso8601String(), // Konvertuojame į String
     };
   }
 
-  factory JournalModel.fromJson(String id, Map<String, dynamic> json) {
+  factory JournalModel.fromJson(Map<String, dynamic> json) {
     return JournalModel(
-      id: id,
+      id: json['id'],
       userId: json['userId'] ?? '',
       note: json['note'] ?? '',
       mood: MoodTypeExtension.fromJson(json['mood'] ?? 'neutrali'),
       photoUrl: json['photoUrl'],
-      date: (json['date'] as Timestamp).toDate(),
+      date: json['date'] is Timestamp
+          ? (json['date'] as Timestamp).toDate()
+          : DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }

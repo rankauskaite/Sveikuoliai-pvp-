@@ -7,7 +7,6 @@ import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/goal_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
-import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -25,8 +24,12 @@ class GoalScreen extends StatefulWidget {
 
 class _GoalPageState extends State<GoalScreen> {
   PlantModel plant = PlantModel(
-      id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
-  final PlantService _plantService = PlantService();
+    id: '',
+    name: '',
+    points: 0,
+    photoUrl: '',
+    duration: 0,
+  );
   final GoalTaskService _goalTaskService = GoalTaskService();
   final GoalService _goalService = GoalService();
   final AuthService _authService = AuthService(); // Pridėtas AuthService
@@ -68,15 +71,13 @@ class _GoalPageState extends State<GoalScreen> {
 
   Future<void> _fetchPlantData() async {
     try {
-      PlantModel? fetchedPlant =
-          await _plantService.getPlantEntry(widget.goal.goalModel.plantId);
-      if (fetchedPlant != null) {
-        setState(() {
-          plant = fetchedPlant;
-        });
-      } else {
-        throw Exception("Gautas `null` augalo objektas");
-      }
+      List<PlantModel> plants = await _authService.getPlantsFromSession();
+      PlantModel? fetchedPlant = plants.firstWhere(
+        (p) => p.id == widget.goal.goalModel.plantId,
+      );
+      setState(() {
+        plant = fetchedPlant;
+      });
     } catch (e) {
       String message = 'Klaida gaunant augalo duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -107,6 +108,17 @@ class _GoalPageState extends State<GoalScreen> {
           widget.goal.goalModel.isPlantDead = isDead;
         });
         await _goalService.updateGoalEntry(widget.goal.goalModel);
+
+        // Atnaujiname sesiją su naujausiais duomenimis
+        List<GoalInformation> goals = await _authService.getGoalsFromSession();
+        int goalIndex =
+            goals.indexWhere((g) => g.goalModel.id == widget.goal.goalModel.id);
+        if (goalIndex != -1) {
+          goals[goalIndex] = widget.goal; // Atnaujiname esamą tikslą
+        } else {
+          goals.add(widget.goal); // Jei tikslo dar nėra, pridedame
+        }
+        await _authService.saveGoalsToSession(goals);
       }
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant tikslo užduotis ❌', false);
@@ -124,10 +136,20 @@ class _GoalPageState extends State<GoalScreen> {
       }
       await _goalService.updateGoalPoints(
           widget.goal.goalModel.id, _userPoints());
-
       setState(() {
         widget.goal.goalModel.points = _userPoints();
       });
+
+      // Atnaujiname sesiją su naujausiais duomenimis
+      List<GoalInformation> goals = await _authService.getGoalsFromSession();
+      int goalIndex =
+          goals.indexWhere((g) => g.goalModel.id == widget.goal.goalModel.id);
+      if (goalIndex != -1) {
+        goals[goalIndex] = widget.goal; // Atnaujiname esamą tikslą
+      } else {
+        goals.add(widget.goal); // Jei tikslo dar nėra, pridedame
+      }
+      await _authService.saveGoalsToSession(goals);
 
       final allCompleted = goalTasks.every((task) => task.isCompleted);
       if (allCompleted) {
@@ -150,13 +172,22 @@ class _GoalPageState extends State<GoalScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
                     widget.goal.goalModel.isCompleted = true;
                     _goalService.updateGoalEntry(widget.goal.goalModel);
                     setState(() {
                       widget.goal.goalModel.isCompleted = true;
                     });
+                    // Atnaujiname sesiją po užbaigimo
+                    List<GoalInformation> updatedGoals =
+                        await _authService.getGoalsFromSession();
+                    int updatedIndex = updatedGoals.indexWhere(
+                        (g) => g.goalModel.id == widget.goal.goalModel.id);
+                    if (updatedIndex != -1) {
+                      updatedGoals[updatedIndex] = widget.goal;
+                      await _authService.saveGoalsToSession(updatedGoals);
+                    }
                     showCustomSnackBar(
                         context, "Tikslas sėkmingai užbaigtas ✅", true);
                   },
@@ -175,7 +206,9 @@ class _GoalPageState extends State<GoalScreen> {
                       type: 1,
                       onSave: (newTask) => _createTask(newTask),
                       goal: widget.goal,
-                      accentColor: isDarkMode ? Colors.lightBlue[300]! : Colors.lightBlueAccent,
+                      accentColor: isDarkMode
+                          ? Colors.lightBlue[300]!
+                          : Colors.lightBlueAccent,
                     );
                   },
                   child: Text(
@@ -327,6 +360,16 @@ class _GoalPageState extends State<GoalScreen> {
       setState(() {
         widget.goal.goalModel.points = totalPoints;
       });
+
+      // Atnaujiname sesiją po užbaigimo
+      List<GoalInformation> updatedGoals =
+          await _authService.getGoalsFromSession();
+      int updatedIndex = updatedGoals
+          .indexWhere((g) => g.goalModel.id == widget.goal.goalModel.id);
+      if (updatedIndex != -1) {
+        updatedGoals[updatedIndex] = widget.goal;
+        await _authService.saveGoalsToSession(updatedGoals);
+      }
     } catch (e) {
       if (mounted) {
         showCustomSnackBar(context, "Klaida perskaičiuojant taškus ❌", false);
@@ -356,6 +399,7 @@ class _GoalPageState extends State<GoalScreen> {
     try {
       final goalService = GoalService();
       await goalService.deleteGoalEntry(widget.goal.goalModel.id);
+      await _authService.removeGoalFromSession(widget.goal);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -405,7 +449,8 @@ class _GoalPageState extends State<GoalScreen> {
             SizedBox(height: topPadding),
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
                   color: isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -445,14 +490,17 @@ class _GoalPageState extends State<GoalScreen> {
                                   context: context,
                                   entityType: EntityType.goal,
                                   entity: widget.goal,
-                                  accentColor: isDarkMode ? Colors.lightBlue[300]! : Colors.lightBlueAccent,
+                                  accentColor: isDarkMode
+                                      ? Colors.lightBlue[300]!
+                                      : Colors.lightBlueAccent,
                                   onSave: () {},
                                 );
                               },
                               icon: Icon(
                                 Icons.edit_outlined,
                                 size: 30,
-                                color: isDarkMode ? Colors.white70 : Colors.black,
+                                color:
+                                    isDarkMode ? Colors.white70 : Colors.black,
                               ),
                             ),
                           IconButton(
@@ -461,7 +509,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 context: context,
                                 entityType: EntityType.goal,
                                 entity: widget.goal,
-                                accentColor: isDarkMode ? Colors.lightBlue[300]! : Colors.lightBlueAccent,
+                                accentColor: isDarkMode
+                                    ? Colors.lightBlue[300]!
+                                    : Colors.lightBlueAccent,
                                 onDelete: () {
                                   _deleteGoal();
                                 },
@@ -481,7 +531,9 @@ class _GoalPageState extends State<GoalScreen> {
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                          color: isDarkMode
+                              ? Colors.lightBlue[300]
+                              : Color(0xFF72ddf7),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -498,7 +550,9 @@ class _GoalPageState extends State<GoalScreen> {
                         'Apie tikslą',
                         style: TextStyle(
                           fontSize: 25,
-                          color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                          color: isDarkMode
+                              ? Colors.lightBlue[300]
+                              : Color(0xFF72ddf7),
                         ),
                       ),
                       Text(
@@ -531,14 +585,19 @@ class _GoalPageState extends State<GoalScreen> {
                                         ? "1 mėnuo"
                                         : widget.goal.goalModel.endPoints == 45
                                             ? "1,5 mėnesio"
-                                            : widget.goal.goalModel.endPoints == 60
+                                            : widget.goal.goalModel.endPoints ==
+                                                    60
                                                 ? "2 mėnesiai"
-                                                : widget.goal.goalModel.endPoints == 90
+                                                : widget.goal.goalModel
+                                                            .endPoints ==
+                                                        90
                                                     ? "3 mėnesiai"
                                                     : "6 mėnesiai",
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                              color: isDarkMode
+                                  ? Colors.lightBlue[300]
+                                  : Color(0xFF72ddf7),
                             ),
                           ),
                         ],
@@ -559,7 +618,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 .format(widget.goal.goalModel.startDate),
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                              color: isDarkMode
+                                  ? Colors.lightBlue[300]
+                                  : Color(0xFF72ddf7),
                             ),
                           ),
                         ],
@@ -579,7 +640,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 .format(widget.goal.goalModel.endDate),
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                              color: isDarkMode
+                                  ? Colors.lightBlue[300]
+                                  : Color(0xFF72ddf7),
                             ),
                           ),
                         ],
@@ -599,7 +662,9 @@ class _GoalPageState extends State<GoalScreen> {
                             plant.name,
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                              color: isDarkMode
+                                  ? Colors.lightBlue[300]
+                                  : Color(0xFF72ddf7),
                             ),
                           ),
                         ],
@@ -609,7 +674,9 @@ class _GoalPageState extends State<GoalScreen> {
                         'Užduotys',
                         style: TextStyle(
                           fontSize: 25,
-                          color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                          color: isDarkMode
+                              ? Colors.lightBlue[300]
+                              : Color(0xFF72ddf7),
                         ),
                       ),
                       Column(
@@ -621,7 +688,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 'Jūs dar neturite užduočių šiam tikslui.',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: isDarkMode ? Colors.grey[600] : Colors.grey,
+                                  color: isDarkMode
+                                      ? Colors.grey[600]
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
@@ -630,27 +699,33 @@ class _GoalPageState extends State<GoalScreen> {
                               .map((task) => GoalTaskCard(
                                     task: task,
                                     type: 0,
-                                    isDoneGoal: widget.goal.goalModel.isCompleted,
+                                    isDoneGoal:
+                                        widget.goal.goalModel.isCompleted,
                                     isMyTask: true,
                                     length: length,
                                     doneLength: doneLength,
                                     calculatePoints: (isCompleted) =>
-                                        _calculatePoints(isCompleted, goalTasks),
+                                        _calculatePoints(
+                                            isCompleted, goalTasks),
                                     onDelete: _deleteTask,
-                                    isDarkMode: isDarkMode, // Perduodame isDarkMode
+                                    isDarkMode:
+                                        isDarkMode, // Perduodame isDarkMode
                                   )),
                           ...goalTasks
                               .where((task) => task.isCompleted)
                               .map((task) => GoalTaskCard(
                                     type: 0,
                                     task: task,
-                                    isDoneGoal: widget.goal.goalModel.isCompleted,
+                                    isDoneGoal:
+                                        widget.goal.goalModel.isCompleted,
                                     isMyTask: true,
                                     length: length,
                                     doneLength: doneLength,
                                     calculatePoints: (isCompleted) =>
-                                        _calculatePoints(isCompleted, goalTasks),
-                                    isDarkMode: isDarkMode, // Perduodame isDarkMode
+                                        _calculatePoints(
+                                            isCompleted, goalTasks),
+                                    isDarkMode:
+                                        isDarkMode, // Perduodame isDarkMode
                                   )),
                         ],
                       ),
@@ -669,12 +744,16 @@ class _GoalPageState extends State<GoalScreen> {
                                       }
                                     },
                                     style: ButtonStyle(
-                                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                                      backgroundColor: MaterialStateProperty
+                                          .resolveWith<Color>(
                                         (Set<MaterialState> states) {
-                                          return isDarkMode ? Colors.grey[800]! : const Color(0xFFCFF4FC);
+                                          return isDarkMode
+                                              ? Colors.grey[800]!
+                                              : const Color(0xFFCFF4FC);
                                         },
                                       ),
-                                      foregroundColor: MaterialStateProperty.all(
+                                      foregroundColor:
+                                          MaterialStateProperty.all(
                                         isDarkMode ? Colors.white : Colors.blue,
                                       ),
                                     ),
@@ -682,7 +761,9 @@ class _GoalPageState extends State<GoalScreen> {
                                       'Išsaugoti',
                                       style: TextStyle(
                                         fontSize: 15,
-                                        color: isDarkMode ? Colors.white : Colors.blue,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.blue,
                                       ),
                                     ),
                                   ),
@@ -698,7 +779,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 CustomDialogs.showNewTaskDialog(
                                   context: context,
                                   goal: widget.goal,
-                                  accentColor: isDarkMode ? Colors.lightBlue[300]! : Colors.lightBlueAccent,
+                                  accentColor: isDarkMode
+                                      ? Colors.lightBlue[300]!
+                                      : Colors.lightBlueAccent,
                                   onSave: (GoalTask task) {
                                     _createTask(task);
                                   },
@@ -707,9 +790,14 @@ class _GoalPageState extends State<GoalScreen> {
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                           backgroundColor: isDarkMode
-                              ? (widget.goal.goalModel.isCompleted ? Colors.grey[700] : Colors.white)
-                              : (widget.goal.goalModel.isCompleted ? Colors.grey : const Color(0xFFA5E9F9)),
-                          foregroundColor: isDarkMode ? Colors.black : Colors.blue,
+                              ? (widget.goal.goalModel.isCompleted
+                                  ? Colors.grey[700]
+                                  : Colors.white)
+                              : (widget.goal.goalModel.isCompleted
+                                  ? Colors.grey
+                                  : const Color(0xFFA5E9F9)),
+                          foregroundColor:
+                              isDarkMode ? Colors.black : Colors.blue,
                         ),
                         child: Text(
                           widget.goal.goalModel.isCompleted
@@ -718,7 +806,9 @@ class _GoalPageState extends State<GoalScreen> {
                           style: TextStyle(
                             fontSize: 20,
                             color: isDarkMode
-                                ? (widget.goal.goalModel.isCompleted ? Colors.white70 : Colors.blue)
+                                ? (widget.goal.goalModel.isCompleted
+                                    ? Colors.white70
+                                    : Colors.blue)
                                 : Colors.blue,
                           ),
                         ),
@@ -728,7 +818,9 @@ class _GoalPageState extends State<GoalScreen> {
                         'Statistika',
                         style: TextStyle(
                           fontSize: 25,
-                          color: isDarkMode ? Colors.lightBlue[300] : Color(0xFF72ddf7),
+                          color: isDarkMode
+                              ? Colors.lightBlue[300]
+                              : Color(0xFF72ddf7),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -739,7 +831,9 @@ class _GoalPageState extends State<GoalScreen> {
                                 "Nėra progreso duomenų",
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: isDarkMode ? Colors.grey[600] : Colors.grey,
+                                  color: isDarkMode
+                                      ? Colors.grey[600]
+                                      : Colors.grey,
                                 ),
                               )
                             : _buildProgressChart(),

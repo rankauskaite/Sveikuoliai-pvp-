@@ -29,20 +29,22 @@ class HabitProgress {
       'points': points,
       'streak': streak,
       'plantUrl': plantUrl,
-      'date': Timestamp.fromDate(date),
+      'date': date.toIso8601String(), // Konvertuojame į String
       'isCompleted': isCompleted,
     };
   }
 
-  factory HabitProgress.fromJson(String id, Map<String, dynamic> json) {
+  factory HabitProgress.fromJson(Map<String, dynamic> json) {
     return HabitProgress(
-      id: id,
+      id: json['id'],
       habitId: json['habitId'] ?? '',
       description: json['description'] ?? '',
       points: json['points'] ?? 0,
       streak: (json['streak'] as int?) ?? 0,
       plantUrl: json['plantUrl'] ?? '',
-      date: (json['date'] as Timestamp).toDate(),
+      date: json['date'] is Timestamp
+          ? (json['date'] as Timestamp).toDate()
+          : DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
       isCompleted: json['isCompleted'] ?? false,
     );
   }

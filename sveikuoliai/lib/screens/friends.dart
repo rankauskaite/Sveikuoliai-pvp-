@@ -23,6 +23,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   final AuthService _authService = AuthService();
   final FriendshipService _friendshipService = FriendshipService();
   final AppNotificationService _notificationService = AppNotificationService();
+  final SharedGoalService _sharedGoalService = SharedGoalService();
   String userUsername = "";
   String userName = "";
   String userIcon = "account_circle";
@@ -64,7 +65,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Future<void> _fetchUserFriends(String username) async {
     try {
       List<FriendshipModel> friendsList =
-          await _friendshipService.getUserFriendshipModels(username);
+          await _authService.getFriendsFromSession();
       setState(() {
         friends = friendsList;
       });
@@ -123,7 +124,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
         status: "pending",
         createdAt: DateTime.now(),
       );
+      FriendshipModel friendshipModel =
+          FriendshipModel(friendship: friendship, friend: user);
       await _friendshipService.createFriendship(friendship);
+      friends.add(friendshipModel);
+      await _authService.saveFriendsToSession(friends);
+
       showCustomSnackBar(context, "Draugas pridėtas ✅", true);
       setState(() {
         _searchController.clear();
@@ -140,7 +146,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
           type: "friend_request",
           date: now);
       await _notificationService.createNotification(notification);
-      await _fetchUserFriends(userUsername);
     } catch (e) {
       showCustomSnackBar(context, "Nepavyko pridėti draugo ❌", false);
     }
@@ -270,11 +275,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
         friendship.friendship.status = "accepted";
       });
       await _friendshipService.updateFriendship(friendship.friendship);
+      setState(() {
+        friends.removeWhere((f) => f.friendship.id == friendship.friendship.id);
+        friends.add(friendship);
+      });
+      await _authService.saveFriendsToSession(friends);
+
       showCustomSnackBar(context, "Draugystė patvirtinta ✅", true);
       setState(() {
         FocusScope.of(context).unfocus();
       });
-      await _fetchUserFriends(userUsername);
     } catch (e) {
       showCustomSnackBar(context, "Nepavyko patvirtinti draugystės ❌", false);
     }
@@ -282,18 +292,41 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _deleteFriend(FriendshipModel friendship) async {
     try {
-      String otherUserId = friendship.friendship.user1 == userUsername
-          ? friendship.friendship.user2
-          : friendship.friendship.user1;
       await _friendshipService.deleteFriendship(friendship.friendship.id);
 
-      final SharedGoalService _sharedGoalService = SharedGoalService();
-      List<SharedGoal> goals = await _sharedGoalService.getSharedGoalsForUsers(
-          userUsername, otherUserId);
+      setState(() {
+        friends.removeWhere((f) => f.friendship.id == friendship.friendship.id);
+      });
 
-      for (var goal in goals) {
-        await _sharedGoalService.deleteSharedGoalEntry(goal.id);
+      await _authService.saveFriendsToSession(friends);
+
+      List<SharedGoalInformation> goals =
+          await _authService.getSharedGoalsFromSession();
+
+      List<String> goalsToDelete = goals
+          .where((goal) {
+            return (goal.sharedGoalModel.user1Id ==
+                        friendship.friendship.user1 &&
+                    goal.sharedGoalModel.user2Id ==
+                        friendship.friendship.user2) ||
+                (goal.sharedGoalModel.user1Id == friendship.friendship.user2 &&
+                    goal.sharedGoalModel.user2Id ==
+                        friendship.friendship.user1);
+          })
+          .map((goal) => goal.sharedGoalModel.id)
+          .toList();
+
+      // Šaliname bendrus tikslus iš Firestore
+      for (var goalId in goalsToDelete) {
+        await _sharedGoalService.deleteSharedGoalEntry(goalId);
       }
+
+      setState(() {
+        goals.removeWhere(
+            (goal) => goalsToDelete.contains(goal.sharedGoalModel.id));
+      });
+
+      await _authService.saveSharedGoalsToSession(goals);
 
       setState(() {
         FocusScope.of(context).unfocus();
@@ -301,8 +334,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
       showCustomSnackBar(
           context, "Draugas ir bendros užduotys pašalinti ✅", true);
-      await _fetchUserFriends(userUsername);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => FriendsScreen()),
+      );
     } catch (e) {
+      print('Klaida šalinant draugą: $e');
       showCustomSnackBar(context, "Nepavyko pašalinti draugo ❌", false);
     }
   }
@@ -394,7 +432,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         hintText: 'Įveskite draugo slapyvardį',
                         hintStyle: TextStyle(
                             color: isDarkMode ? Colors.grey[500] : Colors.grey),
-                        border: OutlineInputBorder(),
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         prefixIcon: Icon(
                           Icons.search,
                           color: isDarkMode ? Colors.white70 : Colors.black,
@@ -735,11 +777,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => FriendProfileScreen(
-                                    name: acceptedFriends[index].friend.name,
-                                    username:
-                                        acceptedFriends[index].friend.username,
-                                    friendshipId:
-                                        acceptedFriends[index].friendship.id,
+                                    friendship: acceptedFriends[index],
+                                    isDarkMode: isDarkMode,
                                   ),
                                 ),
                               );

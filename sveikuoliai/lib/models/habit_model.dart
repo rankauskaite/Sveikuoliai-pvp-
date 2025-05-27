@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sveikuoliai/enums/category_enum.dart'; // Importuoju enum
 import 'package:sveikuoliai/models/habit_type_model.dart';
 
 class HabitModel {
@@ -7,7 +6,6 @@ class HabitModel {
   DateTime startDate;
   DateTime endDate;
   int points;
-  CategoryType category;
   int endPoints;
   bool isCompleted = false;
   String userId;
@@ -20,7 +18,6 @@ class HabitModel {
     required this.startDate,
     required this.endDate,
     required this.points,
-    required this.category,
     required this.endPoints,
     required this.isCompleted,
     required this.userId,
@@ -33,10 +30,9 @@ class HabitModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'startDate': Timestamp.fromDate(startDate),
-      'endDate': Timestamp.fromDate(endDate),
+      'startDate': startDate.toIso8601String(), // Konvertuojame į String
+      'endDate': endDate.toIso8601String(), // Konvertuojame į String
       'points': points,
-      'category': category.toJson(), // enum į string
       'endPoints': endPoints,
       'isCompleted': isCompleted,
       'userId': userId,
@@ -47,43 +43,52 @@ class HabitModel {
   }
 
   // is json
-  factory HabitModel.fromJson(String id, Map<String, dynamic> json) {
+  factory HabitModel.fromJson(Map<String, dynamic> json) {
     return HabitModel(
-      id: id,
+      id: json['id'],
       startDate: json['startDate'] is Timestamp
           ? (json['startDate'] as Timestamp).toDate()
-          : DateTime.tryParse(json['startDate'] ?? '') ?? DateTime.now(),
+          : DateTime.tryParse(json['startDate']?.toString() ?? '') ??
+              DateTime.now(),
       endDate: json['endDate'] is Timestamp
           ? (json['endDate'] as Timestamp).toDate()
-          : DateTime.tryParse(json['endDate'] ?? '') ?? DateTime.now(),
-      points: json['points'] ?? 0,
-      category: json['category'] != null
-          ? CategoryTypeExtension.fromJson(json['category'])
-          : CategoryType.bekategorijos, //
-      endPoints: json['endPoints'] ?? 0,
-      isCompleted: json['isCompleted'] ?? '',
-      userId: json['userId'] ?? '',
-      plantId: json['plantId'] ?? '',
-      habitTypeId: json['habitTypeId'] ?? '',
-      isPlantDead: json['isPlantDead'] ?? false,
+          : DateTime.tryParse(json['endDate']?.toString() ?? '') ??
+              DateTime.now(),
+      points: (json['points'] as num?)?.toInt() ?? 0,
+      endPoints: (json['endPoints'] as num?)?.toInt() ?? 0,
+      isCompleted: json['isCompleted'] as bool? ?? false,
+      userId: json['userId']?.toString() ?? '',
+      plantId: json['plantId']?.toString() ?? '',
+      habitTypeId: json['habitTypeId']?.toString() ?? '',
+      isPlantDead: json['isPlantDead'] as bool? ?? false,
     );
   }
 }
 
 class HabitInformation {
   HabitModel habitModel;
-  HabitType habitType; // Įtraukta HabitType
+  HabitType habitType;
 
-  HabitInformation({
-    required this.habitModel,
-    required this.habitType,
-  });
+  HabitInformation({required this.habitModel, required this.habitType});
 
-  factory HabitInformation.fromJson(
-      HabitModel habitModel, HabitType habitType) {
+  factory HabitInformation.fromJson(Map<String, dynamic> json) {
     return HabitInformation(
-      habitModel: habitModel,
-      habitType: habitType, // Įtraukta HabitType
+      habitModel: HabitModel.fromJson(
+          (json['habitModel'] is Map<String, dynamic>)
+              ? json['habitModel']
+              : <String, dynamic>{}),
+      habitType: HabitType.fromJson(
+          json['habitType']?['id']?.toString() ?? '',
+          (json['habitType'] is Map<String, dynamic>)
+              ? json['habitType']
+              : {} as Map<String, dynamic>),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'habitModel': habitModel.toJson(),
+      'habitType': habitType.toJson(),
+    };
   }
 }

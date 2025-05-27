@@ -18,45 +18,66 @@ class HabitService {
   Future<HabitModel?> getHabitEntry(String id) async {
     DocumentSnapshot doc = await habitCollection.doc(id).get();
     if (!doc.exists || doc.data() == null) return null;
-    return HabitModel.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    return HabitModel.fromJson(doc.data() as Map<String, dynamic>);
   }
 
-  // read user's all habits
   Future<List<HabitInformation>> getUserHabits(String username) async {
-    // Gaukime vartotojo įpročius
-    QuerySnapshot snapshot =
-        await habitCollection.where('userId', isEqualTo: username).get();
+    try {
+      // Gaukime vartotojo įpročius
+      QuerySnapshot snapshot =
+          await habitCollection.where('userId', isEqualTo: username).get();
 
-    // Pirmiausia sukuriame sąrašą HabitModel iš visų duomenų
-    List<HabitModel> habits = snapshot.docs
-        .map((doc) =>
-            HabitModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
-        .toList();
+      // Pirmiausia sukuriame sąrašą HabitModel iš visų duomenų
+      List<HabitModel> habits = [];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        if (data == null) {
+          continue;
+        }
 
-    // Sukuriame sąrašą HabitInformation, užpildytą HabitType duomenimis
-    List<HabitInformation> habitsWithTypes = [];
+        // Konvertuojame Map<dynamic, dynamic> į Map<String, dynamic>
+        final Map<String, dynamic> convertedData = data is Map
+            ? data.map((key, value) => MapEntry(key.toString(), value))
+            : {};
 
-    // Dabar pereiname per kiekvieną HabitModel
-    for (var habitModel in habits) {
-      final habitTypeId = habitModel.habitTypeId;
-
-      // Gaukime HabitType pagal habitTypeId
-      HabitType? habitType =
-          await _habitTypeService.getHabitTypeById(habitTypeId);
-
-      // Galite pridėti patikrinimą, jei habitType yra null
-      if (habitType == null) {
-        // Galite užfiksuoti klaidą arba atlikti kitą veiksmą
-        continue; // Tęsiame su kitais įpročiais
+        try {
+          final habitModel = HabitModel.fromJson(convertedData);
+          habits.add(habitModel);
+        } catch (e) {
+          continue;
+        }
       }
 
-      // Sukurkime HabitInformation su sujungtu HabitType
-      var habitInfo = HabitInformation.fromJson(habitModel, habitType);
+      // Sukuriame sąrašą HabitInformation, užpildytą HabitType duomenimis
+      List<HabitInformation> habitsWithTypes = [];
 
-      habitsWithTypes.add(habitInfo);
+      // Dabar pereiname per kiekvieną HabitModel
+      for (var habitModel in habits) {
+        final habitTypeId = habitModel.habitTypeId;
+
+        // Gaukime HabitType pagal habitTypeId
+        HabitType? habitType =
+            await _habitTypeService.getHabitTypeById(habitTypeId);
+        if (habitType == null) {
+          continue; // Tęsiame su kitais įpročiais
+        }
+
+        // Sukurkime HabitInformation su sujungtu HabitType
+        var habitInfo = HabitInformation.fromJson({
+          'id': habitModel.id, // Aiškiai nurodome id
+          'habitModel': habitModel.toJson(),
+          'habitType': habitType.toJson(),
+        });
+
+        habitsWithTypes.add(habitInfo);
+      }
+
+      print('Habits with types loaded: ${habitsWithTypes.length}');
+      return habitsWithTypes;
+    } catch (e) {
+      print('Klaida gaunant įpročius: $e');
+      return []; // Grąžiname tuščią sąrašą, jei įvyksta klaida
     }
-
-    return habitsWithTypes;
   }
 
   // update

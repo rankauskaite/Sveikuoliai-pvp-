@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart'; // Enum įtraukimas
 
 class SharedGoal {
@@ -9,7 +8,6 @@ class SharedGoal {
   int points;
   bool isCompletedUser1;
   bool isCompletedUser2;
-  CategoryType category;
   int endPoints;
   String user1Id;
   String user2Id;
@@ -26,7 +24,6 @@ class SharedGoal {
     required this.points,
     required this.isCompletedUser1,
     required this.isCompletedUser2,
-    required this.category,
     required this.endPoints,
     required this.user1Id,
     required this.user2Id,
@@ -40,12 +37,12 @@ class SharedGoal {
   /// Konvertavimas į JSON
   Map<String, dynamic> toJson() {
     return {
-      'startDate': Timestamp.fromDate(startDate),
-      'endDate': Timestamp.fromDate(endDate),
+      'id': id,
+      'startDate': startDate.toIso8601String(), // Konvertuojame į String
+      'endDate': endDate.toIso8601String(), // Konvertuojame į String
       'points': points,
       'isCompletedUser1': isCompletedUser1,
       'isCompletedUser2': isCompletedUser2,
-      'category': category.toJson(), // Enum į string
       'endPoints': endPoints,
       'user1Id': user1Id,
       'user2Id': user2Id,
@@ -58,15 +55,20 @@ class SharedGoal {
   }
 
   /// Konvertavimas iš JSON
-  factory SharedGoal.fromJson(String id, Map<String, dynamic> json) {
+  factory SharedGoal.fromJson(Map<String, dynamic> json) {
     return SharedGoal(
-      id: id,
-      startDate: (json['startDate'] as Timestamp).toDate(),
-      endDate: (json['endDate'] as Timestamp).toDate(),
+      id: json['id'],
+      startDate: json['startDate'] is Timestamp
+          ? (json['startDate'] as Timestamp).toDate()
+          : DateTime.tryParse(json['startDate']?.toString() ?? '') ??
+              DateTime.now(),
+      endDate: json['endDate'] is Timestamp
+          ? (json['endDate'] as Timestamp).toDate()
+          : DateTime.tryParse(json['endDate']?.toString() ?? '') ??
+              DateTime.now(),
       points: json['points'] ?? 0,
       isCompletedUser1: json['isCompletedUser1'] ?? false,
       isCompletedUser2: json['isCompletedUser2'] ?? false,
-      category: CategoryTypeExtension.fromJson(json['category'] ?? ''),
       endPoints: json['endPoints'] ?? 0,
       user1Id: json['user1Id'] ?? '',
       user2Id: json['user2Id'] ?? '',
@@ -88,12 +90,24 @@ class SharedGoalInformation {
     required this.goalType,
   });
 
-  /// Konvertavimas iš JSON
-  factory SharedGoalInformation.fromJson(
-      SharedGoal goalModel, GoalType goalType) {
+  Map<String, dynamic> toJson() {
+    return {
+      'sharedGoalModel': sharedGoalModel.toJson(),
+      'goalType': goalType.toJson(),
+    };
+  }
+
+  factory SharedGoalInformation.fromJson(Map<String, dynamic> json) {
     return SharedGoalInformation(
-      sharedGoalModel: goalModel,
-      goalType: goalType,
+      sharedGoalModel: SharedGoal.fromJson(
+          (json['sharedGoalModel'] is Map<String, dynamic>)
+              ? json['sharedGoalModel']
+              : {} as Map<String, dynamic>),
+      goalType: GoalType.fromJson(
+          json['goalType']?['id']?.toString() ?? '',
+          (json['goalType'] is Map<String, dynamic>)
+              ? json['goalType']
+              : {} as Map<String, dynamic>),
     );
   }
 }

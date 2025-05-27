@@ -36,9 +36,9 @@ class GoalTask {
   }
 
   // is json
-  factory GoalTask.fromJson(String id, Map<String, dynamic> json) {
+  factory GoalTask.fromJson(Map<String, dynamic> json) {
     return GoalTask(
-      id: id,
+      id: json['id'],
       goalId: json['goalId'] ?? '',
       isCompleted: json['isCompleted'] ?? false,
       title: json['title'] ?? '',

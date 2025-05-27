@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/friendship_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
@@ -7,7 +6,6 @@ import 'package:sveikuoliai/models/notification_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
-import 'package:sveikuoliai/services/friendship_services.dart';
 import 'package:sveikuoliai/services/goal_task_services.dart';
 import 'package:sveikuoliai/services/goal_type_services.dart';
 import 'package:sveikuoliai/services/notification_services.dart';
@@ -190,7 +188,6 @@ class _GoalCardState extends State<GoalCard> {
   final GoalTypeService _goalTypeService = GoalTypeService();
   final GoalTaskService _goalTaskService = GoalTaskService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
-  final FriendshipService _friendshipService = FriendshipService();
   final AppNotificationService _notificationService = AppNotificationService();
   List<FriendshipModel> friends = [];
   String? _selectedDuration = '1 mėnuo';
@@ -209,7 +206,7 @@ class _GoalCardState extends State<GoalCard> {
     super.initState();
     _dateController.text = DateTime.now().toString().substring(0, 10);
     userUsername = widget.username;
-    _fetchUserFriends(userUsername);
+    _fetchUserFriends();
   }
 
   Future<void> _fetchUserData() async {
@@ -228,10 +225,10 @@ class _GoalCardState extends State<GoalCard> {
     }
   }
 
-  Future<void> _fetchUserFriends(String username) async {
+  Future<void> _fetchUserFriends() async {
     try {
       List<FriendshipModel> friendsList =
-          await _friendshipService.getUserFriendshipModels(username);
+          await _authService.getFriendsFromSession();
       List<FriendshipModel> friendsListFiltered = friendsList
           .where((friendship) => friendship.friendship.status == 'accepted')
           .toList();
@@ -728,7 +725,6 @@ class _GoalCardState extends State<GoalCard> {
         ),
       ),
       points: 0,
-      category: CategoryType.bekategorijos,
       endPoints: _selectedDuration == '1 savaitė'
           ? 7
           : _selectedDuration == '2 savaitės'
@@ -776,6 +772,14 @@ class _GoalCardState extends State<GoalCard> {
         );
       }
       String message = 'Bendras tikslas pridėtas! 🎉';
+      GoalType? goalType =
+          await _goalTypeService.getGoalTypeEntry(goalModel.goalTypeId);
+      if (goalType == null) {
+        throw Exception('goalType not found for id: ${goalModel.goalTypeId}');
+      }
+      SharedGoalInformation goalInformation =
+          SharedGoalInformation(sharedGoalModel: goalModel, goalType: goalType);
+      await _authService.addSharedGoalToSession(goalInformation);
       showCustomSnackBar(context, message, true);
       DateTime now = DateTime.now();
       AppNotification notification = AppNotification(

@@ -17,21 +17,25 @@ class Friendship {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'user1': user1,
       'user2': user2,
       'status': status,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(), // Konvertuojame į String
     };
   }
 
   /// i objekta
   factory Friendship.fromJson(String id, Map<String, dynamic> json) {
     return Friendship(
-      id: id,
+      id: json['id'],
       user1: json['user1'] ?? '',
       user2: json['user2'] ?? '',
       status: json['status'] ?? 'pending',
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: json['createdAt'] is Timestamp
+          ? (json['createdAt'] as Timestamp).toDate()
+          : DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+              DateTime.now(),
     );
   }
 
@@ -46,16 +50,31 @@ class Friendship {
 class FriendshipModel {
   Friendship friendship; // Draugystės objektas
   UserModel friend;
+
   FriendshipModel({
     required this.friendship,
     required this.friend,
   });
 
-  /// i objekta
-  factory FriendshipModel.fromJson(Friendship friendship, UserModel friend) {
+  Map<String, dynamic> toJson() {
+    return {
+      'friendship': friendship.toJson(),
+      'friend': friend.toJson(),
+    };
+  }
+
+  factory FriendshipModel.fromJson(Map<String, dynamic> json) {
     return FriendshipModel(
-      friendship: friendship,
-      friend: friend,
+      friendship: Friendship.fromJson(
+          json['id']?.toString() ?? '',
+          (json['friendship'] is Map<String, dynamic>)
+              ? json['friendship']
+              : {} as Map<String, dynamic>),
+      friend: UserModel.fromJson(
+          json['friend']?['username']?.toString() ?? '',
+          (json['friend'] is Map<String, dynamic>)
+              ? json['friend']
+              : {} as Map<String, dynamic>),
     );
   }
 }

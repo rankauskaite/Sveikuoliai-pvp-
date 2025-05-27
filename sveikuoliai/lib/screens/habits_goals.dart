@@ -10,9 +10,6 @@ import 'package:sveikuoliai/screens/new_habit.dart';
 import 'package:sveikuoliai/screens/new_shared_goal.dart';
 import 'package:sveikuoliai/screens/shared_goal.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
-import 'package:sveikuoliai/services/friendship_services.dart';
-import 'package:sveikuoliai/services/goal_services.dart';
-import 'package:sveikuoliai/services/habit_services.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
@@ -38,10 +35,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   List<GoalInformation> userGoals = [];
   List<SharedGoalInformation> userSharedGoals = [];
   List<FriendshipModel> friends = [];
-  final HabitService _habitService = HabitService();
-  final GoalService _goalService = GoalService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
-  final FriendshipService _friendshipService = FriendshipService();
   bool isDarkMode = false; // Temos būsena
 
   @override
@@ -65,35 +59,33 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
               sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
         },
       );
-      await _fetchUserHabits(userUsername);
-      await _fetchUserGoals(userUsername);
+      await _fetchUserHabits();
+      await _fetchUserGoals();
       if (userVersion == 'premium') {
         await _fetchUserSharedGoals(userUsername);
         await _fetchUserFriends(userUsername);
       }
-      setState(() {
-        _authService.updateUserSession(
-            "date", DateTime.now().toIso8601String().split('T').first);
-        date = DateTime.now().toIso8601String().split('T').first;
-      });
     } catch (e) {
       String message = 'Klaida gaunant duomenis ❌';
       showCustomSnackBar(context, message, false);
     }
   }
 
-  Future<void> _fetchUserHabits(String username) async {
+  Future<void> _fetchUserHabits() async {
     try {
-      List<HabitInformation> habits =
-          await _habitService.getUserHabits(username);
+      List<HabitInformation> habits = await _authService.getHabitsFromSession();
+      bool updated = false;
 
-      if (date != DateTime.now().toIso8601String().split('T').first) {
-        for (var habit in habits) {
-          if (habit.habitModel.endDate.isBefore(DateTime.now())) {
-            habit.habitModel.isCompleted = true;
-            await _habitService.updateHabitEntry(habit.habitModel);
-          }
+      for (var habit in habits) {
+        if (habit.habitModel.endDate.isBefore(DateTime.now()) &&
+            !habit.habitModel.isCompleted) {
+          habit.habitModel.isCompleted = true;
+          updated = true;
         }
+      }
+
+      if (updated) {
+        await _authService.saveHabitsToSession(habits);
       }
 
       setState(() {
@@ -104,17 +96,21 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
     }
   }
 
-  Future<void> _fetchUserGoals(String username) async {
+  Future<void> _fetchUserGoals() async {
     try {
-      List<GoalInformation> goals = await _goalService.getUserGoals(username);
+      List<GoalInformation> goals = await _authService.getGoalsFromSession();
+      bool updated = false;
 
-      if (date != DateTime.now().toIso8601String().split('T').first) {
-        for (var goal in goals) {
-          if (goal.goalModel.endDate.isBefore(DateTime.now())) {
-            goal.goalModel.isCompleted = true;
-            await _goalService.updateGoalEntry(goal.goalModel);
-          }
+      for (var goal in goals) {
+        if (goal.goalModel.endDate.isBefore(DateTime.now()) &&
+            !goal.goalModel.isCompleted) {
+          goal.goalModel.isCompleted = true;
+          updated = true;
         }
+      }
+
+      if (updated) {
+        await _authService.saveGoalsToSession(goals);
       }
 
       setState(() {
@@ -128,38 +124,35 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
   Future<void> _fetchUserSharedGoals(String username) async {
     try {
       List<SharedGoalInformation> goals =
-          await _sharedGoalService.getSharedUserGoals(username);
+          await _authService.getSharedGoalsFromSession();
+      bool updated = false;
 
-      if (date != DateTime.now().toIso8601String().split('T').first) {
-        for (var goal in goals) {
-          if (goal.sharedGoalModel.endDate.isBefore(DateTime.now())) {
-            goal.sharedGoalModel.isCompletedUser1 = true;
-            goal.sharedGoalModel.isCompletedUser2 = true;
-            await _sharedGoalService
-                .updateSharedGoalEntry(goal.sharedGoalModel);
-          }
+      for (var goal in goals) {
+        if (goal.sharedGoalModel.endDate.isBefore(DateTime.now()) &&
+            (!goal.sharedGoalModel.isCompletedUser1 ||
+                !goal.sharedGoalModel.isCompletedUser2)) {
+          goal.sharedGoalModel.isCompletedUser1 = true;
+          goal.sharedGoalModel.isCompletedUser2 = true;
+          updated = true;
         }
       }
 
-      goals.sort((a, b) {
-        if (a.sharedGoalModel.isApproved == b.sharedGoalModel.isApproved) {
-          return 0;
-        }
-        return a.sharedGoalModel.isApproved ? -1 : 1;
-      });
+      if (updated) {
+        await _authService.saveSharedGoalsToSession(goals);
+      }
 
       setState(() {
         userSharedGoals = goals;
       });
     } catch (e) {
-      showCustomSnackBar(context, 'Klaida kraunant draugų tikslus ❌', false);
+      showCustomSnackBar(context, 'Klaida kraunant bendrus tikslus ❌', false);
     }
   }
 
   Future<void> _fetchUserFriends(String username) async {
     try {
       List<FriendshipModel> friendsList =
-          await _friendshipService.getUserFriendshipModels(username);
+          await _authService.getFriendsFromSession();
       List<FriendshipModel> friendsListFiltered = friendsList
           .where((friendship) => friendship.friendship.status == 'accepted')
           .toList();
@@ -174,12 +167,18 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
     }
   }
 
-  Future<void> _confirmSharedGoal(SharedGoal goal) async {
+  Future<void> _confirmSharedGoal(SharedGoalInformation goal) async {
     try {
       setState(() {
-        goal.isApproved = true;
+        goal.sharedGoalModel.isApproved = true;
       });
-      await _sharedGoalService.updateSharedGoalEntry(goal);
+      await _sharedGoalService.updateSharedGoalEntry(goal.sharedGoalModel);
+      setState(() {
+        userSharedGoals.removeWhere(
+            (f) => f.sharedGoalModel.id == goal.sharedGoalModel.id);
+        userSharedGoals.add(goal);
+      });
+      await _authService.saveSharedGoalsToSession(userSharedGoals);
       showCustomSnackBar(context, "Bendras tikslas patvirtinta ✅", true);
       await _fetchUserSharedGoals(userUsername);
     } catch (e) {
@@ -1297,7 +1296,7 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    await _confirmSharedGoal(goal.sharedGoalModel);
+                    await _confirmSharedGoal(goal);
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: isDarkMode

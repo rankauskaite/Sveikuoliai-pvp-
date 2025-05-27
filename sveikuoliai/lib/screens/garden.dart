@@ -6,10 +6,7 @@ import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
-import 'package:sveikuoliai/services/goal_services.dart';
-import 'package:sveikuoliai/services/habit_services.dart';
 import 'package:sveikuoliai/services/plant_image_services.dart';
-import 'package:sveikuoliai/services/shared_goal_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 
@@ -28,9 +25,6 @@ class _GardenScreenState extends State<GardenScreen> {
   List<Map<String, dynamic>> userHabits = [];
   List<Map<String, dynamic>> userGoals = [];
   List<Map<String, dynamic>> userSharedGoals = [];
-  final HabitService _habitService = HabitService();
-  final GoalService _goalService = GoalService();
-  final SharedGoalService _sharedGoalService = SharedGoalService();
   final PageController _pageController = PageController();
   final Random _random = Random();
   int _currentPage = 0;
@@ -149,8 +143,7 @@ class _GardenScreenState extends State<GardenScreen> {
 
   Future<void> _fetchUserHabits(String username) async {
     try {
-      List<HabitInformation> habits =
-          await _habitService.getUserHabits(username);
+      List<HabitInformation> habits = await _authService.getHabitsFromSession();
       setState(() {
         userHabits = habits
             .map((habit) => {
@@ -167,7 +160,7 @@ class _GardenScreenState extends State<GardenScreen> {
 
   Future<void> _fetchUserGoals(String username) async {
     try {
-      List<GoalInformation> goals = await _goalService.getUserGoals(username);
+      List<GoalInformation> goals = await _authService.getGoalsFromSession();
       setState(() {
         userGoals = goals
             .map((goal) => {
@@ -185,11 +178,11 @@ class _GardenScreenState extends State<GardenScreen> {
   Future<void> _fetchUserSharedGoals(String username) async {
     try {
       List<SharedGoalInformation> goals =
-          await _sharedGoalService.getSharedUserGoals(username);
-      List<SharedGoalInformation> activeGoals =
-          goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
+          await _authService.getSharedGoalsFromSession();
+      // List<SharedGoalInformation> activeGoals =
+      //     goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
       setState(() {
-        userSharedGoals = activeGoals
+        userSharedGoals = goals
             .map((goal) => {
                   'plantId': goal.sharedGoalModel.plantId,
                   'points': goal.sharedGoalModel.points,
