@@ -325,8 +325,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 if (unreadNotificationsCount > 0)
                                   Positioned(
-                                    right: 4,
-                                    top: 4,
+                                    right: 3,
+                                    top: 3,
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
                                       decoration: BoxDecoration(

@@ -149,20 +149,20 @@ class _HabitScreenState extends State<HabitScreen> {
         .subtract(Duration(days: 7));
     if (widget.habit.habitModel.plantId == "dobiliukas" &&
         date.isBefore(twoDaysAgo)) {
-      showCustomSnackBar(
-          context,
-          "${getPlantName(widget.habit.habitModel.plantId)} bent 2 dienas 🥺",
-          false);
+      showCustomPlantSnackBar(
+        context,
+        "${getPlantName(widget.habit.habitModel.plantId)} bent 2 dienas 🥺",
+      );
 
       return true;
     } else if (widget.habit.habitModel.plantId == "ramuneles" ||
         widget.habit.habitModel.plantId == "zibuokle" ||
         widget.habit.habitModel.plantId == "saulegraza") {
       if (date.isBefore(threeDaysAgo)) {
-        showCustomSnackBar(
-            context,
-            "${getPlantName(widget.habit.habitModel.plantId)} bent 3 dienas 🥺",
-            false);
+        showCustomPlantSnackBar(
+          context,
+          "${getPlantName(widget.habit.habitModel.plantId)} bent 3 dienas 🥺",
+        );
 
         return true;
       }
@@ -170,15 +170,37 @@ class _HabitScreenState extends State<HabitScreen> {
         widget.habit.habitModel.plantId == "gervuoge" ||
         widget.habit.habitModel.plantId == "vysnia") {
       if (date.isBefore(weekAgo)) {
-        showCustomSnackBar(
-            context,
-            "${getPlantName(widget.habit.habitModel.plantId)} bent savaitę 🥺",
-            false);
+        showCustomPlantSnackBar(
+          context,
+          "${getPlantName(widget.habit.habitModel.plantId)} bent savaitę 🥺",
+        );
 
         return true;
       }
     }
     return false;
+  }
+
+  void showCustomPlantSnackBar(BuildContext context, String message) {
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 17,
+        ),
+      ),
+      backgroundColor: Colors.purple.shade400.withOpacity(0.6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.0), // Viršutinis kairysis kampas
+          topRight: Radius.circular(16.0), // Viršutinis dešinysis kampas
+        ),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   String getPlantName(String plantId) {

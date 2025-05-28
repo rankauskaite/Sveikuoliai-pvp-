@@ -382,6 +382,8 @@ class AuthService {
 
   Future<void> addJournalentryToSession(JournalModel journal) async {
     List<JournalModel> entries = await getJournalEntriesFromSession();
+    // Jei jau yra įrašas su tokiu id, jį pašaliname
+    entries.removeWhere((entry) => entry.id == journal.id);
     entries.add(journal);
     final entriesJson = entries.map((entry) => entry.toJson()).toList();
     await _storage.write(

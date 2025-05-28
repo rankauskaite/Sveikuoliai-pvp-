@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/backblaze_service.dart';
 import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/models/journal_model.dart';
@@ -13,6 +14,7 @@ Future<String?> uploadJournalEntry({
   required MoodType mood,
   File? photoFile,
 }) async {
+  final AuthService _authService = AuthService();
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) {
     print('Vartotojas neprisijungęs.');
@@ -21,7 +23,8 @@ Future<String?> uploadJournalEntry({
 
   String? photoUrl;
   if (photoFile != null) {
-    photoUrl = await BackblazeService().uploadImageAndGetUrl(photoFile, username);
+    photoUrl =
+        await BackblazeService().uploadImageAndGetUrl(photoFile, username);
     if (photoUrl == null) {
       print('Nepavyko įkelti nuotraukos.');
       return null;
@@ -38,6 +41,7 @@ Future<String?> uploadJournalEntry({
   );
 
   await JournalService().createJournalEntry(journalEntry);
+  await _authService.addJournalentryToSession(journalEntry);
   print('Įrašas sukurtas su nuotrauka: $photoUrl');
   return photoUrl; // Grąžiname photoUrl
 }

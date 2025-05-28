@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   DateTime userJoinDate = DateTime.now();
   String userVersion = "Gija NULIS";
   String userIcon = 'account_circle';
+  String iconUrl = 'account_circle'; // Naujas kintamasis tik failo pavadinimui
   bool isDarkMode = false; // Temos būsena
 
   @override
@@ -41,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userIcon = sessionData['icon']?.isNotEmpty == true
             ? sessionData['icon']!
             : 'account_circle';
+        iconUrl = userIcon.contains('/') ? userIcon.split('/').last : userIcon;
         isDarkMode =
             sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
         userVersion = sessionData['version'] ?? 'free';
@@ -146,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       : const Color(0xFFD9D9D9),
                                 )
                               : Image.asset(
-                                  userIcon,
+                                  'assets/images/avataraiHigh/$iconUrl',
                                   width: 250,
                                   height: 250,
                                   fit: BoxFit.cover,

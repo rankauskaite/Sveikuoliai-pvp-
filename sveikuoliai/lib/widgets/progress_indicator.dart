@@ -10,9 +10,9 @@ Widget buildProgressIndicator(double progress, String plantId, int points,
   String imagePath = "";
   // Patikrina ar data yra užvakar arba senesnė
   if (isPlantDead) {
-    imagePath = DeadPlantImageService.getPlantImage(plantType, userPoints);
+    imagePath = HighDeadPlantImageService.getPlantImage(plantType, userPoints);
   } else {
-    imagePath = PlantImageService.getPlantImage(plantType, userPoints);
+    imagePath = HighPlantImageService.getPlantImage(plantType, userPoints);
   }
 
   //PlantImageService.getPlantImage(plantType, userPoints);

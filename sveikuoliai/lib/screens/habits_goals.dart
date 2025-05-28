@@ -141,6 +141,14 @@ class _HabitsGoalsScreenState extends State<HabitsGoalsScreen> {
         await _authService.saveSharedGoalsToSession(goals);
       }
 
+      goals.sort((a, b) {
+        bool aActive = a.sharedGoalModel.isApproved;
+        bool bActive = b.sharedGoalModel.isApproved;
+        if (aActive && !bActive) return -1;
+        if (!aActive && bActive) return 1;
+        return 0;
+      });
+
       setState(() {
         userSharedGoals = goals;
       });
