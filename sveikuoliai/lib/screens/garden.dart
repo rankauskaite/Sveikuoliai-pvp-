@@ -222,7 +222,8 @@ class _GardenScreenState extends State<GardenScreen> {
         userHabits = habits
             .map((habit) => {
                   'plantId': habit.habitModel.plantId,
-                  'points': habit.habitModel.points
+                  'points': habit.habitModel.points,
+                  'isPlantDead': habit.habitModel.isPlantDead,
                 })
             .toList();
       });
@@ -241,7 +242,8 @@ class _GardenScreenState extends State<GardenScreen> {
         userGoals = goals
             .map((goal) => {
                   'plantId': goal.goalModel.plantId,
-                  'points': goal.goalModel.points
+                  'points': goal.goalModel.points,
+                  'isPlantDead': goal.goalModel.isPlantDead,
                 })
             .toList();
       });
@@ -261,7 +263,11 @@ class _GardenScreenState extends State<GardenScreen> {
         userSharedGoals = goals
             .map((goal) => {
                   'plantId': goal.sharedGoalModel.plantId,
-                  'points': goal.sharedGoalModel.points
+                  'points': goal.sharedGoalModel.points,
+                  'isPlantDead': goal.sharedGoalModel.isPlantDeadUser1 &&
+                          goal.sharedGoalModel.isPlantDeadUser2
+                      ? true
+                      : false,
                 })
             .toList();
       });
