@@ -14,9 +14,7 @@ class FriendProfileScreen extends StatefulWidget {
   final FriendshipModel friendship;
   final bool isDarkMode;
   const FriendProfileScreen(
-      {super.key,
-      required this.friendship,
-      required this.isDarkMode});
+      {super.key, required this.friendship, required this.isDarkMode});
 
   @override
   _FriendProfileScreenState createState() => _FriendProfileScreenState();
@@ -26,10 +24,14 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
   final FriendshipService _friendshipService = FriendshipService();
   final SharedGoalService _sharedGoalService = SharedGoalService();
   final AuthService _authService = AuthService();
+  String iconUrl = 'account_circle';
 
   @override
   void initState() {
     super.initState();
+    iconUrl = (widget.friendship.friend.iconUrl!.contains('/')
+        ? widget.friendship.friend.iconUrl!.split('/').last
+        : widget.friendship.friend.iconUrl)!;
   }
 
   Future<void> _deleteFriend(FriendshipModel friendship) async {
@@ -154,7 +156,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                                       : const Color(0xFFD9D9D9),
                                 )
                               : Image.asset(
-                                  widget.friendship.friend.iconUrl!,
+                                  'assets/images/avataraiHigh/$iconUrl',
                                   width: 250,
                                   height: 250,
                                   fit: BoxFit.cover,

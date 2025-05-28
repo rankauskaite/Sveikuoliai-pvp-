@@ -89,7 +89,32 @@ class _GoalPageState extends State<GoalScreen> {
       List<GoalTask> tasks =
           await _goalTaskService.getGoalTasks(widget.goal.goalModel.id);
 
-      tasks.sort((a, b) => a.date.compareTo(b.date));
+      tasks.sort((a, b) {
+        int getNumericId(String id) {
+          final match = RegExp(r'^(\d+)_').firstMatch(id);
+          if (match != null) {
+            return int.tryParse(match.group(1)!) ?? 0;
+          }
+          return -1; // -1 reiškia nėra skaičiaus pradžioje
+        }
+
+        int aNum = getNumericId(a.id);
+        int bNum = getNumericId(b.id);
+
+        if (aNum != -1 && bNum != -1) {
+          // Abu turi skaičių pradžioje – rikiuojam pagal skaičių
+          return aNum.compareTo(bNum);
+        } else if (aNum == -1 && bNum == -1) {
+          // Abu neturi skaičiaus – rikiuojam pagal datą
+          return a.date.compareTo(b.date);
+        } else if (aNum == -1) {
+          // a neturi skaičiaus, b turi – a eina po b
+          return 1;
+        } else {
+          // b neturi skaičiaus, a turi – a eina prieš b
+          return -1;
+        }
+      });
 
       setState(() {
         goalTasks = tasks;
@@ -253,20 +278,18 @@ class _GoalPageState extends State<GoalScreen> {
         .subtract(Duration(days: 7));
     if (widget.goal.goalModel.plantId == "dobiliukas" &&
         date.isBefore(twoDaysAgo)) {
-      showCustomSnackBar(
-          context,
-          "${getPlantName(widget.goal.goalModel.plantId)} bent 2 dienas 🥺",
-          false);
+      showCustomPlantSnackBar(
+        context,
+        "${getPlantName(widget.goal.goalModel.plantId)} bent 2 dienas 🥺",
+      );
 
       return true;
     } else if (widget.goal.goalModel.plantId == "ramuneles" ||
         widget.goal.goalModel.plantId == "zibuokle" ||
         widget.goal.goalModel.plantId == "saulegraza") {
       if (date.isBefore(threeDaysAgo)) {
-        showCustomSnackBar(
-            context,
-            "${getPlantName(widget.goal.goalModel.plantId)} bent 3 dienas 🥺",
-            false);
+        showCustomPlantSnackBar(context,
+            "${getPlantName(widget.goal.goalModel.plantId)} bent 3 dienas 🥺");
 
         return true;
       }
@@ -274,15 +297,37 @@ class _GoalPageState extends State<GoalScreen> {
         widget.goal.goalModel.plantId == "gervuoge" ||
         widget.goal.goalModel.plantId == "vysnia") {
       if (date.isBefore(weekAgo)) {
-        showCustomSnackBar(
-            context,
-            "${getPlantName(widget.goal.goalModel.plantId)} bent savaitę 🥺",
-            false);
+        showCustomPlantSnackBar(
+          context,
+          "${getPlantName(widget.goal.goalModel.plantId)} bent savaitę 🥺",
+        );
 
         return true;
       }
     }
     return false;
+  }
+
+  void showCustomPlantSnackBar(BuildContext context, String message) {
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 17,
+        ),
+      ),
+      backgroundColor: Colors.lightBlue.shade400.withOpacity(0.6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.0), // Viršutinis kairysis kampas
+          topRight: Radius.circular(16.0), // Viršutinis dešinysis kampas
+        ),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   String getPlantName(String plantId) {
@@ -381,7 +426,7 @@ class _GoalPageState extends State<GoalScreen> {
     try {
       await _goalTaskService.createGoalTaskEntry(task);
       await _recalculateGoalTaskPoints();
-      showCustomSnackBar(context, "Tikslo užduotis sėkmingai pridėta ✅", true);
+      //showCustomSnackBar(context, "Tikslo užduotis sėkmingai pridėta ✅", true);
       Navigator.pop(context);
       Navigator.pushReplacement(
         context,

@@ -192,10 +192,10 @@ class _GardenScreenState extends State<GardenScreen> {
     try {
       List<SharedGoalInformation> goals =
           await _authService.getSharedGoalsFromSession();
-      // List<SharedGoalInformation> activeGoals =
-      //     goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
+      List<SharedGoalInformation> activeGoals =
+          goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
       setState(() {
-        userSharedGoals = goals
+        userSharedGoals = activeGoals
             .map((goal) => {
                   'plantId': goal.sharedGoalModel.plantId,
                   'points': goal.sharedGoalModel.points,
@@ -257,10 +257,12 @@ class _GardenScreenState extends State<GardenScreen> {
       // Gaukime vartotojo įpročius
       List<SharedGoalInformation> goals =
           await _sharedGoalService.getSharedUserGoals(username);
+      List<SharedGoalInformation> activeGoals =
+          goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
 
       // Atnaujiname būsena su naujais duomenimis
       setState(() {
-        userSharedGoals = goals
+        userSharedGoals = activeGoals
             .map((goal) => {
                   'plantId': goal.sharedGoalModel.plantId,
                   'points': goal.sharedGoalModel.points,
