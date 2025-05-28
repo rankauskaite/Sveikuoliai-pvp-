@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_progress_model.dart';
 
 class HabitProgressService {
@@ -16,19 +17,60 @@ class HabitProgressService {
   Future<HabitProgress?> getHabitProgressEntry(String id) async {
     DocumentSnapshot doc = await habitProgressCollection.doc(id).get();
     if (!doc.exists || doc.data() == null) return null;
-    return HabitProgress.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    return HabitProgress.fromJson(doc.data() as Map<String, dynamic>);
   }
 
-  // read all habit's progress
-  Future<List<HabitProgress>> getAllHabitProgress(String habitId) async {
-    QuerySnapshot querySnapshot = await habitProgressCollection
-        .where('habitId', isEqualTo: habitId)
-        .get();
+  Future<Map<String, List<HabitProgress>>> getAllHabitProgress(
+      List<HabitInformation> habits) async {
+    try {
+      // Gauname habits iš sesijos
+      if (habits.isEmpty) {
+        return {};
+      }
 
-    return querySnapshot.docs
-        .map((doc) =>
-            HabitProgress.fromJson(doc.id, doc.data() as Map<String, dynamic>))
-        .toList();
+      // Ištraukiame visus habitId
+      List<String> habitIds =
+          habits.map((habit) => habit.habitModel.id).toList();
+
+      if (habitIds.isEmpty) {
+        return {};
+      }
+
+      // Firestore užklausa pagal habitId sąrašą
+      QuerySnapshot querySnapshot = await habitProgressCollection
+          .where('habitId', whereIn: habitIds)
+          .get();
+
+      Map<String, List<HabitProgress>> progressByHabit = {};
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        if (data == null) {
+          continue;
+        }
+
+        final Map<String, dynamic> convertedData = data is Map
+            ? data.map((key, value) => MapEntry(key.toString(), value))
+            : {};
+        convertedData['id'] = doc.id;
+
+        try {
+          final habitProgress = HabitProgress.fromJson(convertedData);
+          progressByHabit
+              .putIfAbsent(habitProgress.habitId, () => [])
+              .add(habitProgress);
+        } catch (e) {
+          print('Failed to parse HabitProgress for document ${doc.id}: $e');
+          continue;
+        }
+      }
+
+      print('HabitProgress loaded: ${progressByHabit.length} habits');
+      print('HabitProgress map: $progressByHabit');
+      return progressByHabit;
+    } catch (e) {
+      print('Klaida gaunant įpročių progresą: $e');
+      return {};
+    }
   }
 
   // read last progress
@@ -41,7 +83,7 @@ class HabitProgressService {
       return null; // Jei nėra įrašų, grąžiname null
 
     var doc = querySnapshot.docs.last;
-    return HabitProgress.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    return HabitProgress.fromJson(doc.data() as Map<String, dynamic>);
   }
 
   Future<HabitProgress?> getTodayHabitProgress(String habitId) async {
@@ -55,7 +97,7 @@ class HabitProgressService {
 
     for (var doc in querySnapshot.docs) {
       HabitProgress progress =
-          HabitProgress.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+          HabitProgress.fromJson(doc.data() as Map<String, dynamic>);
       if (progress.date.isAfter(todayStart) &&
           progress.date.isBefore(tomorrowStart)) {
         return progress; // Grąžinam šiandienos įrašą

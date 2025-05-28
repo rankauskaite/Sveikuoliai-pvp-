@@ -34,7 +34,7 @@ class GoalTaskService {
   Future<GoalTask?> getGoalTaskEntry(String id) async {
     DocumentSnapshot doc = await goalTaskCollection.doc(id).get();
     if (!doc.exists || doc.data() == null) return null;
-    return GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>);
+    return GoalTask.fromJson(doc.data() as Map<String, dynamic>);
   }
 
   // read all goal's tasks
@@ -44,7 +44,7 @@ class GoalTaskService {
 
     return snapshot.docs
         .map((doc) =>
-            GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+            GoalTask.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
   }
 
@@ -58,7 +58,7 @@ class GoalTaskService {
 
     return snapshot.docs
         .map((doc) =>
-            GoalTask.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+            GoalTask.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
   }
 

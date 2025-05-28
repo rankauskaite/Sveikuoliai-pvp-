@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/habit_model.dart';
 import 'package:sveikuoliai/models/habit_type_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
@@ -21,6 +20,7 @@ class _NewHabitScreenState extends State<NewHabitScreen> {
   static Map<String, IconData> habitIcons = HabitType.habitIcons;
   final AuthService _authService = AuthService();
   bool isDarkMode = false; // Temos būsena
+  String userUsername = "";
 
   @override
   void initState() {
@@ -32,6 +32,7 @@ class _NewHabitScreenState extends State<NewHabitScreen> {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
       setState(() {
+        userUsername = sessionData['username'] ?? "";
         isDarkMode =
             sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
       });
@@ -111,6 +112,7 @@ class _NewHabitScreenState extends State<NewHabitScreen> {
                               habitDescription: habit.description,
                               habitIcon: habitIcons[habit.id] ?? Icons.help,
                               isDarkMode: isDarkMode, // Perduodame isDarkMode
+                              userUsername: userUsername,
                             );
                           }).toList(),
                           HabitCard(
@@ -120,6 +122,7 @@ class _NewHabitScreenState extends State<NewHabitScreen> {
                             habitIcon: Icons.add_circle,
                             isCustom: true,
                             isDarkMode: isDarkMode, // Perduodame isDarkMode
+                            userUsername: userUsername,
                           ),
                         ],
                       ),
@@ -144,9 +147,11 @@ class HabitCard extends StatefulWidget {
   final IconData habitIcon;
   final bool isCustom;
   final bool isDarkMode; // Pridėtas isDarkMode parametras
+  final String userUsername;
 
   const HabitCard({
     super.key,
+    required this.userUsername,
     required this.habitId,
     required this.habitName,
     required this.habitDescription,
@@ -160,7 +165,6 @@ class HabitCard extends StatefulWidget {
 }
 
 class _HabitCardState extends State<HabitCard> {
-  String userUsername = "";
   final HabitTypeService _habitTypeService = HabitTypeService();
   final HabitService _habitService = HabitService();
   String? _selectedDuration = '1 mėnuo';
@@ -176,18 +180,6 @@ class _HabitCardState extends State<HabitCard> {
   void initState() {
     super.initState();
     _dateController.text = DateTime.now().toString().substring(0, 10);
-  }
-
-  Future<void> _fetchUserData() async {
-    try {
-      Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(() {
-        userUsername = sessionData['username'] ?? "Nežinomas";
-      });
-    } catch (e) {
-      String message = 'Klaida gaunant duomenis ❌';
-      showCustomSnackBar(context, message, false);
-    }
   }
 
   @override
@@ -551,11 +543,8 @@ class _HabitCardState extends State<HabitCard> {
       }
     }
 
-    if (userUsername.isEmpty) {
-      await _fetchUserData();
-    }
     String habitID =
-        '${habitId}${userUsername[0].toUpperCase() + userUsername.substring(1)}$_startDate';
+        '${habitId}${widget.userUsername[0].toUpperCase() + widget.userUsername.substring(1)}$_startDate';
 
     HabitModel habitModel = HabitModel(
       id: habitID,
@@ -578,7 +567,6 @@ class _HabitCardState extends State<HabitCard> {
         ),
       ),
       points: 0,
-      category: CategoryType.bekategorijos,
       endPoints: _selectedDuration == '1 savaitė'
           ? 7
           : _selectedDuration == '2 savaitės'
@@ -593,7 +581,7 @@ class _HabitCardState extends State<HabitCard> {
                               ? 90
                               : 180,
       isCompleted: false,
-      userId: userUsername,
+      userId: widget.userUsername,
       habitTypeId: habitId.trim(),
       isPlantDead: false,
       plantId: _selectedDuration == '1 savaitė'
@@ -613,6 +601,15 @@ class _HabitCardState extends State<HabitCard> {
 
     try {
       await _habitService.createHabitEntry(habitModel);
+      HabitType? habitType =
+          await _habitTypeService.getHabitTypeById(habitModel.habitTypeId);
+      if (habitType == null) {
+        throw Exception(
+            'HabitType not found for id: ${habitModel.habitTypeId}');
+      }
+      HabitInformation habitInformation =
+          HabitInformation(habitModel: habitModel, habitType: habitType);
+      await _authService.addHabitToSession(habitInformation);
       String message = 'Įprotis pridėtas! 🎉';
       showCustomSnackBar(context, message, true);
     } catch (e) {

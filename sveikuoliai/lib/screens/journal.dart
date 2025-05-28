@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:sveikuoliai/models/journal_model.dart';
 import 'package:sveikuoliai/screens/relax_menu.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
-import 'package:sveikuoliai/services/journal_services.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
 import 'package:sveikuoliai/widgets/profile_button.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -22,7 +22,6 @@ class JournalScreen extends StatefulWidget {
 
 class _JournalScreenState extends State<JournalScreen> {
   AuthService _authService = AuthService();
-  JournalService _journalService = JournalService();
   String userUsername = '';
   Set<DateTime> _markedDays = {};
   PageController _pageController = PageController();
@@ -85,13 +84,27 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Future<void> _loadMarkedDays(String username) async {
-    // Čia gautųsi duomenys iš Firestore ar kito šaltinio
-    List<DateTime> savedDates =
-        await _journalService.getSavedJournalEntries(username);
+    try {
+      // Gauname žurnalo įrašus iš sesijos
+      List<JournalModel> journalEntries =
+          await _authService.getJournalEntriesFromSession();
 
-    setState(() {
-      _markedDays = savedDates.toSet();
-    });
+      // Ištraukiame datas iš žurnalo įrašų
+      List<DateTime> savedDates = journalEntries.map((entry) {
+        return DateTime.utc(entry.date.year, entry.date.month, entry.date.day);
+      }).toList();
+
+      setState(() {
+        _markedDays = savedDates.toSet();
+      });
+    } catch (e) {
+      print('Klaida įkeliant pažymėtas dienas: $e');
+      setState(() {
+        _markedDays = {};
+      });
+      String message = 'Klaida gaunant pažymėtas dienas ❌';
+      showCustomSnackBar(context, message, false);
+    }
   }
 
   @override

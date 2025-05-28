@@ -67,6 +67,7 @@ dependencies:
   flutter_svg: ^2.0.7
   crypto: ^3.0.3
   pay: ^3.2.1
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -114,7 +115,22 @@ flutter:
     - assets/images/augalai_vytimas/saulegraza/
     - assets/images/augalai_vytimas/vysnia/
     - assets/images/augalai_vytimas/zibuokle/
+    - assets/images/augalaiHigh/dobiliukas/
+    - assets/images/augalaiHigh/gervuoge/
+    - assets/images/augalaiHigh/orchideja/
+    - assets/images/augalaiHigh/ramuneles/
+    - assets/images/augalaiHigh/saulegraza/
+    - assets/images/augalaiHigh/vysnia/
+    - assets/images/augalaiHigh/zibuokle/
+    - assets/images/augalai_vytimasHigh/dobiliukas/
+    - assets/images/augalai_vytimasHigh/gervuoge/
+    - assets/images/augalai_vytimasHigh/orchideja/
+    - assets/images/augalai_vytimasHigh/ramuneles/
+    - assets/images/augalai_vytimasHigh/saulegraza/
+    - assets/images/augalai_vytimasHigh/vysnia/
+    - assets/images/augalai_vytimasHigh/zibuokle/
     - assets/images/avatarai/
+    - assets/images/avataraiHigh/
     - assets/images/nuotaikos/
     - assets/images/virsKalendoriaus/
     - assets/images/reklamos/

@@ -4,22 +4,17 @@ import 'package:sveikuoliai/models/shared_goal_model.dart';
 import 'package:sveikuoliai/models/user_model.dart';
 import 'package:sveikuoliai/screens/friends.dart';
 import 'package:sveikuoliai/screens/garden.dart';
+import 'package:sveikuoliai/services/auth_services.dart';
 import 'package:sveikuoliai/services/friendship_services.dart';
 import 'package:sveikuoliai/services/shared_goal_services.dart';
-import 'package:sveikuoliai/services/user_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
-import 'package:sveikuoliai/services/auth_services.dart';
 
 class FriendProfileScreen extends StatefulWidget {
-  final String name;
-  final String username;
-  final String friendshipId;
+  final FriendshipModel friendship;
+  final bool isDarkMode;
   const FriendProfileScreen(
-      {super.key,
-      required this.name,
-      required this.username,
-      required this.friendshipId});
+      {super.key, required this.friendship, required this.isDarkMode});
 
   @override
   _FriendProfileScreenState createState() => _FriendProfileScreenState();
@@ -27,59 +22,50 @@ class FriendProfileScreen extends StatefulWidget {
 
 class _FriendProfileScreenState extends State<FriendProfileScreen> {
   final FriendshipService _friendshipService = FriendshipService();
-  final UserService _userService = UserService();
+  final SharedGoalService _sharedGoalService = SharedGoalService();
   final AuthService _authService = AuthService();
-  UserModel userModel = UserModel(
-      username: "",
-      name: "",
-      password: "",
-      role: "user",
-      notifications: true,
-      darkMode: false,
-      menstrualLength: 7,
-      email: "",
-      createdAt: DateTime.now(),
-      version: "free");
-  bool isDarkMode = false; // Temos būsena
-  String userUsername = '';
+  String iconUrl = 'account_circle';
 
   @override
   void initState() {
     super.initState();
-    _fetchUser();
+    iconUrl = (widget.friendship.friend.iconUrl!.contains('/')
+        ? widget.friendship.friend.iconUrl!.split('/').last
+        : widget.friendship.friend.iconUrl)!;
   }
 
-  Future<void> _fetchUser() async {
+  Future<void> _deleteFriend(FriendshipModel friendship) async {
     try {
-      Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(() {
-        userUsername = sessionData['username'] ?? "Nežinoma";
-        isDarkMode =
-            sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
-      });
-      UserModel? model = await _userService.getUserEntry(widget.username);
-      setState(() {
-        userModel = model!;
-      });
-    } catch (e) {}
-  }
+      await _friendshipService.deleteFriendship(friendship.friendship.id);
+      await _authService.removeFriendsFromSession(widget.friendship);
 
-  Future<void> _deleteFriend(String friendshipID) async {
-    try {
-      Friendship? friendship =
-          await _friendshipService.getFriendship(friendshipID);
-      String? otherUserId = friendship?.user1 == userUsername
-          ? friendship?.user2
-          : friendship?.user1;
-      await _friendshipService.deleteFriendship(friendship!.id);
+      List<SharedGoalInformation> goals =
+          await _authService.getSharedGoalsFromSession();
 
-      final SharedGoalService _sharedGoalService = SharedGoalService();
-      List<SharedGoal> goals = await _sharedGoalService.getSharedGoalsForUsers(
-          userUsername, otherUserId!);
+      List<String> goalsToDelete = goals
+          .where((goal) {
+            return (goal.sharedGoalModel.user1Id ==
+                        friendship.friendship.user1 &&
+                    goal.sharedGoalModel.user2Id ==
+                        friendship.friendship.user2) ||
+                (goal.sharedGoalModel.user1Id == friendship.friendship.user2 &&
+                    goal.sharedGoalModel.user2Id ==
+                        friendship.friendship.user1);
+          })
+          .map((goal) => goal.sharedGoalModel.id)
+          .toList();
 
-      for (var goal in goals) {
-        await _sharedGoalService.deleteSharedGoalEntry(goal.id);
+      // Šaliname bendrus tikslus iš Firestore
+      for (var goalId in goalsToDelete) {
+        await _sharedGoalService.deleteSharedGoalEntry(goalId);
       }
+
+      setState(() {
+        goals.removeWhere(
+            (goal) => goalsToDelete.contains(goal.sharedGoalModel.id));
+      });
+
+      await _authService.saveSharedGoalsToSession(goals);
 
       setState(() {
         FocusScope.of(context).unfocus();
@@ -87,11 +73,13 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
 
       showCustomSnackBar(
           context, "Draugas ir bendros užduotys pašalinti ✅", true);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => FriendsScreen()),
       );
     } catch (e) {
+      print('Klaida šalinant draugą: $e');
       showCustomSnackBar(context, "Nepavyko pašalinti draugo ❌", false);
     }
   }
@@ -103,11 +91,13 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
     const double bottomPadding = 20.0;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
+      backgroundColor:
+          widget.isDarkMode ? Colors.black : const Color(0xFF8093F1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 0,
-        backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
+        backgroundColor:
+            widget.isDarkMode ? Colors.black : const Color(0xFF8093F1),
       ),
       body: Center(
         child: Column(
@@ -118,10 +108,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                 margin:
                     const EdgeInsets.symmetric(horizontal: horizontalPadding),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey[900] : Colors.white,
+                  color: widget.isDarkMode ? Colors.grey[900] : Colors.white,
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: isDarkMode ? Colors.grey[800]! : Colors.white,
+                    color: widget.isDarkMode ? Colors.grey[800]! : Colors.white,
                     width: 20,
                   ),
                 ),
@@ -138,13 +128,14 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                           icon: Icon(
                             Icons.arrow_back_ios,
                             size: 30,
-                            color: isDarkMode ? Colors.white : Colors.black,
+                            color:
+                                widget.isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
                         const Expanded(child: SizedBox()),
                         ElevatedButton(
                           onPressed: () {
-                            _deleteCustomSnackBar(userModel);
+                            _deleteCustomSnackBar(widget.friendship.friend);
                           },
                           child: Text(
                             'Ištrinti',
@@ -155,17 +146,17 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     Stack(
                       children: [
                         Center(
-                          child: (userModel.iconUrl == '' ||
-                                  userModel.iconUrl == null)
+                          child: (widget.friendship.friend.iconUrl == '' ||
+                                  widget.friendship.friend.iconUrl == null)
                               ? Icon(
                                   Icons.account_circle,
                                   size: 250,
-                                  color: isDarkMode
+                                  color: widget.isDarkMode
                                       ? Colors.grey[400]
                                       : const Color(0xFFD9D9D9),
                                 )
                               : Image.asset(
-                                  userModel.iconUrl!,
+                                  'assets/images/avataraiHigh/$iconUrl',
                                   width: 250,
                                   height: 250,
                                   fit: BoxFit.cover,
@@ -176,11 +167,12 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
-                        widget.name,
+                        widget.friendship.friend.name,
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black,
+                          color:
+                              widget.isDarkMode ? Colors.white : Colors.black,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -188,10 +180,10 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
-                        widget.username,
+                        widget.friendship.friend.username,
                         style: TextStyle(
                           fontSize: 18,
-                          color: isDarkMode
+                          color: widget.isDarkMode
                               ? Colors.white70
                               : const Color(0xFF8093F1),
                           fontWeight: FontWeight.w400,
@@ -207,8 +199,8 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      GardenScreen(user: userModel)),
+                                  builder: (context) => GardenScreen(
+                                      user: widget.friendship.friend)),
                             );
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -217,7 +209,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                             height: 160,
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: isDarkMode
+                                color: widget.isDarkMode
                                     ? Colors.green.shade600
                                     : Colors.green.shade700,
                                 width: 3,
@@ -225,7 +217,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: isDarkMode
+                                  color: widget.isDarkMode
                                       ? Colors.black54
                                       : Colors.black26,
                                   blurRadius: 8,
@@ -269,7 +261,8 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                   ? Icon(
                       Icons.account_circle,
                       size: 100,
-                      color: isDarkMode ? Colors.white70 : Colors.grey[800],
+                      color:
+                          widget.isDarkMode ? Colors.white70 : Colors.grey[800],
                     )
                   : Image.asset(
                       friend.iconUrl!,
@@ -284,14 +277,17 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
-                    color: isDarkMode ? Colors.purple[200] : Colors.deepPurple,
+                    color: widget.isDarkMode
+                        ? Colors.purple[200]
+                        : Colors.deepPurple,
                   ),
                   children: [
                     TextSpan(
                       text: "Ar tikrai norite pašalinti šį draugą?",
                       style: TextStyle(
                         fontWeight: FontWeight.normal,
-                        color: isDarkMode ? Colors.white70 : Colors.black,
+                        color:
+                            widget.isDarkMode ? Colors.white70 : Colors.black,
                         fontSize: 18,
                       ),
                     ),
@@ -302,11 +298,11 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
               Text(
                 "Draugo pašalinimas bus negrįžtamas.\nBus pašalinta ir bendrų užduočių istorija.",
                 style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : Colors.black),
+                    color: widget.isDarkMode ? Colors.white70 : Colors.black),
               ),
             ],
           ),
-          backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          backgroundColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
           actions: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -319,7 +315,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     });
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: isDarkMode
+                    backgroundColor: widget.isDarkMode
                         ? Colors.purple[500]!.withOpacity(0.2)
                         : Colors.deepPurple.withOpacity(0.2),
                   ),
@@ -327,7 +323,9 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     "Ne",
                     style: TextStyle(
                       fontSize: 18,
-                      color: isDarkMode ? Colors.white70 : Colors.deepPurple,
+                      color: widget.isDarkMode
+                          ? Colors.white70
+                          : Colors.deepPurple,
                     ),
                   ),
                 ),
@@ -335,17 +333,17 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    await _deleteFriend(widget.friendshipId);
+                    await _deleteFriend(widget.friendship);
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: isDarkMode
+                    backgroundColor: widget.isDarkMode
                         ? Colors.red[500]!.withOpacity(0.2)
                         : Colors.red.withOpacity(0.2),
                   ),
                   child: Text(
                     "Taip",
                     style: TextStyle(
-                      color: isDarkMode ? Colors.red[300] : Colors.red,
+                      color: widget.isDarkMode ? Colors.red[300] : Colors.red,
                       fontSize: 18,
                     ),
                   ),

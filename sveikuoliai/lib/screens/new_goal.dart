@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sveikuoliai/enums/category_enum.dart';
 import 'package:sveikuoliai/models/goal_model.dart';
 import 'package:sveikuoliai/models/goal_task_model.dart';
 import 'package:sveikuoliai/models/goal_type_model.dart';
@@ -24,6 +23,7 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
   static Map<String, IconData> goalIcons = GoalType.goalIcons;
   final AuthService _authService = AuthService();
   bool isDarkMode = false; // Temos būsena
+  String userUsername = "";
 
   @override
   void initState() {
@@ -35,6 +35,7 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
     try {
       Map<String, String?> sessionData = await _authService.getSessionUser();
       setState(() {
+        userUsername = sessionData['username'] ?? "";
         isDarkMode =
             sessionData['darkMode'] == 'true'; // Gauname darkMode iš sesijos
       });
@@ -117,6 +118,7 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
                               isCountable: goal.isCountable,
                               goalIcon: goalIcons[goal.id] ?? Icons.help,
                               isDarkMode: isDarkMode, // Perduodame isDarkMode
+                              userUsername: userUsername,
                             );
                           }).toList(),
                           GoalCard(
@@ -127,6 +129,7 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
                             isCountable: true,
                             isCustom: true,
                             isDarkMode: isDarkMode, // Perduodame isDarkMode
+                            userUsername: userUsername,
                           ),
                         ],
                       ),
@@ -152,6 +155,7 @@ class GoalCard extends StatefulWidget {
   final bool isCountable;
   final bool isCustom;
   final bool isDarkMode; // Pridėtas isDarkMode parametras
+  final String userUsername;
 
   const GoalCard({
     super.key,
@@ -162,6 +166,7 @@ class GoalCard extends StatefulWidget {
     required this.isCountable,
     this.isCustom = false,
     required this.isDarkMode, // Pridėtas parametras
+    required this.userUsername,
   });
 
   @override
@@ -169,7 +174,6 @@ class GoalCard extends StatefulWidget {
 }
 
 class _GoalCardState extends State<GoalCard> {
-  String userUsername = "";
   final GoalTypeService _goalTypeService = GoalTypeService();
   final GoalService _goalService = GoalService();
   final GoalTaskService _goalTaskService = GoalTaskService();
@@ -186,18 +190,6 @@ class _GoalCardState extends State<GoalCard> {
   void initState() {
     super.initState();
     _dateController.text = DateTime.now().toString().substring(0, 10);
-  }
-
-  Future<void> _fetchUserData() async {
-    try {
-      Map<String, String?> sessionData = await _authService.getSessionUser();
-      setState(() {
-        userUsername = sessionData['username'] ?? "Nežinomas";
-      });
-    } catch (e) {
-      String message = 'Klaida gaunant duomenis ❌';
-      showCustomSnackBar(context, message, false);
-    }
   }
 
   @override
@@ -596,11 +588,8 @@ class _GoalCardState extends State<GoalCard> {
       }
     }
 
-    if (userUsername.isEmpty) {
-      await _fetchUserData();
-    }
     String goalID =
-        '${goalId}${userUsername[0].toUpperCase() + userUsername.substring(1)}$_startDate';
+        '${goalId}${widget.userUsername[0].toUpperCase() + widget.userUsername.substring(1)}$_startDate';
 
     GoalModel goalModel = GoalModel(
       id: goalID,
@@ -623,7 +612,6 @@ class _GoalCardState extends State<GoalCard> {
         ),
       ),
       points: 0,
-      category: CategoryType.bekategorijos,
       endPoints: _selectedDuration == '1 savaitė'
           ? 7
           : _selectedDuration == '2 savaitės'
@@ -637,7 +625,7 @@ class _GoalCardState extends State<GoalCard> {
                           : _selectedDuration == '3 mėnesiai'
                               ? 90
                               : 180,
-      userId: userUsername,
+      userId: widget.userUsername,
       goalTypeId: goalId.trim(),
       isPlantDead: false,
       plantId: _selectedDuration == '1 savaitė'
@@ -662,9 +650,17 @@ class _GoalCardState extends State<GoalCard> {
         await _goalTaskService.createDefaultTasksForGoal(
           goalId: goalID,
           goalType: goalId,
-          username: userUsername,
+          username: widget.userUsername,
         );
       }
+      GoalType? goalType =
+          await _goalTypeService.getGoalTypeEntry(goalModel.goalTypeId);
+      if (goalType == null) {
+        throw Exception('goalType not found for id: ${goalModel.goalTypeId}');
+      }
+      GoalInformation goalInformation =
+          GoalInformation(goalModel: goalModel, goalType: goalType);
+      await _authService.addGoalToSession(goalInformation);
       String message = 'Tikslas pridėtas! 🎉';
       showCustomSnackBar(context, message, true);
       return goalModel;

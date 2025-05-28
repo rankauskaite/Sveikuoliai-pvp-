@@ -123,12 +123,14 @@ class _GardenScreenState extends State<GardenScreen> {
       if (sessionData['username'] != widget.user.username) {
         flag = true;
       }
-      await _fetchUserHabits(widget.user.username);
-      await _fetchUserGoals(widget.user.username);
-      if (widget.user.version == 'premium') {
-        await _fetchUserSharedGoals(widget.user.username);
+      if (!flag) {
+        await _fetchUserHabits();
+        await _fetchUserGoals();
+        if (widget.user.version == 'premium') {
+          await _fetchUserSharedGoals();
+        }
       }
-      setState(() {
+      setState(() async {
         friendFlag = flag;
         isDarkMode = sessionData['darkMode'] == 'true'; // Gauname darkMode
         if (flag) {
@@ -137,6 +139,11 @@ class _GardenScreenState extends State<GardenScreen> {
             'Draugo ${widget.user.name}\ntikslų sodą puošia\naugaliukai',
             '${widget.user.name} augina\ntikslų augaliukus su draugais'
           ];
+          await _fetchUserFHabits(widget.user.username);
+          await _fetchUserFGoals(widget.user.username);
+          if (widget.user.version == 'premium') {
+            await _fetchUserFSharedGoals(widget.user.username);
+          }
         }
         count = [
           userHabits.length.toString(),
@@ -147,10 +154,9 @@ class _GardenScreenState extends State<GardenScreen> {
     } catch (e) {}
   }
 
-  Future<void> _fetchUserHabits(String username) async {
+  Future<void> _fetchUserHabits() async {
     try {
-      List<HabitInformation> habits =
-          await _habitService.getUserHabits(username);
+      List<HabitInformation> habits = await _authService.getHabitsFromSession();
       setState(() {
         userHabits = habits
             .map((habit) => {
@@ -165,9 +171,9 @@ class _GardenScreenState extends State<GardenScreen> {
     }
   }
 
-  Future<void> _fetchUserGoals(String username) async {
+  Future<void> _fetchUserGoals() async {
     try {
-      List<GoalInformation> goals = await _goalService.getUserGoals(username);
+      List<GoalInformation> goals = await _authService.getGoalsFromSession();
       setState(() {
         userGoals = goals
             .map((goal) => {
@@ -182,12 +188,79 @@ class _GardenScreenState extends State<GardenScreen> {
     }
   }
 
-  Future<void> _fetchUserSharedGoals(String username) async {
+  Future<void> _fetchUserSharedGoals() async {
     try {
+      List<SharedGoalInformation> goals =
+          await _authService.getSharedGoalsFromSession();
+      List<SharedGoalInformation> activeGoals =
+          goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
+      setState(() {
+        userSharedGoals = activeGoals
+            .map((goal) => {
+                  'plantId': goal.sharedGoalModel.plantId,
+                  'points': goal.sharedGoalModel.points,
+                  'isPlantDead': goal.sharedGoalModel.isPlantDeadUser1 &&
+                          goal.sharedGoalModel.isPlantDeadUser2
+                      ? true
+                      : false,
+                })
+            .toList();
+      });
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant draugų tikslus ❌', false);
+    }
+  }
+
+  Future<void> _fetchUserFHabits(String username) async {
+    try {
+      // Gaukime vartotojo įpročius
+      List<HabitInformation> habits =
+          await _habitService.getUserHabits(username);
+
+      // Atnaujiname būsena su naujais duomenimis
+      setState(() {
+        userHabits = habits
+            .map((habit) => {
+                  'plantId': habit.habitModel.plantId,
+                  'points': habit.habitModel.points,
+                  'isPlantDead': habit.habitModel.isPlantDead,
+                })
+            .toList();
+      });
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant įpročius ❌', false);
+    }
+  }
+
+  Future<void> _fetchUserFGoals(String username) async {
+    try {
+      // Gaukime vartotojo įpročius
+      List<GoalInformation> goals = await _goalService.getUserGoals(username);
+
+      // Atnaujiname būsena su naujais duomenimis
+      setState(() {
+        userGoals = goals
+            .map((goal) => {
+                  'plantId': goal.goalModel.plantId,
+                  'points': goal.goalModel.points,
+                  'isPlantDead': goal.goalModel.isPlantDead,
+                })
+            .toList();
+      });
+    } catch (e) {
+      showCustomSnackBar(context, 'Klaida kraunant tikslus ❌', false);
+    }
+  }
+
+  Future<void> _fetchUserFSharedGoals(String username) async {
+    try {
+      // Gaukime vartotojo įpročius
       List<SharedGoalInformation> goals =
           await _sharedGoalService.getSharedUserGoals(username);
       List<SharedGoalInformation> activeGoals =
           goals.where((goal) => goal.sharedGoalModel.isApproved).toList();
+
+      // Atnaujiname būsena su naujais duomenimis
       setState(() {
         userSharedGoals = activeGoals
             .map((goal) => {

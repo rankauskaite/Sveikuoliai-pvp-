@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sveikuoliai/enums/mood_enum.dart';
 import 'package:sveikuoliai/models/journal_model.dart';
@@ -43,7 +43,7 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   String userUsername = "";
   File? _selectedImage;
   String? _photoUrl;
-  bool isDarkMode = false; // Temos būsena
+  bool isDarkMode = false;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -52,9 +52,13 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     super.initState();
     selectedDay = widget.selectedDay;
     menstruationStart = DateTime(2000, 1, 1);
-    _fetchUserData().then((_) {
-      _fetchJournalEntry(selectedDay);
-    });
+    _fetchUserData();
+  }
+
+  @override
+  void dispose() {
+    _selectedImage = null;
+    super.dispose();
   }
 
   Future<void> _fetchUserData() async {
@@ -62,8 +66,9 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
       Map<String, String?> sessionData = await _authService.getSessionUser();
       setState(() {
         userUsername = sessionData['username'] ?? "Nežinomas";
-        isDarkMode = sessionData['darkMode'] == 'true'; // Gauname darkMode
+        isDarkMode = sessionData['darkMode'] == 'true';
       });
+      await _fetchJournalEntry(selectedDay);
       UserModel? userModel = await _userService.getUserEntry(userUsername);
       if (userModel != null) {
         setState(() {
@@ -80,34 +85,56 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
 
   Future<void> _fetchJournalEntry(DateTime date) async {
     try {
-      JournalModel? entry =
-          await _journalService.getJournalEntryByDay(userUsername, date);
-      if (entry != null) {
-        String? photoUrl = entry.photoUrl!.isNotEmpty ? entry.photoUrl : null;
-        if (photoUrl != null) {
-          final uri = Uri.parse(photoUrl);
-          final filePath = uri.pathSegments.skip(2).join('/');
-          photoUrl = await _backblazeService.getAuthorizedDownloadUrl(filePath);
-          if (photoUrl == null) {
-            print('Nepavyko gauti autorizuoto URL nuotraukai: $filePath');
-          }
-        }
-
-        setState(() {
-          journalText = entry.note;
-          selectedMood = entry.mood;
-          _photoUrl = photoUrl;
-        });
-        print('Nuotraukos URL: $_photoUrl');
-      } else {
+      List<JournalModel> journalEntries =
+          await _authService.getJournalEntriesFromSession();
+      if (journalEntries.isEmpty) {
         setState(() {
           journalText = '';
           selectedMood = MoodType.neutrali;
           _photoUrl = null;
         });
+        return;
       }
+
+      DateTime targetDate = DateTime.utc(date.year, date.month, date.day);
+      JournalModel? entry = journalEntries.firstWhere(
+        (e) =>
+            DateTime.utc(e.date.year, e.date.month, e.date.day) == targetDate,
+        orElse: () => JournalModel(
+          id: '',
+          userId: userUsername,
+          note: '',
+          mood: MoodType.neutrali,
+          date: targetDate,
+          photoUrl: '',
+        ),
+      );
+
+      String? photoUrl =
+          entry.photoUrl?.isNotEmpty == true ? entry.photoUrl : null;
+      if (photoUrl != null) {
+        final uri = Uri.parse(photoUrl);
+        final filePath = uri.pathSegments.skip(2).join('/');
+        photoUrl = await _backblazeService.getAuthorizedDownloadUrl(filePath);
+        if (photoUrl == null) {
+          print('Nepavyko gauti autorizuoto URL nuotraukai: $filePath');
+        }
+      }
+
+      setState(() {
+        journalText = entry.note;
+        selectedMood = entry.mood;
+        _photoUrl = photoUrl;
+      });
+      print('Nuotraukos URL: $_photoUrl');
     } catch (e) {
       showCustomSnackBar(context, 'Klaida gaunant įrašą ❌', false);
+      setState(() {
+        journalText = '';
+        selectedMood = MoodType.neutrali;
+        _photoUrl = null;
+      });
+      print('Klaida _fetchJournalEntry: $e');
     }
   }
 
@@ -131,6 +158,13 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   }
 
   Future<void> _saveJournalEntry() async {
+    // Patikriname, ar data leidžia redaguoti
+    if (!_isEditableDay()) {
+      showCustomSnackBar(
+          context, 'Šios dienos įrašų redaguoti negalima ❌', false);
+      return;
+    }
+
     if (journalText.isNotEmpty) {
       String? photoUrl;
       if (_selectedImage != null) {
@@ -142,6 +176,8 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
           mood: selectedMood,
           photoFile: _selectedImage,
         );
+        print('uploadJournalEntry grąžino: $photoUrl');
+
         if (photoUrl == null) {
           if (mounted) {
             showCustomSnackBar(context, 'Nepavyko įkelti nuotraukos ❌', false);
@@ -150,16 +186,24 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
         }
       }
 
+      String finalPhotoUrl = photoUrl ?? _photoUrl ?? '';
+      print('Final photoUrl for JournalModel: $finalPhotoUrl');
+
       JournalModel journalModel = JournalModel(
         id: "${userUsername}_${selectedDay.year}-${selectedDay.month}-${selectedDay.day}",
         userId: userUsername,
         note: journalText,
-        photoUrl: photoUrl ?? _photoUrl ?? '',
+        photoUrl: finalPhotoUrl,
         mood: selectedMood,
         date: selectedDay,
       );
 
       await _journalService.createJournalEntry(journalModel);
+      await _authService.addJournalentryToSession(journalModel);
+
+      List<JournalModel> journalEntries =
+          await _authService.getJournalEntriesFromSession();
+      print('Sesijoje išsaugota: ${journalEntries.last.photoUrl}');
 
       if (_tempMenstruationStart != null) {
         MenstrualCycle menstrualCycle = MenstrualCycle(
@@ -197,6 +241,12 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    if (!_isEditableDay()) {
+      showCustomSnackBar(
+          context, 'Šios dienos mėnesinių žymėti negalima ❌', false);
+      return;
+    }
+
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -297,6 +347,12 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
   }
 
   Future<void> _pickImage() async {
+    if (!_isEditableDay()) {
+      showCustomSnackBar(
+          context, 'Šios dienos nuotraukos keisti negalima ❌', false);
+      return;
+    }
+
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
@@ -309,12 +365,40 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
     }
   }
 
+  Future<void> _deletePhoto() async {
+    if (!_isEditableDay()) {
+      showCustomSnackBar(
+          context, 'Šios dienos nuotraukos trinti negalima ❌', false);
+      return;
+    }
+
+    setState(() {
+      _photoUrl = '';
+      _selectedImage = null;
+    });
+    showCustomSnackBar(
+        context, 'Nuotrauka pašalinta! Galite įkelti kitą. 📸', true);
+  }
+
+  bool _isEditableDay() {
+    DateTime today = DateTime.now();
+    DateTime yesterday = today.subtract(Duration(days: 1));
+    DateTime selected =
+        DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+    DateTime todayDate = DateTime(today.year, today.month, today.day);
+    DateTime yesterdayDate =
+        DateTime(yesterday.year, yesterday.month, yesterday.day);
+
+    return selected == todayDate || selected == yesterdayDate;
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime currentDay = DateTime.now();
     const double topPadding = 25.0;
     const double horizontalPadding = 20.0;
     const double bottomPadding = 20.0;
+    bool isEditable = _isEditableDay();
 
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.black : const Color(0xFF8093F1),
@@ -325,88 +409,80 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final double bottomNavigationHeight = 60.0;
-          final double availableHeight = constraints.maxHeight -
-              topPadding -
-              bottomPadding -
-              bottomNavigationHeight;
-
-          return Center(
-            child: Column(
-              children: [
-                SizedBox(height: topPadding),
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: horizontalPadding),
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.grey[900] : Color(0xFFFCE5FC),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color:
-                            isDarkMode ? Colors.grey[800]! : Color(0xFFFCE5FC),
-                        width: 10,
-                      ),
+          return Column(
+            children: [
+              SizedBox(height: topPadding),
+              Expanded(
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[900] : Color(0xFFFCE5FC),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[800]! : Color(0xFFFCE5FC),
+                      width: 10,
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_left,
+                                color: isDarkMode ? Colors.white : null),
+                            onPressed: () {
+                              setState(() {
+                                selectedDay =
+                                    selectedDay.subtract(Duration(days: 1));
+                              });
+                              _fetchJournalEntry(selectedDay);
+                            },
+                          ),
+                          Text(
+                            _formatDay(selectedDay.day),
+                            style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : null),
+                          ),
+                          if (!isToday(selectedDay, currentDay))
                             IconButton(
-                              icon: Icon(Icons.arrow_left,
+                              icon: Icon(Icons.arrow_right,
                                   color: isDarkMode ? Colors.white : null),
                               onPressed: () {
                                 setState(() {
                                   selectedDay =
-                                      selectedDay.subtract(Duration(days: 1));
+                                      selectedDay.add(Duration(days: 1));
                                 });
                                 _fetchJournalEntry(selectedDay);
                               },
-                            ),
-                            Text(
-                              _formatDay(selectedDay.day),
-                              style: TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : null),
-                            ),
-                            if (!isToday(selectedDay, currentDay))
-                              IconButton(
-                                icon: Icon(Icons.arrow_right,
-                                    color: isDarkMode ? Colors.white : null),
-                                onPressed: () {
-                                  setState(() {
-                                    selectedDay =
-                                        selectedDay.add(Duration(days: 1));
-                                  });
-                                  _fetchJournalEntry(selectedDay);
-                                },
-                              )
-                            else
-                              SizedBox(width: 48),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _capitalizeMonth(
-                                  DateFormat.MMMM('lt_LT').format(selectedDay)),
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  color: isDarkMode ? Colors.white70 : null),
-                            ),
-                          ],
-                        ),
-                        const Divider(thickness: 1, color: Colors.grey),
-                        SizedBox(height: 10),
-                        Row(
+                            )
+                          else
+                            SizedBox(width: 48),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _capitalizeMonth(
+                                DateFormat.MMMM('lt_LT').format(selectedDay)),
+                            style: TextStyle(
+                                fontSize: 20,
+                                color: isDarkMode ? Colors.white70 : null),
+                          ),
+                        ],
+                      ),
+                      const Divider(thickness: 1, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
                               width: 80,
-                              height: availableHeight - 140.0,
                               child: ListView(
                                 scrollDirection: Axis.vertical,
                                 children: [
@@ -421,166 +497,367 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                       'assets/images/nuotaikos/laiminga.png'),
                                   _buildMoodCircle(MoodType.liudna,
                                       'assets/images/nuotaikos/liudna.png'),
-                                  _buildMoodCircle(MoodType.pikta,
-                                      'assets/images/nuotaikos/pikta.png'),
-                                  _buildMoodCircle(MoodType.pavargusi,
-                                      'assets/images/nuotaikos/pavargusi.png'),
-                                  _buildMoodCircle(MoodType.motyvuota,
-                                      'assets/images/nuotaikos/motyvuota.png'),
                                   _buildMoodCircle(MoodType.ryztinga,
                                       'assets/images/nuotaikos/ryztinga.png'),
-                                  _buildMoodCircle(MoodType.suglumusi,
-                                      'assets/images/nuotaikos/suglumusi.png'),
-                                  _buildMoodCircle(MoodType.kuribinga,
-                                      'assets/images/nuotaikos/kurybinga.png'),
+                                  _buildMoodCircle(MoodType.pavargusi,
+                                      'assets/images/nuotaikos/pavargusi.png'),
                                   _buildMoodCircle(MoodType.patenkinta,
                                       'assets/images/nuotaikos/patenkinta.png'),
-                                  _buildMoodCircle(MoodType.sunerimusi,
-                                      'assets/images/nuotaikos/stresuojanti.png'),
+                                  _buildMoodCircle(MoodType.abejinga,
+                                      'assets/images/nuotaikos/abejinga.png'),
+                                  _buildMoodCircle(MoodType.motyvuota,
+                                      'assets/images/nuotaikos/motyvuota.png'),
+                                  _buildMoodCircle(MoodType.pikta,
+                                      'assets/images/nuotaikos/pikta.png'),
+                                  _buildMoodCircle(MoodType.kuribinga,
+                                      'assets/images/nuotaikos/kurybinga.png'),
+                                  _buildMoodCircle(MoodType.suglumusi,
+                                      'assets/images/nuotaikos/suglumusi.png'),
                                   _buildMoodCircle(MoodType.zaisminga,
                                       'assets/images/nuotaikos/zaisminga.png'),
+                                  _buildMoodCircle(MoodType.sunerimusi,
+                                      'assets/images/nuotaikos/stresuojanti.png'),
                                 ],
                               ),
                             ),
                             Container(
-                              height: availableHeight - 140.0,
                               width: 1,
                               color:
                                   isDarkMode ? Colors.grey[700]! : Colors.grey,
                             ),
                             Expanded(
-                              child: Column(
-                                children: [
-                                  SizedBox(height: 10),
-                                  Container(
-                                    width: 200,
-                                    height: 110,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.asset(
-                                        'assets/images/dienorascio_vizualas.png',
-                                        fit: BoxFit.fill,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(height: 5),
+                                    Container(
+                                      width: 200,
+                                      height: 110,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.asset(
+                                          'assets/images/dienorascio_vizualas.png',
+                                          fit: BoxFit.fill,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        String tempText = journalText;
-                                        showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          backgroundColor: isDarkMode
-                                              ? Colors.grey[900]
-                                              : null,
-                                          builder: (BuildContext context) {
-                                            return Padding(
-                                              padding: EdgeInsets.only(
-                                                bottom: MediaQuery.of(context)
-                                                    .viewInsets
-                                                    .bottom,
-                                                left: 20,
-                                                right: 20,
-                                                top: 20,
-                                              ),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  TextField(
-                                                    maxLines: null,
-                                                    autofocus: true,
-                                                    onChanged: (value) {
-                                                      tempText = value;
-                                                    },
-                                                    style: TextStyle(
-                                                        color: isDarkMode
-                                                            ? Colors.white
-                                                            : null),
-                                                    decoration: InputDecoration(
-                                                      hintText:
-                                                          'Rašykite čia...',
-                                                      hintStyle: TextStyle(
-                                                          color: isDarkMode
-                                                              ? Colors.grey[500]
-                                                              : null),
-                                                      border:
-                                                          OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10),
+                                    SizedBox(height: 5),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      child: GestureDetector(
+                                        onTap: isEditable
+                                            ? () {
+                                                String tempText = journalText;
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  isScrollControlled: true,
+                                                  backgroundColor: isDarkMode
+                                                      ? Colors.grey[900]
+                                                      : null,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return Padding(
+                                                      padding: EdgeInsets.only(
+                                                        bottom: MediaQuery.of(
+                                                                context)
+                                                            .viewInsets
+                                                            .bottom,
+                                                        left: 20,
+                                                        right: 20,
+                                                        top: 20,
                                                       ),
-                                                      filled: true,
-                                                      fillColor: isDarkMode
-                                                          ? Colors.grey[800]
-                                                          : Colors.white,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  ElevatedButton(
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      backgroundColor:
-                                                          isDarkMode
-                                                              ? Colors.grey[700]
-                                                              : null,
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        journalText = tempText;
-                                                      });
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: Text('Išsaugoti',
-                                                        style: TextStyle(
-                                                            color: isDarkMode
-                                                                ? Colors.white
-                                                                : null)),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: Container(
-                                        height: 115,
-                                        decoration: BoxDecoration(
-                                          color: isDarkMode
-                                              ? Colors.grey[800]
-                                              : Colors.transparent,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          border: Border.all(
-                                              color: isDarkMode
-                                                  ? Colors.grey[700]!
-                                                  : Colors.transparent,
-                                              width: 1),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            journalText.isEmpty
-                                                ? 'Įrašyk savo mintis\n································\n································\n································'
-                                                : journalText,
-                                            style: TextStyle(
+                                                      child: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          TextField(
+                                                            maxLines: null,
+                                                            autofocus: true,
+                                                            onChanged: (value) {
+                                                              tempText = value;
+                                                            },
+                                                            style: TextStyle(
+                                                                color: isDarkMode
+                                                                    ? Colors
+                                                                        .white
+                                                                    : null),
+                                                            decoration:
+                                                                InputDecoration(
+                                                              hintText:
+                                                                  'Rašykite čia...',
+                                                              hintStyle: TextStyle(
+                                                                  color: isDarkMode
+                                                                      ? Colors
+                                                                          .grey[500]
+                                                                      : null),
+                                                              border:
+                                                                  OutlineInputBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10),
+                                                              ),
+                                                              filled: true,
+                                                              fillColor: isDarkMode
+                                                                  ? Colors
+                                                                      .grey[800]
+                                                                  : Colors
+                                                                      .white,
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 10),
+                                                          ElevatedButton(
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  isDarkMode
+                                                                      ? Colors
+                                                                          .grey[700]
+                                                                      : null,
+                                                            ),
+                                                            onPressed: () {
+                                                              setState(() {
+                                                                journalText =
+                                                                    tempText;
+                                                              });
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Text(
+                                                                'Išsaugoti',
+                                                                style: TextStyle(
+                                                                    color: isDarkMode
+                                                                        ? Colors
+                                                                            .white
+                                                                        : null)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }
+                                            : null,
+                                        child: Container(
+                                          height: 115,
+                                          decoration: BoxDecoration(
+                                            color: isDarkMode
+                                                ? Colors.grey[800]
+                                                : Colors.transparent,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: Border.all(
                                                 color: isDarkMode
-                                                    ? Colors.purple[300]
-                                                    : Color(0xFFB388EB),
-                                                fontSize: 18),
-                                            textAlign: TextAlign.left,
+                                                    ? Colors.grey[700]!
+                                                    : Colors.transparent,
+                                                width: 1),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              journalText.isEmpty
+                                                  ? 'Įrašyk savo mintis\n································\n································\n································'
+                                                  : journalText,
+                                              style: TextStyle(
+                                                  color: isDarkMode
+                                                      ? Colors.purple[300]
+                                                      : Colors.deepPurple,
+                                                  fontSize: 18),
+                                              textAlign: TextAlign.left,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  (_photoUrl != null || _selectedImage != null)
-                                      ? Container(
-                                          width: 200,
-                                          height: 150,
+                                    SizedBox(height: 5),
+                                    (_photoUrl != null &&
+                                                _photoUrl!.isNotEmpty) ||
+                                            _selectedImage != null
+                                        ? Stack(
+                                            children: [
+                                              SizedBox(
+                                                width: 200,
+                                                height: 200,
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                  child: _selectedImage != null
+                                                      ? Image.file(
+                                                          _selectedImage!,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (context, error,
+                                                                  stackTrace) {
+                                                            return Center(
+                                                              child: Text(
+                                                                'Klaida įkeliant nuotrauką',
+                                                                style: TextStyle(
+                                                                    color: isDarkMode
+                                                                        ? Colors.deepPurple[
+                                                                            300]
+                                                                        : Colors
+                                                                            .deepPurple),
+                                                              ),
+                                                            );
+                                                          },
+                                                        )
+                                                      : CachedNetworkImage(
+                                                          imageUrl: _photoUrl!,
+                                                          fit: BoxFit.cover,
+                                                          placeholder:
+                                                              (context, url) =>
+                                                                  Center(
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                              color: isDarkMode
+                                                                  ? Colors
+                                                                      .purple[300]
+                                                                  : null,
+                                                            ),
+                                                          ),
+                                                          errorWidget: (context,
+                                                                  url, error) =>
+                                                              Center(
+                                                            child: Text(
+                                                              'Klaida įkeliant nuotrauką',
+                                                              style: TextStyle(
+                                                                  color: isDarkMode
+                                                                      ? Colors.deepPurple[
+                                                                          300]
+                                                                      : Colors
+                                                                          .deepPurple),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                ),
+                                              ),
+                                              if (_selectedImage != null ||
+                                                  (isEditable &&
+                                                      _photoUrl != null &&
+                                                      _photoUrl!.isNotEmpty))
+                                                Positioned(
+                                                  top: 10,
+                                                  right: 10,
+                                                  child: GestureDetector(
+                                                    onTap: _deletePhoto,
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.all(4),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors
+                                                            .deepPurple[600],
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.close,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          )
+                                        : GestureDetector(
+                                            onTap:
+                                                isEditable ? _pickImage : null,
+                                            child: Container(
+                                              width: 200,
+                                              height: 150,
+                                              decoration: BoxDecoration(
+                                                color: isDarkMode
+                                                    ? Colors.grey[800]
+                                                    : Colors.deepPurple.shade50,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                border: Border.all(
+                                                    color: isDarkMode
+                                                        ? Colors.purple[700]!
+                                                        : Colors.deepPurple
+                                                            .shade200),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: isDarkMode
+                                                        ? Colors.black
+                                                            .withOpacity(0.3)
+                                                        : Colors.black
+                                                            .withOpacity(0.05),
+                                                    spreadRadius: 2,
+                                                    blurRadius: 8,
+                                                    offset: Offset(0, 4),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.add_a_photo,
+                                                      size: 50,
+                                                      color: isDarkMode
+                                                          ? Colors.purple[300]
+                                                          : Colors
+                                                              .deepPurple[400]),
+                                                  SizedBox(height: 10),
+                                                  Text(
+                                                    'Įkelti nuotrauką',
+                                                    style: TextStyle(
+                                                        fontSize: 18,
+                                                        color: isDarkMode
+                                                            ? Colors.purple[300]
+                                                            : Colors.deepPurple[
+                                                                400]),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                    SizedBox(height: 10),
+                                    if ((_tempMenstruationStart != null &&
+                                            !selectedDay.isBefore(
+                                                _tempMenstruationStart!) &&
+                                            selectedDay.isBefore(
+                                                _tempMenstruationStart!.add(Duration(
+                                                    days: periodLength)))) ||
+                                        (_tempMenstruationStart != null &&
+                                            selectedDay ==
+                                                _tempMenstruationStart!.add(Duration(
+                                                    days: periodLength - 1))) ||
+                                        (menstruationStart.year > 2000 &&
+                                            !selectedDay
+                                                .isBefore(menstruationStart) &&
+                                            selectedDay.isBefore(
+                                                menstruationStart.add(Duration(
+                                                    days: periodLength)))) ||
+                                        (menstruationStart.year > 2000 &&
+                                            selectedDay ==
+                                                menstruationStart.add(
+                                                    Duration(days: periodLength - 1))))
+                                      Text(
+                                        'Šiandien yra ${selectedDay.difference(_tempMenstruationStart ?? menstruationStart).inDays + 1} mėnesinių diena',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDarkMode
+                                              ? Colors.purple[300]
+                                              : Colors.deepPurple,
+                                        ),
+                                      )
+                                    else
+                                      GestureDetector(
+                                        onTap: isEditable
+                                            ? () => _selectDate(context)
+                                            : null,
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 8),
                                           decoration: BoxDecoration(
+                                            color: isDarkMode
+                                                ? Colors.grey[800]
+                                                : Colors.deepPurple.shade50,
                                             borderRadius:
                                                 BorderRadius.circular(20),
                                             border: Border.all(
@@ -588,235 +865,71 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
                                                     ? Colors.purple[700]!
                                                     : Colors
                                                         .deepPurple.shade200),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: isDarkMode
-                                                    ? Colors.black
-                                                        .withOpacity(0.3)
-                                                    : Colors.black
-                                                        .withOpacity(0.05),
-                                                spreadRadius: 2,
-                                                blurRadius: 8,
-                                                offset: Offset(0, 4),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.calendar_today,
+                                                  color: isDarkMode
+                                                      ? Colors.purple[300]
+                                                      : Colors.deepPurple,
+                                                  size: 16),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Pažymėti mėnesines',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDarkMode
+                                                      ? Colors.purple[300]
+                                                      : Colors.deepPurple,
+                                                ),
                                               ),
                                             ],
                                           ),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            child: _selectedImage != null
-                                                ? Image.file(
-                                                    _selectedImage!,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context,
-                                                        error, stackTrace) {
-                                                      return Center(
-                                                        child: Text(
-                                                          'Klaida įkeliant nuotrauką',
-                                                          style: TextStyle(
-                                                              color: isDarkMode
-                                                                  ? Colors
-                                                                      .red[300]
-                                                                  : Colors.red),
-                                                        ),
-                                                      );
-                                                    },
-                                                  )
-                                                : Image.network(
-                                                    _photoUrl!,
-                                                    fit: BoxFit.cover,
-                                                    loadingBuilder: (context,
-                                                        child, progress) {
-                                                      if (progress == null)
-                                                        return child;
-                                                      return Center(
-                                                        child: CircularProgressIndicator(
-                                                            color: isDarkMode
-                                                                ? Colors
-                                                                    .purple[300]
-                                                                : null),
-                                                      );
-                                                    },
-                                                    errorBuilder: (context,
-                                                        error, stackTrace) {
-                                                      return Center(
-                                                        child: Text(
-                                                          'Klaida įkeliant nuotrauką',
-                                                          style: TextStyle(
-                                                              color: isDarkMode
-                                                                  ? Colors
-                                                                      .red[300]
-                                                                  : Colors.red),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                          ),
-                                        )
-                                      : GestureDetector(
-                                          onTap: _pickImage,
-                                          child: Container(
-                                            width: 200,
-                                            height: (_photoUrl != null ||
-                                                    _selectedImage != null)
-                                                ? 250
-                                                : 150,
-                                            decoration: BoxDecoration(
-                                              color: isDarkMode
-                                                  ? Colors.grey[800]
-                                                  : Colors.deepPurple.shade50,
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              border: Border.all(
-                                                  color: isDarkMode
-                                                      ? Colors.purple[700]!
-                                                      : Colors
-                                                          .deepPurple.shade200),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: isDarkMode
-                                                      ? Colors.black
-                                                          .withOpacity(0.3)
-                                                      : Colors.black
-                                                          .withOpacity(0.05),
-                                                  spreadRadius: 2,
-                                                  blurRadius: 8,
-                                                  offset: Offset(0, 4),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Icon(Icons.add_a_photo,
-                                                    size: 50,
-                                                    color: isDarkMode
-                                                        ? Colors.purple[300]
-                                                        : Colors
-                                                            .deepPurple[300]),
-                                                SizedBox(height: 10),
-                                                Text(
-                                                  'Įkelti nuotrauką',
-                                                  style: TextStyle(
-                                                      fontSize: 18,
-                                                      color: isDarkMode
-                                                          ? Colors.purple[300]
-                                                          : Colors
-                                                              .deepPurple[300]),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                  SizedBox(height: 10),
-                                  if ((_tempMenstruationStart != null &&
-                                          !selectedDay.isBefore(
-                                              _tempMenstruationStart!) &&
-                                          selectedDay.isBefore(
-                                              _tempMenstruationStart!.add(
-                                                  Duration(
-                                                      days: periodLength)))) ||
-                                      (_tempMenstruationStart != null &&
-                                          selectedDay ==
-                                              _tempMenstruationStart!.add(Duration(
-                                                  days: periodLength - 1))) ||
-                                      (menstruationStart.year > 2000 &&
-                                          !selectedDay
-                                              .isBefore(menstruationStart) &&
-                                          selectedDay.isBefore(menstruationStart.add(
-                                              Duration(days: periodLength)))) ||
-                                      (menstruationStart.year > 2000 &&
-                                          selectedDay ==
-                                              menstruationStart.add(Duration(
-                                                  days: periodLength - 1))))
-                                    Text(
-                                      'Šiandien yra ${selectedDay.difference(_tempMenstruationStart ?? menstruationStart).inDays + 1} mėnesinių diena',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode
-                                            ? Colors.purple[300]
-                                            : Colors.deepPurple,
-                                      ),
-                                    )
-                                  else
-                                    GestureDetector(
-                                      onTap: () => _selectDate(context),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          color: isDarkMode
-                                              ? Colors.grey[800]
-                                              : Colors.deepPurple.shade50,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                              color: isDarkMode
-                                                  ? Colors.purple[700]!
-                                                  : Colors.deepPurple.shade200),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.calendar_today,
-                                                color: isDarkMode
-                                                    ? Colors.purple[300]
-                                                    : Colors.deepPurple,
-                                                size: 16),
-                                            SizedBox(width: 8),
-                                            Text(
-                                              'Pažymėti mėnesines',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: isDarkMode
-                                                    ? Colors.purple[300]
-                                                    : Colors.deepPurple,
-                                              ),
-                                            ),
-                                          ],
                                         ),
                                       ),
-                                    ),
-                                  SizedBox(height: 5),
-                                  SizedBox(
-                                    width: 150,
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: isDarkMode
-                                            ? Colors.grey[700]
+                                    SizedBox(height: 5),
+                                    SizedBox(
+                                      width: 150,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isDarkMode
+                                              ? Colors.grey[700]
+                                              : null,
+                                        ),
+                                        onPressed: isEditable
+                                            ? () {
+                                                setState(() {});
+                                                _saveJournalEntry();
+                                              }
                                             : null,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {});
-                                        _saveJournalEntry();
-                                      },
-                                      child: Text(
-                                        'Išsaugoti',
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : null),
+                                        child: Text(
+                                          'Išsaugoti',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(height: 10),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                const BottomNavigation(),
-                SizedBox(height: bottomPadding),
-              ],
-            ),
+              ),
+              const BottomNavigation(),
+              SizedBox(height: bottomPadding),
+            ],
           );
         },
       ),
@@ -839,12 +952,15 @@ class _JournalDayScreenState extends State<JournalDayScreen> {
 
   Widget _buildMoodCircle(MoodType mood, String imageUrl) {
     bool isSelected = selectedMood == mood;
+    bool isEditable = _isEditableDay();
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedMood = mood;
-        });
-      },
+      onTap: isEditable
+          ? () {
+              setState(() {
+                selectedMood = mood;
+              });
+            }
+          : null,
       child: Column(
         children: [
           CircleAvatar(

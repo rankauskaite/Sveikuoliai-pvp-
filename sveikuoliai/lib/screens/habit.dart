@@ -5,9 +5,7 @@ import 'package:sveikuoliai/models/habit_progress_model.dart';
 import 'package:sveikuoliai/models/plant_model.dart';
 import 'package:sveikuoliai/screens/habits_goals.dart';
 import 'package:sveikuoliai/services/auth_services.dart';
-import 'package:sveikuoliai/services/habit_progress_services.dart';
 import 'package:sveikuoliai/services/habit_services.dart';
-import 'package:sveikuoliai/services/plant_services.dart';
 import 'package:sveikuoliai/widgets/bottom_navigation.dart';
 import 'package:sveikuoliai/widgets/custom_dialogs.dart';
 import 'package:sveikuoliai/widgets/custom_snack_bar.dart';
@@ -24,22 +22,18 @@ class HabitScreen extends StatefulWidget {
 
 class _HabitScreenState extends State<HabitScreen> {
   PlantModel plant = PlantModel(
-      id: '', name: '', points: 0, photoUrl: '', duration: 0, stages: []);
-  final PlantService _plantService = PlantService();
+    id: '',
+    name: '',
+    points: 0,
+    photoUrl: '',
+    duration: 0,
+  );
   final HabitService _habitService = HabitService();
-  final HabitProgressService _habitProgressService = HabitProgressService();
   final AuthService _authService = AuthService(); // Pridėtas AuthService
   bool notifications = true;
   bool isDarkMode = false; // Temos būsena
   List<HabitProgress> progressList = [];
-  HabitProgress habitProgress = HabitProgress(
-      id: '',
-      habitId: '',
-      description: '',
-      points: 0,
-      plantUrl: '',
-      date: DateTime.now(),
-      isCompleted: false);
+  HabitProgress? habitProgress; // Pakeista į nullable tipą
   final TextEditingController _progressController = TextEditingController();
   int pointss = 0;
   int streakk = 0;
@@ -78,15 +72,13 @@ class _HabitScreenState extends State<HabitScreen> {
 
   Future<void> _fetchPlantData() async {
     try {
-      PlantModel? fetchedPlant =
-          await _plantService.getPlantEntry(widget.habit.habitModel.plantId);
-      if (fetchedPlant != null) {
-        setState(() {
-          plant = fetchedPlant;
-        });
-      } else {
-        throw Exception("Gautas `null` augalo objektas");
-      }
+      List<PlantModel> plants = await _authService.getPlantsFromSession();
+      PlantModel? fetchedPlant = plants.firstWhere(
+        (p) => p.id == widget.habit.habitModel.plantId,
+      );
+      setState(() {
+        plant = fetchedPlant;
+      });
     } catch (e) {
       String message = 'Klaida gaunant augalo duomenis ❌';
       showCustomSnackBar(context, message, false);
@@ -95,30 +87,55 @@ class _HabitScreenState extends State<HabitScreen> {
 
   Future<void> _fetchHabitProgress() async {
     try {
-      List<HabitProgress> all = await _habitProgressService
-          .getAllHabitProgress(widget.habit.habitModel.id);
+      Map<String, List<HabitProgress>> allProgress =
+          await _authService.getHabitProgressFromSession();
+      String habitId = widget.habit.habitModel.id;
 
-      if (all.isNotEmpty) {
+      if (allProgress.isNotEmpty && allProgress.containsKey(habitId)) {
+        List<HabitProgress> habitProgressList = allProgress[habitId]!;
         setState(() {
-          progressList = all;
-          habitProgress = all.last;
-          lastProgressDate = all.last.date;
+          progressList = habitProgressList;
+          habitProgress =
+              habitProgressList.isNotEmpty ? habitProgressList.last : null;
+          lastProgressDate =
+              habitProgress?.date ?? widget.habit.habitModel.startDate;
         });
 
-        if (!widget.habit.habitModel.isCompleted) {
+        if (habitProgress != null && !widget.habit.habitModel.isCompleted) {
           bool isDead = isPlantDead(lastProgressDate);
-          setState(() {
-            widget.habit.habitModel.isPlantDead = isDead;
-          });
-          await _habitService.updateHabitEntry(widget.habit.habitModel);
+          if (widget.habit.habitModel.isPlantDead != isDead) {
+            setState(() {
+              widget.habit.habitModel.isPlantDead = isDead;
+            });
+            await _habitService.updateHabitEntry(widget.habit.habitModel);
+            // Atnaujiname sesiją su naujausiais duomenimis
+            List<HabitInformation> habits =
+                await _authService.getHabitsFromSession();
+            int habitIndex = habits.indexWhere(
+                (g) => g.habitModel.id == widget.habit.habitModel.id);
+            if (habitIndex != -1) {
+              habits[habitIndex] = widget.habit; // Atnaujiname esamą tikslą
+            } else {
+              habits.add(widget.habit); // Jei tikslo dar nėra, pridedame
+            }
+            await _authService.saveHabitsToSession(habits);
+          }
         }
       } else {
         setState(() {
           progressList = [];
+          habitProgress = null;
+          lastProgressDate = widget.habit.habitModel.startDate;
         });
       }
     } catch (e) {
       showCustomSnackBar(context, 'Klaida kraunant įpročio progresą ❌', false);
+      setState(() {
+        progressList = [];
+        habitProgress = null;
+        lastProgressDate = widget.habit.habitModel.startDate;
+      });
+      print('Klaida _fetchHabitProgress: $e');
     }
   }
 
@@ -132,20 +149,20 @@ class _HabitScreenState extends State<HabitScreen> {
         .subtract(Duration(days: 7));
     if (widget.habit.habitModel.plantId == "dobiliukas" &&
         date.isBefore(twoDaysAgo)) {
-      showCustomSnackBar(
-          context,
-          "${getPlantName(widget.habit.habitModel.plantId)} bent 2 dienas 🥺",
-          false);
+      showCustomPlantSnackBar(
+        context,
+        "${getPlantName(widget.habit.habitModel.plantId)} bent 2 dienas 🥺",
+      );
 
       return true;
     } else if (widget.habit.habitModel.plantId == "ramuneles" ||
         widget.habit.habitModel.plantId == "zibuokle" ||
         widget.habit.habitModel.plantId == "saulegraza") {
       if (date.isBefore(threeDaysAgo)) {
-        showCustomSnackBar(
-            context,
-            "${getPlantName(widget.habit.habitModel.plantId)} bent 3 dienas 🥺",
-            false);
+        showCustomPlantSnackBar(
+          context,
+          "${getPlantName(widget.habit.habitModel.plantId)} bent 3 dienas 🥺",
+        );
 
         return true;
       }
@@ -153,15 +170,37 @@ class _HabitScreenState extends State<HabitScreen> {
         widget.habit.habitModel.plantId == "gervuoge" ||
         widget.habit.habitModel.plantId == "vysnia") {
       if (date.isBefore(weekAgo)) {
-        showCustomSnackBar(
-            context,
-            "${getPlantName(widget.habit.habitModel.plantId)} bent savaitę 🥺",
-            false);
+        showCustomPlantSnackBar(
+          context,
+          "${getPlantName(widget.habit.habitModel.plantId)} bent savaitę 🥺",
+        );
 
         return true;
       }
     }
     return false;
+  }
+
+  void showCustomPlantSnackBar(BuildContext context, String message) {
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 17,
+        ),
+      ),
+      backgroundColor: Colors.purple.shade400.withOpacity(0.6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.0), // Viršutinis kairysis kampas
+          topRight: Radius.circular(16.0), // Viršutinis dešinysis kampas
+        ),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   String getPlantName(String plantId) {
@@ -193,8 +232,8 @@ class _HabitScreenState extends State<HabitScreen> {
 
   Future<void> _deleteHabit() async {
     try {
-      final habitService = HabitService();
-      await habitService.deleteHabitEntry(widget.habit.habitModel.id);
+      await _habitService.deleteHabitEntry(widget.habit.habitModel.id);
+      await _authService.removeHabitFromSession(widget.habit);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -206,25 +245,49 @@ class _HabitScreenState extends State<HabitScreen> {
     }
   }
 
-  void _loadProgress() async {
-    final habitProgressService = HabitProgressService();
-    HabitProgress? progress = await habitProgressService
-        .getTodayHabitProgress(widget.habit.habitModel.id);
-    HabitProgress? lastProgress = await habitProgressService
-        .getLatestHabitProgress(widget.habit.habitModel.id);
+  void _loadProgress() {
+    // Filtruojame progreso įrašus pagal dabartinę dieną
+    DateTime today = DateTime.now();
+    DateTime todayDate = DateTime(today.year, today.month, today.day);
+    HabitProgress? todayProgress = progressList
+            .where(
+              (progress) =>
+                  DateTime(progress.date.year, progress.date.month,
+                      progress.date.day) ==
+                  todayDate,
+            )
+            .isNotEmpty
+        ? progressList.firstWhere(
+            (progress) =>
+                DateTime(progress.date.year, progress.date.month,
+                    progress.date.day) ==
+                todayDate,
+          )
+        : null;
 
-    if (progress != null) {
+    // Gauname paskutinį progreso įrašą
+    HabitProgress? lastProgress =
+        progressList.isNotEmpty ? progressList.last : null;
+
+    if (todayProgress != null) {
       setState(() {
-        _progressController.text = progress.description;
-        pointss = lastProgress!.points;
-        streakk = lastProgress.streak;
+        _progressController.text = todayProgress.description;
+        pointss = lastProgress?.points ?? 0;
+        streakk = lastProgress?.streak ?? 0;
       });
     } else if (lastProgress != null) {
       setState(() {
         pointss = lastProgress.points;
         if (lastProgress.date.day == DateTime.now().day - 1) {
           streakk = lastProgress.streak;
+        } else {
+          streakk = 0; // Reset streak, jei nėra progreso vakar
         }
+      });
+    } else {
+      setState(() {
+        pointss = 0;
+        streakk = 0;
       });
     }
   }
@@ -355,7 +418,7 @@ class _HabitScreenState extends State<HabitScreen> {
                                   accentColor: isDarkMode
                                       ? Colors.purple[300]!
                                       : Color(0xFFB388EB),
-                                  onSave: () {},
+                                  onSave: () async {},
                                   progressController: _progressController,
                                   points: pointss,
                                   streak: streakk,
@@ -397,10 +460,12 @@ class _HabitScreenState extends State<HabitScreen> {
                             ),
                           ),
                           Text(
-                            (habitProgress.date.day == DateTime.now().day ||
-                                    habitProgress.date.day ==
-                                        DateTime.now().day - 1)
-                                ? habitProgress.streak.toString()
+                            habitProgress != null &&
+                                    (habitProgress!.date.day ==
+                                            DateTime.now().day ||
+                                        habitProgress!.date.day ==
+                                            DateTime.now().day - 1)
+                                ? habitProgress!.streak.toString()
                                 : "0",
                             style: TextStyle(
                               fontSize: 15,
