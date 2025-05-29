@@ -402,15 +402,17 @@ class _HabitCardState extends State<HabitCard> {
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            _submitHabit();
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      HabitsGoalsScreen(selectedIndex: 0)),
-                            );
+                            HabitModel? result = await _submitHabit();
+                            if (result != null) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        HabitsGoalsScreen(selectedIndex: 0)),
+                              );
+                            }
                           }
                         },
                         child: Text(
@@ -463,7 +465,7 @@ class _HabitCardState extends State<HabitCard> {
     );
   }
 
-  Future<void> _submitHabit() async {
+  Future<HabitModel?> _submitHabit() async {
     String habitId = widget.isCustom
         ? _habitNameController.text
             .toLowerCase()
@@ -612,11 +614,13 @@ class _HabitCardState extends State<HabitCard> {
       await _authService.addHabitToSession(habitInformation);
       String message = 'Įprotis pridėtas! 🎉';
       showCustomSnackBar(context, message, true);
+      return habitModel;
     } catch (e) {
       print("Klaida pridedant įprotį: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Įvyko klaida!')),
       );
     }
+    return null;
   }
 }
