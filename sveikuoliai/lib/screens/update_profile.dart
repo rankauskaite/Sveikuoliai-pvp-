@@ -413,7 +413,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     children: [
                       Icon(
                         Icons.block,
-                        size: 50,
+                        size: 65,
                         color: isDarkMode ? Colors.white : Colors.deepPurple,
                       ),
                     ],
@@ -429,8 +429,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       children: [
                         Image.asset(
                           entry,
-                          width: 50,
-                          height: 50,
+                          width: 65,
+                          height: 65,
                           fit: BoxFit.cover,
                         ),
                       ],
